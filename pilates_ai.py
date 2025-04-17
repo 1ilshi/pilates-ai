@@ -6,11 +6,11 @@ import os
 import firebase_admin
 import requests
 
-from PyQt6.QtCore import QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QThread, pyqtSignal, pyqtSlot, Qt
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QListWidget, QPushButton,
-    QDialog, QFormLayout, QLineEdit, QLabel, QComboBox, QMessageBox
+    QDialog, QFormLayout, QLineEdit, QLabel, QComboBox, QMessageBox, QStackedWidget
 )
 from firebase_admin import credentials, firestore
 
@@ -65,20 +65,35 @@ MODEL_PATHS = {
 
 
 # Function to download the model if it doesn't already exist locally
-def download_model(url, save_path):
+def download_model(url, save_path, splash=None):
     if not os.path.exists(save_path):
-        print(f"Downloading model from {url}...")
+        if splash:
+            splash.update_status(f"Downloading model to {save_path}...")
         try:
-            response = requests.get(url)
+            response = requests.get(url, stream=True)
             response.raise_for_status()
+
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            total_size = int(response.headers.get("content-length", 0))
+            downloaded = 0
             with open(save_path, "wb") as f:
-                f.write(response.content)
-            print(f"Model saved to {save_path}")
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+                        downloaded += len(chunk)
+                        if splash and total_size:
+                            percent = int((downloaded / total_size) * 100)
+                            splash.update_status(f"Downloading {os.path.basename(save_path)}... {percent}%")
+            if splash:
+                splash.update_status(f"Model saved to {save_path}")
         except Exception as e:
+            if splash:
+                splash.update_status(f"Error downloading model: {e}")
             print(f"Failed to download model from {url}. Error: {e}")
     else:
-        print(f"Model already exists at {save_path}")
+        if splash:
+            splash.update_status(f"Model already exists at {save_path}")
+
 
 
 # Download all models
@@ -96,6 +111,21 @@ for pose, path in MODEL_PATHS.items():
         print(f"{pose.capitalize()} model loaded from {path}")
     else:
         print(f"{pose.capitalize()} model not available at {path}. Please check.")
+
+
+class SplashScreen(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Model Downloader")
+        self.setGeometry(600, 300, 400, 150)
+        self.layout = QVBoxLayout()
+        self.status_label = QLabel("Initializing...")
+        self.layout.addWidget(self.status_label)
+        self.setLayout(self.layout)
+
+    def update_status(self, message):
+        self.status_label.setText(message)
+        QApplication.processEvents()  # Force UI to update
 
 
 class PoseDetectionThread(QThread):
@@ -136,7 +166,7 @@ class PoseDetectionThread(QThread):
 
                     # Write metrics every second
                     current_time = time.time()
-                    if current_time - last_time >= 1:
+                    if current_time - last_time >= 3:
                         last_time = current_time
                         metrics_data = {
                             "accuracy": avg_confidence,
@@ -175,82 +205,95 @@ class PoseDetectionThread(QThread):
         self.wait()
 
 
+# PATIENT DETAILS PAGE
 class PatientDetailsPage(QWidget):
-    def __init__(self, patient_id, parent=None):
+    def __init__(self, patient_id, back_callback, parent=None):
         super().__init__(parent)
         self.patient_id = patient_id
         self.pose_thread = None
         self.current_pose = None
+        self.back_callback = back_callback
 
-        self.setWindowTitle("Patient Details")
-        self.setGeometry(300, 300, 400, 300)
         self.layout = QVBoxLayout()
 
         self.info_label = QLabel("Patient Info Loading...")
         self.layout.addWidget(self.info_label)
 
-        # Video feed display label
         self.video_label = QLabel("Video Feed")
         self.video_label.setFixedSize(320, 240)
         self.layout.addWidget(self.video_label)
 
-        # Buttons for each pose model
         for pose, model in models.items():
             btn = QPushButton(f"Start Pose Detection - {pose.capitalize()}")
+            btn.setStyleSheet("background-color: green; color: white;")  # Make button green
             btn.clicked.connect(lambda checked, p=pose: self.start_pose_detection(p))
             self.layout.addWidget(btn)
 
+
         self.stop_button = QPushButton("Stop Pose Detection")
+        self.stop_button.setStyleSheet("background-color: yellow; color: gray; font-weight: bold;")
         self.stop_button.clicked.connect(self.stop_pose_detection)
         self.layout.addWidget(self.stop_button)
 
-        # Delete patient button
         self.delete_button = QPushButton("Delete Patient")
+        self.delete_button.setStyleSheet("background-color: red; color: white; font-weight: bold;")
         self.delete_button.clicked.connect(self.delete_patient)
         self.layout.addWidget(self.delete_button)
+
+        self.back_button = QPushButton("Back to List")
+        self.back_button.clicked.connect(self.back_callback)
+        self.layout.addWidget(self.back_button)
 
         self.status_label = QLabel("")
         self.layout.addWidget(self.status_label)
 
-        self.load_patient_details()
         self.setLayout(self.layout)
+        self.load_patient_details()
 
     def load_patient_details(self):
         try:
             doc = db.collection("patients").document(self.patient_id).get()
             if doc.exists:
-                patient_data = doc.to_dict()
-                details = (
-                    f"Name: {patient_data.get('name')}\n"
-                    f"Age: {patient_data.get('age')}\n"
-                    f"Weight: {patient_data.get('weight')}\n"
-                    f"Height: {patient_data.get('height')}\n"
-                    f"Tel: {patient_data.get('tel_number')}\n"
-                    f"Address: {patient_data.get('address')}\n"
-                    f"Gender: {patient_data.get('gender')}"
+                data = doc.to_dict()
+                self.info_label.setText(
+                    f"Name: {data.get('name')}\n"
+                    f"Age: {data.get('age')}\n"
+                    f"Weight: {data.get('weight')}\n"
+                    f"Height: {data.get('height')}\n"
+                    f"Gender: {data.get('gender')}"
                 )
-                self.info_label.setText(details)
             else:
-                self.info_label.setText("Patient record not found.")
+                self.info_label.setText("Patient not found.")
         except Exception as e:
-            self.info_label.setText("Error loading patient details.")
-            print("Error loading patient details:", e)
+            self.info_label.setText("Error loading patient.")
+            print(e)
 
     def start_pose_detection(self, pose):
-        if self.pose_thread is not None and self.pose_thread.isRunning():
-            self.status_label.setText("A pose detection is already running.")
+        if self.pose_thread and self.pose_thread.isRunning():
+            self.status_label.setText("Detection already running.")
             return
 
-        self.current_pose = pose
         model = models.get(pose)
         if model:
             self.pose_thread = PoseDetectionThread(model, self.patient_id, pose)
             self.pose_thread.frameUpdated.connect(self.update_video_frame)
             self.pose_thread.errorOccurred.connect(self.handle_error)
             self.pose_thread.start()
-            self.status_label.setText(f"Pose detection started for {pose.capitalize()}.")
-        else:
-            self.status_label.setText("Invalid pose selection.")
+            self.status_label.setText(f"Started pose: {pose.capitalize()}")
+
+    def stop_pose_detection(self):
+        if self.pose_thread:
+            self.pose_thread.stop()
+            self.pose_thread = None
+            self.status_label.setText("Detection stopped.")
+            self.video_label.clear()
+
+    def delete_patient(self):
+        try:
+            db.collection("patients").document(self.patient_id).delete()
+            self.back_callback()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to delete patient: {e}")
 
     @pyqtSlot(QImage)
     def update_video_frame(self, q_img):
@@ -264,111 +307,116 @@ class PatientDetailsPage(QWidget):
         self.status_label.setText(message)
         QMessageBox.critical(self, "Error", message)
 
-    def stop_pose_detection(self):
-        if self.pose_thread is not None:
-            self.pose_thread.stop()
-            self.pose_thread = None
-            self.status_label.setText("Pose detection stopped.")
-            self.video_label.clear()
 
-    def delete_patient(self):
-        try:
-            db.collection("patients").document(self.patient_id).delete()
-            self.close()
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to delete patient: {e}")
-            print("Error deleting patient:", e)
-
-
+# MAIN APPLICATION WINDOW
 class PatientListApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.initUI()
-        self.load_patients()
-
-    def initUI(self):
         self.setWindowTitle("Pilates AI")
-        self.setGeometry(100, 100, 400, 400)
+        self.setGeometry(100, 100, 800, 600)
+        self.resize(1200, 800)
 
-        self.layout = QVBoxLayout()
+
+        self.stack = QStackedWidget()
+        self.layout = QVBoxLayout(self)
+        self.layout.addWidget(self.stack)
+
+        self.list_page = QWidget()
+        self.stack.addWidget(self.list_page)
+        self.init_list_ui()
+
+    def init_list_ui(self):
+        layout = QVBoxLayout()
+
         self.listWidget = QListWidget()
         self.listWidget.itemClicked.connect(self.open_patient_details)
-
         self.add_button = QPushButton("Add Patient")
         self.add_button.clicked.connect(self.show_add_patient_dialog)
 
-        self.layout.addWidget(self.listWidget)
-        self.layout.addWidget(self.add_button)
-        self.setLayout(self.layout)
+
+        layout.addWidget(self.listWidget)
+        layout.addWidget(self.add_button)
+        self.list_page.setLayout(layout)
+
+        self.load_patients()
 
     def load_patients(self):
         self.listWidget.clear()
         try:
-            patients_ref = db.collection("patients").stream()
-            for patient in patients_ref:
-                item_text = patient.get("name")
-                item_id = patient.id
-                self.listWidget.addItem(f"{item_text} | {item_id}")
+            for patient in db.collection("patients").stream():
+                name = patient.get("name")
+                pid = patient.id
+                self.listWidget.addItem(f"{name} | {pid}")
         except Exception as e:
-            print("Error loading patients:", e)
+            print("Failed to load patients:", e)
 
     def open_patient_details(self, item):
-        patient_id = item.text().split(" | ")[-1]
-        self.details_page = PatientDetailsPage(patient_id)
-        self.details_page.show()
+        pid = item.text().split(" | ")[-1]
+        details_page = PatientDetailsPage(pid, self.show_list_page)
+        self.stack.addWidget(details_page)
+        self.stack.setCurrentWidget(details_page)
+
+    def show_list_page(self):
+        self.load_patients()
+        self.stack.setCurrentWidget(self.list_page)
 
     def show_add_patient_dialog(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Add Patient")
-        layout = QFormLayout()
+        form = QFormLayout()
 
-        name_input = QLineEdit()
-        age_input = QLineEdit()
-        weight_input = QLineEdit()
-        height_input = QLineEdit()
-        tel_input = QLineEdit()
-        address_input = QLineEdit()
+        name = QLineEdit()
+        age = QLineEdit()
+        weight = QLineEdit()
+        height = QLineEdit()
+        gender = QComboBox()
+        gender.addItems(["Male", "Female"])
 
-        gender_input = QComboBox()
-        gender_input.addItems(["Male", "Female"])
+        form.addRow("Name:", name)
+        form.addRow("Age:", age)
+        form.addRow("Weight:", weight)
+        form.addRow("Height:", height)
+        form.addRow("Gender:", gender)
 
-        layout.addRow("Name:", name_input)
-        layout.addRow("Age:", age_input)
-        layout.addRow("Weight:", weight_input)
-        layout.addRow("Height:", height_input)
-        layout.addRow("Tel Number:", tel_input)
-        layout.addRow("Address:", address_input)
-        layout.addRow("Gender:", gender_input)
+        add_btn = QPushButton("Add")
+        form.addWidget(add_btn)
 
-        add_button = QPushButton("Add")
-
-        def save_patient():
-            if name_input.text():
+        def save():
+            if name.text():
                 try:
                     db.collection("patients").add({
-                        "name": name_input.text(),
-                        "age": age_input.text(),
-                        "weight": weight_input.text(),
-                        "height": height_input.text(),
-                        "tel_number": tel_input.text(),
-                        "address": address_input.text(),
-                        "gender": gender_input.currentText()
+                        "name": name.text(),
+                        "age": age.text(),
+                        "weight": weight.text(),
+                        "height": height.text(),
+                        "gender": gender.currentText()
                     })
                     self.load_patients()
                     dialog.accept()
                 except Exception as e:
                     QMessageBox.critical(dialog, "Error", f"Failed to add patient: {e}")
-                    print("Error adding patient:", e)
 
-        add_button.clicked.connect(save_patient)
-        layout.addWidget(add_button)
-
-        dialog.setLayout(layout)
+        add_btn.clicked.connect(save)
+        dialog.setLayout(form)
         dialog.exec()
 
 
+# MAIN EXECUTION
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+
+    splash = SplashScreen()
+    splash.show()
+
+    for pose, url in MODEL_URLS.items():
+        if "URL_FOR" not in url:
+            download_model(url, MODEL_PATHS[pose], splash)
+
+    splash.update_status("Loading application...")
+    time.sleep(1)
+    splash.close()
+
     window = PatientListApp()
     window.show()
+
     sys.exit(app.exec())

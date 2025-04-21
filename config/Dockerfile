@@ -24,7 +24,7 @@ RUN apt-get update && apt-get install -y \
 
 
 # Copy the requirements file into the container
-COPY requirements.txt .
+COPY ../requirements.txt .
 
 # Install Python dependencies from requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt\
@@ -53,7 +53,7 @@ ENV GOOGLE_APPLICATION_CREDENTIALS="/app/firebase-sdk.json"
 ENV QT_QPA_PLATFORM=offscreen
 
 # Copy the rest of your application code
-COPY . .
+COPY .. .
 
 # Set the command to run the application (assumes pilates_ai.py is the entry point)
 CMD ["python", "pilates_ai.py"]

@@ -75,5 +75,5 @@ node_modules/
 # Ignore virtual environments
 /venv/
 
-
-
+# (Optionally) Ignore logs if you want them to be generated at runtime
+/logs/

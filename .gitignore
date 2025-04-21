@@ -77,3 +77,6 @@ node_modules/
 
 # (Optionally) Ignore logs if you want them to be generated at runtime
 /logs/
+
+#ignore bfg.jar report
+/..bfg-report/

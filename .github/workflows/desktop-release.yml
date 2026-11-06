@@ -256,18 +256,27 @@ jobs:
       # minimum supported version). Raises `minimum` only when MINIMUM_VERSION
       # is set, which should happen only for a genuinely incompatible change.
       - name: Build update manifests
-        run: node tools/build-update-manifest.mjs dist
+        shell: bash
+        run: |
+          set -o pipefail
+          log="$RUNNER_TEMP/manifest.log"
+          if ! node tools/build-update-manifest.mjs dist 2>&1 | tee "$log"; then
+            echo "::error::$(tail -n 15 "$log" | tr '\n' ' ' | cut -c1-1200)"
+            exit 1
+          fi
 
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # The manifests are flattened into dist/release by the previous step.
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+            gh release upload "$GITHUB_REF_NAME" dist/release/* --clobber
           else
             gh release create "$GITHUB_REF_NAME" \
               --title "Pilates AI $GITHUB_REF_NAME" \
               --notes "See the changelog for this version." \
-              dist/*
+              dist/release/*
           fi
           echo "published $GITHUB_REF_NAME"
+          gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name'

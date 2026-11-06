@@ -14,7 +14,7 @@
  *   node tools/build-update-manifest.mjs <dist-dir> [--base-url <url>]
  */
 
-import { readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -49,6 +49,17 @@ function assetUrl(baseUrl, name) {
   return `${baseUrl.replace(/\/$/, "")}/${encodeURIComponent(name)}`;
 }
 
+/** Every file under `dir`, at any depth. */
+function walk(dir) {
+  const out = [];
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) out.push(...walk(full));
+    else out.push(full);
+  }
+  return out;
+}
+
 function main() {
   const args = process.argv.slice(2);
   const distIndex = args.findIndex((arg) => !arg.startsWith("--"));
@@ -60,40 +71,62 @@ function main() {
   const config = JSON.parse(readFileSync(TAURI_CONF, "utf8"));
   const version = config.version;
 
-  const files = readdirSync(dist);
+  // `download-artifact` keeps each artifact's internal directory structure, so
+  // the installers arrive nested several levels deep. Flatten them into one
+  // directory: the release assets, and therefore the manifest URLs, must be
+  // plain file names.
+  const outDir = join(dist, "release");
+  mkdirSync(outDir, { recursive: true });
+
+  const files = walk(dist)
+    .filter((path) => !path.startsWith(outDir))
+    .map((path) => ({ path, name: path.split(/[\\/]/).pop() }));
+
   const platforms = {};
 
-  for (const file of files) {
-    const platform = classify(file);
+  for (const { path, name } of files) {
+    const platform = classify(name);
     if (!platform) continue;
 
     // `foo.exe.sig` -> `foo.exe`
-    const artifact = file.replace(/\.sig$/, "");
-    if (!files.includes(artifact)) {
-      console.warn(`warn: ${file} has no matching artifact, skipped`);
+    const artifactName = name.replace(/\.sig$/, "");
+    const artifact = files.find((entry) => entry.name === artifactName);
+    if (!artifact) {
+      console.warn(`warn: ${name} has no matching artifact, skipped`);
       continue;
     }
 
-    const signature = readFileSync(join(dist, file), "utf8").trim();
+    const signature = readFileSync(path, "utf8").trim();
     if (!signature) {
-      console.warn(`warn: ${file} is empty, skipped`);
+      console.warn(`warn: ${name} is empty, skipped`);
       continue;
     }
 
     if (platforms[platform]) {
       // NSIS and MSI both map to windows-x86_64; the NSIS installer is the
       // update path, so keep the first (rules are ordered by preference).
-      console.log(`  ${platform}: already set, ignoring ${artifact}`);
+      console.log(`  ${platform}: already set, ignoring ${artifactName}`);
       continue;
     }
 
-    platforms[platform] = { signature, url: assetUrl(baseUrl, artifact) };
-    console.log(`  ${platform}: ${artifact}`);
+    copyFileSync(artifact.path, join(outDir, artifactName));
+    copyFileSync(path, join(outDir, name));
+    platforms[platform] = { signature, url: assetUrl(baseUrl, artifactName) };
+    console.log(`  ${platform}: ${artifactName}`);
   }
 
   if (Object.keys(platforms).length === 0) {
-    console.error("error: no signed updater artifacts found in " + dist);
+    console.error("error: no signed updater artifacts found under " + dist);
+    console.error("found " + files.length + " file(s): " + files.map((f) => f.name).join(", "));
     process.exit(1);
+  }
+
+  // Every installer is published, not only the ones the updater installs: a
+  // clinic downloading by hand wants the .msi and .deb too.
+  for (const { path, name } of files) {
+    if (name.endsWith(".sig")) continue;
+    if (!/\.(exe|msi|dmg|deb|AppImage|tar\.gz)$/i.test(name)) continue;
+    copyFileSync(path, join(outDir, name));
   }
 
   const manifest = {
@@ -103,7 +136,7 @@ function main() {
     platforms,
   };
 
-  const out = join(dist, "latest.json");
+  const out = join(outDir, "latest.json");
   writeFileSync(out, `${JSON.stringify(manifest, null, 2)}\n`);
   console.log(`wrote ${out} (version ${version}, ${Object.keys(platforms).length} platform(s))`);
 
@@ -117,7 +150,7 @@ function main() {
     minimum: process.env.MINIMUM_VERSION ?? version,
     updated_at: new Date().toISOString(),
   };
-  const channelPath = join(dist, "channel.json");
+  const channelPath = join(outDir, "channel.json");
   writeFileSync(channelPath, `${JSON.stringify(channel, null, 2)}\n`);
   console.log(`wrote ${channelPath} (minimum ${channel.minimum})`);
 }

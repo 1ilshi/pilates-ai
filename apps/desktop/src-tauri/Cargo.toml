@@ -1,0 +1,53 @@
+[package]
+name = "pilates-desktop"
+version = "2.0.0"
+description = "Pilates AI Clinical Workstation"
+authors = ["Pilates AI Team"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.0", features = ["tray-icon"] }
+tauri-plugin-shell = "2.0"
+# User-initiated updates: the app checks a manifest and installs only when the
+# clinician clicks. `process` provides the relaunch after installing.
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.40", features = ["full"] }
+uuid = { version = "1.10", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "1.0"
+arc-swap = "1.7"
+
+# Biomechanical math (SIMD-accelerated vectors)
+glam = "0.29"
+
+# Computer vision: ONNX Runtime (DirectML / CoreML / CPU) and camera capture.
+#
+# `load-dynamic` is required: pyke.io only publishes prebuilt ONNX Runtime
+# binaries for `x86_64-pc-windows-msvc`, and this project builds with the GNU
+# toolchain. Dynamic loading defers the dependency to runtime, where the engine
+# loads the platform's shared library from bundled resources (or the system
+# PATH) and degrades to "inference unavailable" if it is absent — see
+# inference.rs.
+#
+# `directml` is deliberately **not** enabled: no DirectML-enabled ONNX Runtime
+# exists for the 1.31 API, so the EP could never initialise. `coreml` is a
+# compile-time binding only; with `load-dynamic` nothing is linked.
+ort = { version = "2.0.0-rc.15", features = ["load-dynamic", "coreml"] }
+nokhwa = { version = "0.10", features = ["input-native"] }
+
+# Dual-tier telemetry (Apache Arrow & Parquet)
+arrow = { version = "53.0", features = ["prettyprint"] }
+parquet = { version = "53.0", features = ["arrow"] }
+sha2 = "0.10"
+# Needed to read Parquet back out of an in-memory buffer (ChunkReader impl).
+bytes = "1"
+
+# Local outbox (SQLite WAL) and cloud sync
+rusqlite = { version = "0.32", features = ["bundled"] }
+reqwest = { version = "0.12", features = ["json", "blocking"] }

@@ -1,0 +1,140 @@
+{
+  "version": "2.0.0",
+  "format": "ONNX",
+  "precision": "FP16",
+  "input_shape": [
+    1,
+    3,
+    640,
+    640
+  ],
+  "opset": 17,
+  "onnx_models": [
+    {
+      "pose": "pose1",
+      "pose_index": 1,
+      "source": "assets\\models\\pose1\\best.pt",
+      "num_classes": 2,
+      "num_keypoints": 3,
+      "class_names": {
+        "0": "end",
+        "1": "start"
+      },
+      "onnx_path": "config\\models\\pose1.onnx",
+      "onnx_filename": "pose1.onnx",
+      "sha256": "b507b311c4309a7ac5cc41c59a5dc2af4cd345f5220880fd01d6e19048803707",
+      "file_size_bytes": 6376620,
+      "file_size_mb": 6.08,
+      "export_config": {
+        "format": "onnx",
+        "half": true,
+        "dynamic": false,
+        "imgsz": 640,
+        "simplify": true,
+        "opset": 17
+      },
+      "export_time_seconds": 3.1
+    },
+    {
+      "pose": "pose2",
+      "pose_index": 2,
+      "source": "assets\\models\\pose2\\best.pt",
+      "num_classes": 2,
+      "num_keypoints": 3,
+      "class_names": {
+        "0": "end",
+        "1": "start"
+      },
+      "onnx_path": "config\\models\\pose2.onnx",
+      "onnx_filename": "pose2.onnx",
+      "sha256": "cb14733c5a7bca7bae20940723e449796a67339e97cff3b6e979f61e58ea418d",
+      "file_size_bytes": 6376621,
+      "file_size_mb": 6.08,
+      "export_config": {
+        "format": "onnx",
+        "half": true,
+        "dynamic": false,
+        "imgsz": 640,
+        "simplify": true,
+        "opset": 17
+      },
+      "export_time_seconds": 1.9
+    },
+    {
+      "pose": "pose3",
+      "pose_index": 3,
+      "source": "assets\\models\\pose3\\best.pt",
+      "num_classes": 2,
+      "num_keypoints": 5,
+      "class_names": {
+        "0": "End",
+        "1": "start"
+      },
+      "onnx_path": "config\\models\\pose3.onnx",
+      "onnx_filename": "pose3.onnx",
+      "sha256": "c47bfaa7bca6016f303cdca7420d231db1acddced1e556d66cda803b8b2e35d6",
+      "file_size_bytes": 6377232,
+      "file_size_mb": 6.08,
+      "export_config": {
+        "format": "onnx",
+        "half": true,
+        "dynamic": false,
+        "imgsz": 640,
+        "simplify": true,
+        "opset": 17
+      },
+      "export_time_seconds": 1.5
+    },
+    {
+      "pose": "pose4",
+      "pose_index": 4,
+      "source": "assets\\models\\pose4\\best.pt",
+      "num_classes": 3,
+      "num_keypoints": 7,
+      "class_names": {
+        "0": "end left",
+        "1": "end right",
+        "2": "start"
+      },
+      "onnx_path": "config\\models\\pose4.onnx",
+      "onnx_filename": "pose4.onnx",
+      "sha256": "fd27809610a59949716890279048463815072b7ef8f4b9681787df1cc5d83444",
+      "file_size_bytes": 6429255,
+      "file_size_mb": 6.13,
+      "export_config": {
+        "format": "onnx",
+        "half": true,
+        "dynamic": false,
+        "imgsz": 640,
+        "simplify": true,
+        "opset": 17
+      },
+      "export_time_seconds": 1.6
+    },
+    {
+      "pose": "pose5",
+      "pose_index": 5,
+      "source": "assets\\models\\pose5\\best.pt",
+      "num_classes": 2,
+      "num_keypoints": 15,
+      "class_names": {
+        "0": "End",
+        "1": "start"
+      },
+      "onnx_path": "config\\models\\pose5.onnx",
+      "onnx_filename": "pose5.onnx",
+      "sha256": "aaa89705ee2cc69a22769eb2fce0f2ee9bfc6a6cd953eee7b15d7552beb88bd5",
+      "file_size_bytes": 6717859,
+      "file_size_mb": 6.41,
+      "export_config": {
+        "format": "onnx",
+        "half": true,
+        "dynamic": false,
+        "imgsz": 640,
+        "simplify": true,
+        "opset": 17
+      },
+      "export_time_seconds": 1.7
+    }
+  ]
+}

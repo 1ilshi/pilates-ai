@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// Cloud Storage rules for the research telemetry archive.
+//
+// One immutable Parquet object per session at
+// `telemetry/{patientId}/{sessionId}.parquet`. The desktop uploads it before
+// writing the Firestore document, so the pointer in the document is never
+// dangling. Nothing deletes an archive: an object that disappeared would leave
+// a session document advertising a download that cannot be resolved.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isClinician() {
+      return request.auth != null
+        && request.auth.token.get('clinic', '') == 'pilates-ai';
+    }
+
+    match /telemetry/{patientId}/{fileName} {
+      allow read: if isClinician();
+
+      allow create: if isClinician()
+        && fileName.matches('.*\\.parquet')
+        && request.resource.size < 200 * 1024 * 1024;
+
+      // Archives are write-once. A partial or corrupt upload is replaced by
+      // deleting the Firestore session document, never by rewriting the object.
+      allow update, delete: if false;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

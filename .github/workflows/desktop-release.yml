@@ -1,0 +1,187 @@
+name: Desktop Release
+
+on:
+  push:
+    # `master` is this repository's default branch; `main` is accepted so the
+    # workflow keeps working if the default is renamed.
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-desktop:
+    name: Build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    # Needed so tauri-action can create/attach assets to a GitHub release.
+    permissions:
+      contents: write
+    strategy:
+      # A single failing platform must not cancel the other two bundles.
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            rust_targets: x86_64-pc-windows-msvc
+            onnx_platform: windows-x64
+            args: --target x86_64-pc-windows-msvc
+          - name: macos-arm64
+            # Apple Silicon only: ONNX Runtime 1.31.1 publishes no macOS
+            # x86_64 and no universal2 artifact, so a universal binary would
+            # carry an arm64 dylib that cannot load on an Intel Mac.
+            os: macos-14
+            target: aarch64-apple-darwin
+            rust_targets: aarch64-apple-darwin
+            onnx_platform: macos-arm64
+            args: --target aarch64-apple-darwin
+          - name: linux-x64
+            # Pinned to 22.04 (not -latest) so the .deb/.AppImage binaries are
+            # built against a glibc floor older than the runner image's. A
+            # bundle built on 24.04 refuses to start on 22.04.
+            os: ubuntu-22.04
+            target: ""
+            # Explicit rather than empty: dtolnay/rust-toolchain passes
+            # `targets` straight to rustup, and an empty value is not a no-op.
+            rust_targets: x86_64-unknown-linux-gnu
+            onnx_platform: linux-x64
+            args: ""
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libsoup-3.0-dev \
+            libjavascriptcoregtk-4.1-dev \
+            librsvg2-dev \
+            libappindicator3-dev \
+            libssl-dev \
+            pkg-config \
+            libclang-dev \
+            clang \
+            patchelf \
+            file \
+            build-essential
+
+      # pnpm must be on PATH *before* setup-node: setup-node resolves its
+      # `cache: pnpm` store by invoking pnpm itself.
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.16.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Pinned rather than relying on the runner's `python`: the ONNX fetch
+      # script and the Parquet verifier both run in this job.
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+          key: ${{ matrix.name }}
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The trailing `...` includes the desktop app's workspace dependencies,
+      # notably @pilates/patient-view. A hand-written --filter list silently
+      # omits it and the Vite build then fails on an unresolved import.
+      - name: Build Shared Packages
+        run: pnpm turbo run build --filter=@pilates/desktop...
+
+      # ONNX Runtime shared libraries are gitignored, so a fresh checkout has
+      # none. Without this step the bundle ships with no inference engine and
+      # the app silently degrades at runtime.
+      - name: Fetch ONNX Runtime
+        run: python tools/fetch_onnxruntime.py --platform ${{ matrix.onnx_platform }}
+
+      - name: Verify ONNX Runtime library is bundled
+        shell: bash
+        run: |
+          library=$(find apps/desktop/src-tauri/resources -maxdepth 1 \
+            \( -name '*.dll' -o -name '*.dylib' -o -name '*.so' \) \
+            -print -quit)
+          if [ -z "$library" ]; then
+            echo "::error::No .dll/.dylib/.so found in apps/desktop/src-tauri/resources"
+            exit 1
+          fi
+          echo "Found ONNX Runtime library: $library"
+
+      # --- Verification -------------------------------------------------
+      # The Rust suite runs without a webcam, without ONNX Runtime and
+      # without network: the mock pipeline feeds scripted frames through the
+      # real capture path, and the live Firestore test is #[ignore]d.
+
+      - name: Engine tests (hardware-free)
+        working-directory: apps/desktop/src-tauri
+        run: cargo test --locked
+
+      - name: Pose definitions are in sync
+        run: node tools/generate-pose-definitions.mjs --check
+
+      - name: Visualisation smoke tests
+        run: pnpm --filter @pilates/viz smoke
+
+      - name: Parquet integrity (independent reader)
+        run: |
+          python -m pip install --quiet polars
+          python tools/verify_parquet.py
+
+      - name: Upload Parquet fixture
+        uses: actions/upload-artifact@v4
+        with:
+          name: parquet-fixture-${{ matrix.name }}
+          path: apps/desktop/src-tauri/target/parquet-fixture.parquet
+          if-no-files-found: error
+
+      - name: Build and bundle desktop app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        with:
+          projectPath: apps/desktop
+          args: ${{ matrix.args }}
+          # Only tag pushes (v*) attach to a GitHub release; on main/PR the
+          # empty tagName keeps tauri-action to a plain build.
+          tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+          releaseName: ${{ startsWith(github.ref, 'refs/tags/') && format('Pilates AI {0}', github.ref_name) || '' }}
+          releaseDraft: true
+
+      - name: Upload installers
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-installers-${{ matrix.name }}
+          path: |
+            apps/desktop/src-tauri/target/**/release/bundle/{nsis,msi,dmg,deb,appimage}/**
+          if-no-files-found: error

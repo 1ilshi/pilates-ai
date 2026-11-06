@@ -1,0 +1,15 @@
+# Python tooling for ONNX export & validation (MASTER_EXECUTION_PLAN Step 2)
+# Install into the project venv:  .venv\Scripts\python.exe -m pip install -r tools/requirements-export.txt
+#
+# These packages are needed only on the developer/CI machine that produces
+# config/models/*.onnx. The shipped desktop app has no Python dependency.
+
+torch>=2.0
+torchvision
+ultralytics>=8.3
+onnx>=1.16
+onnxruntime>=1.19
+onnxslim>=0.1.40
+numpy
+opencv-python
+pillow

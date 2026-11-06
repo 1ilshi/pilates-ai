@@ -1,101 +1,89 @@
-const functions = require("firebase-functions/v1");
+/**
+ * Cloud Functions for Pilates AI.
+ *
+ * The legacy per-metric triggers (`aggregatePoseData_pose1..5`, listening on
+ * `patients/{patientId}/pose{N}/{docId}`) have been **removed**. They rebuilt
+ * cohort averages by scanning the whole `patients` collection on every write,
+ * and they targeted a data shape the current application no longer produces.
+ *
+ * The desktop app now writes exactly one document per completed exercise
+ * session, so aggregation is a single O(1) transaction per session.
+ */
+
+const {onDocumentCreated, onDocumentWritten} = require(
+    "firebase-functions/v2/firestore",
+);
 const admin = require("firebase-admin");
+
+const {applySessionAggregate} = require("./aggregation");
+
 admin.initializeApp();
 
-async function updatePatientStats(patientId, poseField, change) {
-    if (!change.after.exists) return null;
+/**
+ * Keep `patients/{patientId}` running totals in sync with new sessions.
+ *
+ * Region is pinned to the Firestore location (`asia-east2`) to avoid a
+ * cross-region hop per invocation. `retry` is enabled because the aggregation
+ * is idempotent via the session ledger.
+ */
+exports.onSessionCreated = onDocumentCreated(
+    {
+        document: "patients/{patientId}/sessions/{sessionId}",
+        region: "asia-east2",
+        retry: true,
+    },
+    async (event) => {
+        const snapshot = event.data;
+        if (!snapshot) return;
 
-    const poseData = change.after.data();
-    const accuracy = poseData.accuracy;
-    const timestamp = poseData.timestamp;
-
-    if (accuracy === undefined || !timestamp) return null;
-
-    const patientRef = admin.firestore().collection("patients").doc(patientId);
-    const patientDoc = await patientRef.get();
-
-    const avgField = `${poseField}_avg`;
-    const countField = `count_${poseField}`;
-    const timeField = `${poseField}_time`;
-
-    let oldAvg = 0;
-    let oldCount = 0;
-
-    if (patientDoc.exists) {
-        const data = patientDoc.data();
-        oldAvg = data[avgField] || 0;
-        oldCount = data[countField] || 0;
-    }
-
-    const newCount = oldCount + 1;
-    const newAvg = ((oldAvg * oldCount) + accuracy) / newCount;
-    const newTime = newCount * 3;
-
-    await patientRef.update({
-        [avgField]: newAvg,
-        [countField]: newCount,
-        [timeField]: newTime,
-    });
-
-    // ✅ Also update group-level stats here
-    await updateAgeAndGenderGraphs(patientRef, poseField);
-
-    return null;
-}
-
-for (let i = 1; i <= 5; i++) {
-    const pose = `pose${i}`;
-    exports[`aggregatePoseData_${pose}`] = functions.firestore
-        .document(`patients/{patientId}/${pose}/{docId}`)
-        .onWrite((change, context) => {
-            const { patientId } = context.params;
-            return updatePatientStats(patientId, pose, change);
+        await applySessionAggregate({
+            database: admin.firestore(),
+            snapshot,
+            patientId: event.params.patientId,
+            serverTimestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
-}
 
-// ✅ New function that updates ageRangeGraph and genderGraph
-async function updateAgeAndGenderGraphs(patientRef, poseField) {
-    const db = admin.firestore();
-    const patientSnap = await patientRef.get();
-    const patient = patientSnap.data();
+        // Announce the new session to the other workstations.
+        await recordChange(snapshot.data()?.last_origin || "");
+    },
+);
 
-    const age = patient.age;
-    const gender = (patient.gender || "").toLowerCase();
-    const avgField = `${poseField}_avg`;
-
-    if (!age || !gender || patient[avgField] === undefined) return;
-
-    // Determine age group
-    let ageGroup = "";
-    if (age >= 40 && age <= 55) ageGroup = "youngOld";
-    else if (age >= 56 && age <= 65) ageGroup = "middleOld";
-    else if (age > 65) ageGroup = "veryOld";
-    else return;
-
-    const patientsSnap = await db.collection("patients").get();
-
-    const filterPatients = (filterFn) =>
-        patientsSnap.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(filterFn)
-            .map(p => p[avgField])
-            .filter(val => val !== undefined);
-
-    const ageValues = filterPatients(p =>
-        (p.age >= 40 && p.age <= 55 && ageGroup === "youngOld") ||
-        (p.age >= 56 && p.age <= 65 && ageGroup === "middleOld") ||
-        (p.age > 65 && ageGroup === "veryOld")
+/**
+ * Bump the clinic change marker.
+ *
+ * One small document (`syncState/current`) that desktops can poll cheaply:
+ * a read of it costs a single document instead of scanning the roster. The
+ * writer records `last_origin`, the id of the workstation that made the change,
+ * so that workstation can ignore the echo of its own upload.
+ *
+ * @param {string} origin Instance id of the writer, empty when unknown.
+ */
+async function recordChange(origin) {
+    await admin.firestore().doc("syncState/current").set(
+        {
+            revision: admin.firestore.FieldValue.increment(1),
+            last_origin: origin || "",
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        {merge: true},
     );
-
-    const genderValues = filterPatients(p => (p.gender || "").toLowerCase() === gender);
-
-    const calcAvg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
-
-    await db.collection("ageRangeGraph").doc(ageGroup).set({
-        [avgField]: calcAvg(ageValues),
-    }, { merge: true });
-
-    await db.collection("genderGraph").doc(gender).set({
-        [avgField]: calcAvg(genderValues),
-    }, { merge: true });
 }
+
+/**
+ * Announce any patient document change (create, edit, delete).
+ *
+ * Writes made from the console or the portal carry no `last_origin`, which
+ * reads as "someone else" — exactly what the desktops should react to.
+ */
+exports.onPatientWritten = onDocumentWritten(
+    {
+        document: "patients/{patientId}",
+        region: "asia-east2",
+    },
+    async (event) => {
+        const after = event.data?.after;
+        const before = event.data?.before;
+        const data = (after && after.exists ? after.data() : before?.data()) || {};
+        await recordChange(data.last_origin || "");
+    },
+);

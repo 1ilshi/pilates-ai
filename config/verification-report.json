@@ -1,0 +1,131 @@
+{
+  "criteria": {
+    "max_keypoint_distance_px": 1.5,
+    "max_class_prob_diff": 0.01,
+    "benchmark_image": "C:\\Users\\muham\\OneDrive\\Documents\\pilates-ai\\.venv\\Lib\\site-packages\\ultralytics\\assets\\zidane.jpg"
+  },
+  "method": "raw tensor parity on identical preprocessed input",
+  "reports": [
+    {
+      "pose": "pose1",
+      "onnx_path": "C:\\Users\\muham\\OneDrive\\Documents\\pilates-ai\\config\\models\\pose1.onnx",
+      "passed": true,
+      "sha256_match": true,
+      "benchmark": {
+        "anchors": 8400,
+        "keypoints": 3,
+        "classes": 2,
+        "keypoint_max_px": 0.5419437289237976,
+        "keypoint_mean_px": 0.1770063042640686,
+        "keypoint_p99_px": 0.4047297537326813,
+        "class_prob_max_diff": 0.0005203783512115479,
+        "bbox_max_diff_px": 1.10296630859375,
+        "tensor_max_abs_diff": 1.10296630859375,
+        "detection_relevant_anchors": 0,
+        "detection_relevant_keypoint_max_px": null,
+        "detection_relevant_class_max_diff": null,
+        "passed": true,
+        "image": "C:\\Users\\muham\\OneDrive\\Documents\\pilates-ai\\.venv\\Lib\\site-packages\\ultralytics\\assets\\zidane.jpg",
+        "pt_inference_ms": 204.17,
+        "onnx_inference_ms": 30.36
+      }
+    },
+    {
+      "pose": "pose2",
+      "onnx_path": "C:\\Users\\muham\\OneDrive\\Documents\\pilates-ai\\config\\models\\pose2.onnx",
+      "passed": true,
+      "sha256_match": true,
+      "benchmark": {
+        "anchors": 8400,
+        "keypoints": 3,
+        "classes": 2,
+        "keypoint_max_px": 0.5072760581970215,
+        "keypoint_mean_px": 0.1790228635072708,
+        "keypoint_p99_px": 0.4107309877872467,
+        "class_prob_max_diff": 3.934372216463089e-05,
+        "bbox_max_diff_px": 1.71240234375,
+        "tensor_max_abs_diff": 1.71240234375,
+        "detection_relevant_anchors": 0,
+        "detection_relevant_keypoint_max_px": null,
+        "detection_relevant_class_max_diff": null,
+        "passed": true,
+        "image": "C:\\Users\\muham\\OneDrive\\Documents\\pilates-ai\\.venv\\Lib\\site-packages\\ultralytics\\assets\\zidane.jpg",
+        "pt_inference_ms": 119.51,
+        "onnx_inference_ms": 25.57
+      }
+    },
+    {
+      "pose": "pose3",
+      "onnx_path": "C:\\Users\\muham\\OneDrive\\Documents\\pilates-ai\\config\\models\\pose3.onnx",
+      "passed": true,
+      "sha256_match": true,
+      "benchmark": {
+        "anchors": 8400,
+        "keypoints": 5,
+        "classes": 2,
+        "keypoint_max_px": 0.6775467395782471,
+        "keypoint_mean_px": 0.2315124124288559,
+        "keypoint_p99_px": 0.494444876909256,
+        "class_prob_max_diff": 1.2390315532684326e-05,
+        "bbox_max_diff_px": 0.9796524047851562,
+        "tensor_max_abs_diff": 0.9796524047851562,
+        "detection_relevant_anchors": 0,
+        "detection_relevant_keypoint_max_px": null,
+        "detection_relevant_class_max_diff": null,
+        "passed": true,
+        "image": "C:\\Users\\muham\\OneDrive\\Documents\\pilates-ai\\.venv\\Lib\\site-packages\\ultralytics\\assets\\zidane.jpg",
+        "pt_inference_ms": 116.32,
+        "onnx_inference_ms": 24.69
+      }
+    },
+    {
+      "pose": "pose4",
+      "onnx_path": "C:\\Users\\muham\\OneDrive\\Documents\\pilates-ai\\config\\models\\pose4.onnx",
+      "passed": true,
+      "sha256_match": true,
+      "benchmark": {
+        "anchors": 8400,
+        "keypoints": 7,
+        "classes": 3,
+        "keypoint_max_px": 0.7463547587394714,
+        "keypoint_mean_px": 0.27679020166397095,
+        "keypoint_p99_px": 0.5883755683898926,
+        "class_prob_max_diff": 5.329027771949768e-05,
+        "bbox_max_diff_px": 1.416961669921875,
+        "tensor_max_abs_diff": 1.416961669921875,
+        "detection_relevant_anchors": 0,
+        "detection_relevant_keypoint_max_px": null,
+        "detection_relevant_class_max_diff": null,
+        "passed": true,
+        "image": "C:\\Users\\muham\\OneDrive\\Documents\\pilates-ai\\.venv\\Lib\\site-packages\\ultralytics\\assets\\zidane.jpg",
+        "pt_inference_ms": 122.54,
+        "onnx_inference_ms": 25.81
+      }
+    },
+    {
+      "pose": "pose5",
+      "onnx_path": "C:\\Users\\muham\\OneDrive\\Documents\\pilates-ai\\config\\models\\pose5.onnx",
+      "passed": true,
+      "sha256_match": true,
+      "benchmark": {
+        "anchors": 8400,
+        "keypoints": 15,
+        "classes": 2,
+        "keypoint_max_px": 0.9695408344268799,
+        "keypoint_mean_px": 0.4226251542568207,
+        "keypoint_p99_px": 0.8300976157188416,
+        "class_prob_max_diff": 0.00016793608665466309,
+        "bbox_max_diff_px": 1.046600341796875,
+        "tensor_max_abs_diff": 1.046600341796875,
+        "detection_relevant_anchors": 0,
+        "detection_relevant_keypoint_max_px": null,
+        "detection_relevant_class_max_diff": null,
+        "passed": true,
+        "image": "C:\\Users\\muham\\OneDrive\\Documents\\pilates-ai\\.venv\\Lib\\site-packages\\ultralytics\\assets\\zidane.jpg",
+        "pt_inference_ms": 126.7,
+        "onnx_inference_ms": 27.99
+      }
+    }
+  ],
+  "all_passed": true
+}

@@ -11,6 +11,10 @@ firebase-debug.*.log*
 .firebase/
 
 # Firebase config
+config/*-sdk.json
+service-account*.json
+*firebase-adminsdk*.json
+.env.*
 
 # Uncomment this if you'd like others to create their own Firebase project.
 # For a team working on the same Firebase project(s), it is recommended to leave
@@ -18,6 +22,8 @@ firebase-debug.*.log*
 # .firebaserc
 
 # Runtime data
+__pycache__/
+*.py[cod]
 pids
 *.pid
 *.seed
@@ -74,9 +80,35 @@ node_modules/
 
 # Ignore virtual environments
 /venv/
+# The local Python toolchain (export/verify scripts). ~1.4 GB; never commit.
+.venv/
+
+# Large deliverable binaries kept out of git history
+final.pdf
 
 # (Optionally) Ignore logs if you want them to be generated at runtime
 /logs/
+/pilates.db
+/pilates.db-shm
+/pilates.db-wal
 
 #ignore bfg.jar report
 /..bfg-report/
+
+# Monorepo build / test artifacts
+apps/*/dist/
+packages/*/dist/
+packages/viz/smoke/smoke.bundle.cjs
+.turbo/
+*.tsbuildinfo
+
+# Rust build artifacts (Cargo target dirs can be >1 GB)
+target/
+
+# Fetched ONNX Runtime binaries (~17 MB Windows, ~37 MB macOS, ~11 MB Linux)
+# and the download cache. Restore with: python tools/fetch_onnxruntime.py
+apps/desktop/src-tauri/resources/*.dll
+apps/desktop/src-tauri/resources/*.dylib
+apps/desktop/src-tauri/resources/*.so
+apps/desktop/src-tauri/resources/*.so.*
+apps/desktop/src-tauri/resources/.cache/

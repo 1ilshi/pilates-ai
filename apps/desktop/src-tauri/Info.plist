@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!--
+    Merged into the generated Info.plist by Tauri (`bundle.macOS.infoPlist`).
+
+    macOS terminates any process that touches AVCapture without a usage
+    description — it is not a denial, it is a crash on first camera access.
+    The camera layer (camera.rs) opens the device on the first preview.
+  -->
+  <key>NSCameraUsageDescription</key>
+  <string>Pilates AI uses the camera to track exercise repetitions during a session. Video is processed on this computer and is never uploaded.</string>
+
+  <key>LSApplicationCategoryType</key>
+  <string>public.app-category.medical</string>
+
+  <key>NSHumanReadableCopyright</key>
+  <string>Pilates AI</string>
+</dict>
+</plist>

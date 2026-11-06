@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pilates AI Desktop</title>
+    <style>
+      /* Splash shown before the bundle mounts. React replaces #root wholesale,
+         so this disappears the moment the app is ready. */
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #020617;
+        color: #e2e8f0;
+        font-family:
+          ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      #splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+      }
+      #splash svg {
+        width: 56px;
+        height: 56px;
+      }
+      #splash .label {
+        font-size: 13px;
+        letter-spacing: 0.02em;
+        color: #94a3b8;
+      }
+      #splash .bar {
+        width: 160px;
+        height: 3px;
+        border-radius: 999px;
+        background: #1e293b;
+        overflow: hidden;
+      }
+      #splash .bar span {
+        display: block;
+        width: 40%;
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #2dd4bf, #2dc8de);
+        animation: slide 1.1s ease-in-out infinite;
+      }
+      @keyframes slide {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(320%);
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-slate-950 text-slate-50 antialiased selection:bg-teal-500 selection:text-white">
+    <div id="root">
+      <div id="splash">
+        <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <rect width="48" height="48" rx="12" fill="#0b1220" />
+          <rect x="10" y="22" width="4" height="10" rx="2" fill="#2dc8de" />
+          <rect x="17" y="16" width="4" height="16" rx="2" fill="#5eead4" />
+          <rect x="24" y="11" width="4" height="21" rx="2" fill="#2dd4bf" />
+          <rect x="31" y="18" width="4" height="14" rx="2" fill="#5eead4" />
+          <rect x="38" y="25" width="4" height="7" rx="2" fill="#2dc8de" />
+        </svg>
+        <p class="label">Starting clinical workstation…</p>
+        <div class="bar"><span></span></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

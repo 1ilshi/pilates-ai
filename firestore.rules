@@ -1,0 +1,126 @@
+rules_version = '2';
+
+// Firestore security rules for the Pilates AI clinic database.
+//
+// Two rules shape everything below:
+//
+// 1. **Field ownership.** The desktop owns the profile fields; the Cloud
+//    Function alone owns the derived aggregates (`total_sessions`,
+//    `lifetime_avg_score`, `last_active`). Before this file existed a stale
+//    workstation could echo a `total_sessions` it had read minutes earlier and
+//    silently undo an aggregate the function had just computed.
+//
+// 2. **Server-owned collections are invisible to clients.** `sessionLedger`
+//    makes the aggregation trigger idempotent, and `syncState/current` is the
+//    change marker every workstation polls. A client able to write either one
+//    could double-count sessions or forge a change notification.
+//
+// The `clinic` claim is set once per account by
+// `functions/scripts/set-clinic-claim.mjs`. Deploy that first: these rules
+// reject every request from an account that does not carry it.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------------
+    // Identity
+    // ---------------------------------------------------------------------
+
+    function isClinician() {
+      return request.auth != null
+        && request.auth.token.get('clinic', '') == 'pilates-ai';
+    }
+
+    // ---------------------------------------------------------------------
+    // Field ownership
+    // ---------------------------------------------------------------------
+
+    // Fields the desktop writes. `address`, `note` and `tel_number` are here
+    // so the profile form can edit them; they were read-only before.
+    function patientOwnedFields() {
+      return [
+        'name', 'age', 'weight', 'height', 'gender',
+        'address', 'note', 'tel_number',
+        'revision', 'local_state', 'updated_by', 'last_origin'
+      ];
+    }
+
+    function validName() {
+      return request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 200;
+    }
+
+    match /patients/{patientId} {
+      allow read: if isClinician();
+
+      allow create: if isClinician()
+        && validName()
+        && request.resource.data.keys().hasOnly(patientOwnedFields());
+
+      allow update: if isClinician()
+        && validName()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(patientOwnedFields());
+
+      // Deletions are soft (`local_state = 'tombstone'`): the session
+      // subcollection must survive, and a client must not be able to destroy
+      // a clinical record outright.
+      allow delete: if false;
+
+      // -------------------------------------------------------------------
+      // Sessions: written once, by the workstation that recorded them.
+      // -------------------------------------------------------------------
+      match /sessions/{sessionId} {
+        allow read: if isClinician();
+
+        allow create: if isClinician()
+          && request.resource.data.keys()
+               .hasAll(['session_id', 'patient_id', 'pose_id', 'started_at',
+                        'completed_at', 'summary', 'reps', 'kinematic_curve'])
+          && request.resource.data.session_id == sessionId
+          && request.resource.data.patient_id == patientId
+          && request.resource.data.completed_at is string
+          && request.resource.data.summary is map
+          && request.resource.data.reps is list
+          && request.resource.data.kinematic_curve is list;
+
+        // A completed session is an immutable clinical record.
+        allow update, delete: if false;
+      }
+
+      // -------------------------------------------------------------------
+      // Clinical comments: append and remove, never edit.
+      // -------------------------------------------------------------------
+      match /comments/{commentId} {
+        allow read: if isClinician();
+
+        allow create: if isClinician()
+          && request.resource.data.keys().hasAll(['text', 'created_at'])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 4000;
+
+        allow delete: if isClinician();
+        allow update: if false;
+      }
+    }
+
+    // ---------------------------------------------------------------------
+    // Server-owned collections
+    // ---------------------------------------------------------------------
+
+    // Idempotency ledger for the aggregation trigger. Deleting an entry would
+    // let a redelivered event count the same session twice.
+    match /sessionLedger/{sessionId} {
+      allow read, write: if false;
+    }
+
+    // The change marker the desktops poll. Read-only for clients: a forged
+    // bump would make every workstation re-download the whole roster.
+    match /syncState/{document} {
+      allow read: if isClinician();
+      allow write: if false;
+    }
+  }
+}

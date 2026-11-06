@@ -1,0 +1,57 @@
+/**
+ * @pilates/ui — shared design tokens for Tailwind CSS v4.
+ *
+ * This file intentionally does NOT `@import "tailwindcss"`. Consuming apps own
+ * the Tailwind entry point and compose this token layer:
+ *
+ *   @import "tailwindcss";
+ *   @import "@pilates/ui/styles.css";
+ *   @source "../../packages/ui/src";
+ *   @source "../../packages/viz/src";
+ *
+ * Importing Tailwind from a library would duplicate the preflight/reset layer.
+ */
+@theme {
+  /* Clinical brand ramp (teal) — used for primary actions and live indicators. */
+  --color-brand-50: #f0fdfa;
+  --color-brand-100: #ccfbf1;
+  --color-brand-200: #99f6e4;
+  --color-brand-300: #5eead4;
+  --color-brand-400: #2dd4bf;
+  --color-brand-500: #14b8a6;
+  --color-brand-600: #0d9488;
+  --color-brand-700: #0f766e;
+  --color-brand-800: #115e59;
+  --color-brand-900: #134e4a;
+
+  /* Biomechanical status colours — shared by canvas, gauges and badges. */
+  --color-pose-high: #22c55e;
+  --color-pose-medium: #eab308;
+  --color-pose-low: #ef4444;
+
+  /* Motion phase palette (charts). */
+  --color-phase-eccentric: #60a5fa;
+  --color-phase-holding: #34d399;
+  --color-phase-concentric: #f59e0b;
+  --color-phase-idle: #94a3b8;
+
+  --radius-card: 0.75rem;
+  --radius-control: 0.5rem;
+}
+
+/* Phase colours are also exposed as plain classes so chart/legend markup can
+   reference them without inline styles. */
+@layer components {
+  .phase-swatch-eccentric {
+    background-color: var(--color-phase-eccentric);
+  }
+  .phase-swatch-holding {
+    background-color: var(--color-phase-holding);
+  }
+  .phase-swatch-concentric {
+    background-color: var(--color-phase-concentric);
+  }
+  .phase-swatch-idle {
+    background-color: var(--color-phase-idle);
+  }
+}

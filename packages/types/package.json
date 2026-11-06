@@ -1,0 +1,15 @@
+{
+  "name": "@pilates/types",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "node ../../tools/generate-pose-definitions.mjs && tsc",
+    "dev": "tsc --watch",
+    "verify:pose-definitions": "node ../../tools/generate-pose-definitions.mjs --check"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

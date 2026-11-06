@@ -1,6 +1,7 @@
 {
   "name": "functions",
   "scripts": {
+    "test": "node --test test/*.test.js",
     "serve": "firebase serve --only functions",
     "shell": "firebase functions:shell",
     "start": "npm run shell",

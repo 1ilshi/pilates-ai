@@ -1,0 +1,25 @@
+@import "tailwindcss";
+@import "@pilates/ui/styles.css";
+
+/* Tailwind v4 scans these workspace packages for class names. Paths are
+   relative to this file (apps/desktop/src). */
+@source "../../../packages/ui/src";
+@source "../../../packages/viz/src";
+@source "../../../packages/patient-view/src";
+
+/* Buttons and other interactive controls should read as clickable. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary {
+    cursor: pointer;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}

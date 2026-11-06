@@ -1,0 +1,91 @@
+name: Web CI & Firebase Deploy
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # The Firestore emulator is a JVM program and firebase-tools requires 21+.
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Run Firestore rules tests
+        run: npm run test:rules
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.16.1
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The portal imports the workspace packages, so they must be built first.
+      # `...` includes every workspace dependency — the explicit list used to
+      # omit @pilates/patient-view and the build failed on a clean runner.
+      - name: Build Shared Packages
+        run: pnpm turbo run build --filter=@pilates/web...
+
+      - name: Type-check and build Web App
+        run: pnpm --filter @pilates/web build
+
+      # The aggregation trigger and the syncState change marker are only live
+      # if functions are deployed; until this step existed, nothing did.
+      - name: Test Cloud Functions
+        run: |
+          npm --prefix functions ci
+          npm --prefix functions test
+
+      # Rules and indexes are deployed before hosting: a portal that ships
+      # against stale rules is a portal whose reads start failing.
+      - name: Authenticate to Google Cloud
+        if: github.ref == 'refs/heads/main'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PILATES }}'
+
+      - name: Deploy security rules, indexes and functions
+        if: github.ref == 'refs/heads/main'
+        run: |
+          npm install -g firebase-tools
+          firebase deploy \
+            --only firestore:rules,firestore:indexes,storage,functions \
+            --project pilates-ai --non-interactive
+
+      - name: Deploy to Firebase Hosting
+        if: github.ref == 'refs/heads/main'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PILATES }}'
+          channelId: live
+          projectId: pilates-ai

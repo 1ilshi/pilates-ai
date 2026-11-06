@@ -72,15 +72,17 @@ function main() {
   const version = config.version;
 
   // `download-artifact` keeps each artifact's internal directory structure, so
-  // the installers arrive nested several levels deep. Flatten them into one
-  // directory: the release assets, and therefore the manifest URLs, must be
-  // plain file names.
-  const outDir = join(dist, "release");
+  // the installers arrive nested several levels deep — and some of those paths
+  // contain `release/bundle`, which is why the staging directory lives outside
+  // `dist`: a staging dir *inside* it collided with an artifact path and `gh`
+  // tried to upload a directory as a release asset.
+  const outDir = resolve(ROOT, "release-assets");
   mkdirSync(outDir, { recursive: true });
 
-  const files = walk(dist)
-    .filter((path) => !path.startsWith(outDir))
-    .map((path) => ({ path, name: path.split(/[\\/]/).pop() }));
+  const files = walk(dist).map((path) => ({
+    path,
+    name: path.split(/[\\/]/).pop(),
+  }));
 
   const platforms = {};
 

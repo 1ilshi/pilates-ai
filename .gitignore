@@ -112,3 +112,6 @@ apps/desktop/src-tauri/resources/*.dylib
 apps/desktop/src-tauri/resources/*.so
 apps/desktop/src-tauri/resources/*.so.*
 apps/desktop/src-tauri/resources/.cache/
+
+# Staging directory for release assets (tools/build-update-manifest.mjs)
+/release-assets/

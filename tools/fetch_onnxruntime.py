@@ -95,7 +95,7 @@ ARTIFACTS = {
         "url": "https://github.com/microsoft/onnxruntime/releases/download/v1.31.1/onnxruntime-osx-arm64-1.31.1.tgz",
         "filename": "onnxruntime-osx-arm64-1.31.1.tgz",
         "format": "tgz",
-        "sha256": "2e1344a1926ee50b25b38153cb6992c3567515aef0e677a1a520a1798896d6f",
+        "sha256": "2e1344a1926ee50eb25b38153cb6992c3567515aef0e677a1a520a1798896d6f",
         "libraries": ("libonnxruntime.dylib", "libonnxruntime.*.dylib"),
         "required": ("libonnxruntime.dylib",),
         "aliases": {"libonnxruntime.dylib": "libonnxruntime.*.dylib"},

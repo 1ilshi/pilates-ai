@@ -28,7 +28,7 @@
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://pilates-ai.web.app/desktop/{{target}}/{{arch}}/latest.json"
+        "https://github.com/1ilshi/pilates-ai/releases/latest/download/latest.json"
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDY4QjA0QUZBNEY0N0ZCQTkKUldTcCswZFAra3F3YUlCUUdleS9wZmJqMVM3eTVUd0NpUVJZRk43Qkphbkhwcng0NXRiNnI1YXkK"
     }

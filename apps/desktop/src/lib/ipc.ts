@@ -40,6 +40,12 @@ export interface EngineStatus {
   detail: string;
   poses: PoseSummary[];
   cloud_sync_enabled: boolean;
+  /**
+   * A telemetry archive bucket is configured. When false, sessions are still
+   * recorded and queued locally, but their Parquet archive is never uploaded,
+   * so the portal shows no telemetry for the patient.
+   */
+  bucket_configured: boolean;
 }
 
 export interface PatientRecord {

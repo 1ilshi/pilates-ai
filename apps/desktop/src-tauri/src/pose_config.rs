@@ -372,7 +372,15 @@ impl PoseDefinitionDocument {
 mod tests {
     use super::*;
 
+    /// Serialises tests that mutate or depend on `TAURI_RESOURCE_DIR`.
+    ///
+    /// The variable is process-global: the install-layout tests point it at a
+    /// fake tree, and `real_document()` reads it. Both must hold this lock or
+    /// a loader test can observe the fake tree and fail.
+    static RESOURCE_ENV: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
     fn real_document() -> PoseDefinitionDocument {
+        let _guard = RESOURCE_ENV.lock().unwrap_or_else(|error| error.into_inner());
         PoseDefinitionDocument::load().expect("load real pose definitions")
     }
 
@@ -458,12 +466,6 @@ mod tests {
     // tests point `TAURI_RESOURCE_DIR` at a fake install tree so the resource
     // path is the only thing that can satisfy them.
     // ------------------------------------------------------------------
-
-    /// Serialises tests that mutate `TAURI_RESOURCE_DIR`.
-    ///
-    /// The variable is process-global; two of these tests running at once
-    /// would see each other's tree.
-    static RESOURCE_ENV: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
     /// Restores `TAURI_RESOURCE_DIR` when it goes out of scope.
     struct ResourceDir {

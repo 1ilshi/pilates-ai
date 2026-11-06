@@ -8,9 +8,12 @@
     "test": "turbo run test",
     "test:rules": "firebase emulators:exec --only firestore,storage --project demo-pilates \"node --test rules-tests/firestore.rules.test.mjs rules-tests/storage.rules.test.mjs\"",
     "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage",
-    "claim:clinic": "node functions/scripts/set-clinic-claim.mjs"
+    "claim:clinic": "node functions/scripts/set-clinic-claim.mjs",
+    "changeset": "changeset",
+    "version": "changeset version && node tools/set-version.mjs --sync"
   },
   "devDependencies": {
+    "@changesets/cli": "^3.0.3",
     "turbo": "^2.1.0",
     "typescript": "^5.6.3"
   },

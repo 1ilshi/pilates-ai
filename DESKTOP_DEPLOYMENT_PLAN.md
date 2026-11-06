@@ -21,9 +21,9 @@
 | 1 — Windows installable | ✅ **verified** | NSIS installer built locally (39.63 MiB) and in CI; installed-layout launch confirmed — no `_up_`, config resolves, ONNX runtime found, DB created |
 | 2 — macOS/Linux compile | ✅ **verified** | macOS arm64 and Linux x64 compile and pass the full suite in CI |
 | 3 — CI matrix | ✅ **green** | all three jobs pass: 84.5 MiB (Windows), 142.8 MiB (macOS), 194.6 MiB (Linux) of installers + signatures |
-| 4 — Signing / updates | 🟡 partial | **updater wired and signing**; OS code signing deliberately deferred — pipeline ready for secrets |
+| 4 — Signing / updates | ✅ **complete (unsigned)** | updater wired and signing; `latest.json` + `channel.json` are generated and published to a GitHub Release on tag; OS code signing deferred — pipeline ready for secrets |
 | 5 — Hardware correctness | ✅ **decided** | B8 withdrawn by measurement; DirectML removed (D5); Linux camera hint and startup log done; MSVC standardised |
-| 6 — Release train | 🟡 partial | `tools/set-version.mjs` done; Changesets and `channel.json` not started |
+| 6 — Release train | ✅ **complete** | `tools/set-version.mjs` (+ `--sync`), Changesets configured, tag → release with manifests |
 
 **Verification.** `cargo test --locked` on `x86_64-pc-windows-msvc`: **140 passed, 0 failed, 1 ignored** — with the updater and process plugins linked. `tauri build --bundles nsis` → 39.63 MiB installer plus `Pilates AI_2.0.0_x64-setup.exe.sig`. macOS and Linux have not been compiled yet; the workflow is their first compiler.
 
@@ -39,7 +39,25 @@
 
 **Confirmed by CI:** all three platforms build installers — Windows (NSIS + MSI, 84.5 MiB), macOS arm64 (DMG + updater archive, 142.8 MiB), Linux (deb + AppImage, 194.6 MiB), each with a valid updater signature. Full run: 38 minutes from cold cache.
 
-**Remaining to ship:** publish `latest.json` + installers to Firebase so the updater can find them; add certificates when they exist; Changesets and `channel.json`.
+**Remaining to ship:** OS code signing (certificates), and a real tagged release to exercise the publish job end to end.
+
+## How a release works now
+
+```bash
+pnpm changeset            # record the intent of a change (patch/minor/major)
+pnpm version              # collapse changesets -> one version, synced to all manifests
+git commit -am "Release x.y.z"
+git tag vX.Y.Z && git push --tags
+```
+
+The tag push builds all three platforms, then the `publish` job:
+
+1. downloads the three installer artifacts,
+2. generates `latest.json` (what the app downloads) and `channel.json` (minimum supported version),
+3. creates or updates the GitHub Release with every asset.
+
+The app polls `https://github.com/1ilshi/pilates-ai/releases/latest/download/latest.json`, compares versions, and shows the banner — installing only when the clinician clicks.
+
 
 ## Do this before the first CI run
 

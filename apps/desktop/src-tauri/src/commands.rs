@@ -86,6 +86,11 @@ pub struct EngineStatus {
     pub detail: String,
     pub poses: Vec<PoseSummary>,
     pub cloud_sync_enabled: bool,
+    /// A telemetry archive bucket is configured. Without one, sessions are
+    /// recorded and queued locally but their Parquet archive is never
+    /// uploaded, so the portal shows no telemetry for the patient. That is
+    /// otherwise invisible until someone asks why the charts are empty.
+    pub bucket_configured: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -431,6 +436,7 @@ pub fn engine_status(state: State<'_, AppState>) -> EngineStatus {
             .lock()
             .map(|guard| guard.is_some())
             .unwrap_or(false),
+        bucket_configured: !state.gcs_bucket.is_empty(),
     }
 }
 

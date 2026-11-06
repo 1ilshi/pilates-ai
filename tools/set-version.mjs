@@ -119,6 +119,18 @@ function report() {
 function main() {
   const args = process.argv.slice(2);
 
+  // After `changeset version` has written the new version into package.json,
+  // propagate it to the two Rust-side manifests.
+  if (args.includes("--sync")) {
+    const version = readPackageVersion();
+    if (!version) fail("apps/desktop/package.json has no version");
+    writeTauri(version);
+    writeCargo(version);
+    console.log(`Synced ${version} from package.json`);
+    report();
+    return;
+  }
+
   if (args.includes("--check")) {
     const versions = report();
     const values = Object.values(versions);

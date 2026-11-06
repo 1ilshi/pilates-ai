@@ -230,6 +230,15 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
         </Card>
       )}
 
+      {engine && !engine.bucket_configured && (
+        <Card className="border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-300">
+          Archive upload is disabled — no telemetry bucket is configured. Sessions are
+          recorded and queued on this computer, but the portal will show no charts for
+          them until <code>bucket</code> is set in <code>cloud.json</code> (or
+          <code>PILATES_FIREBASE_BUCKET</code> is set for this installation).
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* Video + skeleton */}
         <div className="lg:col-span-2 space-y-3">

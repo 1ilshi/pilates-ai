@@ -86,15 +86,23 @@ export function App() {
   // restart can never interrupt a recording.
   const update = useUpdate(isTauri() && tab !== "capture");
 
+  // A `PERMISSION_DENIED` from Firestore almost always means the account is
+  // missing the `clinic` custom claim, which an administrator has to set with
+  // `pnpm claim:clinic`. "Sync failed" would leave the clinic guessing.
+  const notProvisioned =
+    !!sync.lastError && /permission_denied|403|insufficient permissions/i.test(sync.lastError);
+
   const syncLabel = sync.syncing
     ? "Syncing…"
     : sync.lastError === "offline"
       ? "Offline — queued locally"
-      : sync.lastError
-        ? "Sync failed — retrying"
-        : sync.lastSyncAt
-          ? `Synced ${relativeTime(sync.lastSyncAt)}`
-          : "Not synced yet";
+      : notProvisioned
+        ? "Account not provisioned for this clinic"
+        : sync.lastError
+          ? "Sync failed — retrying"
+          : sync.lastSyncAt
+            ? `Synced ${relativeTime(sync.lastSyncAt)}`
+            : "Not synced yet";
 
   const heading =
     tab === "patient"

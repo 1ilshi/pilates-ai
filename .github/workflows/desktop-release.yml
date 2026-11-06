@@ -228,3 +228,46 @@ jobs:
             apps/desktop/src-tauri/target/**/release/bundle/appimage/*.tar.gz
             apps/desktop/src-tauri/target/**/release/bundle/appimage/*.sig
           if-no-files-found: error
+
+  publish:
+    name: Publish release
+    needs: build-desktop
+    # Only a tagged version is published. The updater compares version numbers,
+    # so the manifest must always name a build that is newer than what clinics
+    # are running — publishing every master push would make "latest" a moving
+    # target that is not a release.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-installers-*
+          merge-multiple: true
+          path: dist
+
+      - name: List collected artifacts
+        run: ls -lh dist
+
+      # Produces latest.json (what the app downloads) and channel.json (the
+      # minimum supported version). Raises `minimum` only when MINIMUM_VERSION
+      # is set, which should happen only for a genuinely incompatible change.
+      - name: Build update manifests
+        run: node tools/build-update-manifest.mjs dist
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --title "Pilates AI $GITHUB_REF_NAME" \
+              --notes "See the changelog for this version." \
+              dist/*
+          fi
+          echo "published $GITHUB_REF_NAME"

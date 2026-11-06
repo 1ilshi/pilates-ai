@@ -269,14 +269,23 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # The manifests are flattened into dist/release by the previous step.
+          set -euo pipefail
+          echo "assets staged for $GITHUB_REF_NAME:"
+          ls -1 dist/release
+
+          # Capture the CLI's own message: without this a permission failure
+          # (the default GITHUB_TOKEN is read-only unless the repository allows
+          # write access) reports only "exit code 1".
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" dist/release/* --clobber
+            out=$(gh release upload "$GITHUB_REF_NAME" dist/release/* --clobber 2>&1) \
+              || { echo "::error::upload failed: ${out}"; exit 1; }
           else
-            gh release create "$GITHUB_REF_NAME" \
+            out=$(gh release create "$GITHUB_REF_NAME" \
               --title "Pilates AI $GITHUB_REF_NAME" \
               --notes "See the changelog for this version." \
-              dist/release/*
+              dist/release/* 2>&1) \
+              || { echo "::error::create failed: ${out}"; exit 1; }
           fi
-          echo "published $GITHUB_REF_NAME"
+          echo "$out"
+
           gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name'

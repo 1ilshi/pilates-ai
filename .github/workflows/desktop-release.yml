@@ -17,6 +17,12 @@ jobs:
     # Needed so tauri-action can create/attach assets to a GitHub release.
     permissions:
       contents: write
+    # `createUpdaterArtifacts` is on, so every bundle must be signed. Keeping
+    # the key at job level lets the guard below see it; an unset secret would
+    # otherwise surface only as "npm run tauri build failed".
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     strategy:
       # A single failing platform must not cancel the other two bundles.
       fail-fast: false
@@ -32,7 +38,10 @@ jobs:
             # Apple Silicon only: ONNX Runtime 1.31.1 publishes no macOS
             # x86_64 and no universal2 artifact, so a universal binary would
             # carry an arm64 dylib that cannot load on an Intel Mac.
-            os: macos-14
+            # `macos-14` is no longer a supported runner label ("configuration
+            # 'macos-14-arm64-us-default' is not supported"); `macos-latest` is
+            # Apple Silicon, and an arm64 target cross-compiles if it is not.
+            os: macos-latest
             target: aarch64-apple-darwin
             rust_targets: aarch64-apple-darwin
             onnx_platform: macos-arm64
@@ -156,12 +165,22 @@ jobs:
           path: apps/desktop/src-tauri/target/parquet-fixture.parquet
           if-no-files-found: error
 
+      # Fail with one clear line instead of a cryptic bundler error.
+      - name: Check updater signing key
+        shell: bash
+        run: |
+          if [ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY is not set. Add the contents of"
+            echo "::error::%USERPROFILE%\\.tauri\\pilates-updater.key as a repository"
+            echo "::error::secret (Settings -> Secrets and variables -> Actions)."
+            exit 1
+          fi
+          echo "updater signing key present (${#TAURI_SIGNING_PRIVATE_KEY} bytes)"
+
       - name: Build and bundle desktop app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}

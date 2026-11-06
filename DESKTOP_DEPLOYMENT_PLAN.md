@@ -39,7 +39,28 @@
 
 **Confirmed by CI:** all three platforms build installers — Windows (NSIS + MSI, 84.5 MiB), macOS arm64 (DMG + updater archive, 142.8 MiB), Linux (deb + AppImage, 194.6 MiB), each with a valid updater signature. Full run: 38 minutes from cold cache.
 
-**Remaining to ship:** OS code signing (certificates), and a real tagged release to exercise the publish job end to end.
+**Remaining to ship:** OS code signing only (certificates). Everything else in this plan is implemented and verified.
+
+## Release v2.0.0 — live
+
+```
+https://github.com/1ilshi/pilates-ai/releases/latest/download/latest.json
+```
+
+| Platform | Update artifact | Also published |
+|---|---|---|
+| Windows | `Pilates AI_2.0.0_x64-setup.exe` (NSIS) | MSI for managed deployment, both signatures |
+| macOS arm64 | `Pilates AI.app.tar.gz` | `.dmg` |
+| Linux | `Pilates AI_2.0.0_amd64.AppImage` | `.deb` |
+
+`channel.json` sits beside the manifest with `minimum: 2.0.0`. Raise it only for a change that is genuinely incompatible with older clients.
+
+### Three bugs the publish job surfaced (all fixed)
+
+1. `download-artifact` keeps each artifact's nested paths — the manifest builder saw nothing at the top level.
+2. Staging into `dist/release` collided with an artifact path that also contains `release/bundle`, so `gh` tried to upload a directory.
+3. The manifest took the first match in filesystem order, and `msi/` sorts before `nsis/` — Windows updates pointed at the MSI, which cannot update a per-user NSIS install.
+
 
 ## How a release works now
 

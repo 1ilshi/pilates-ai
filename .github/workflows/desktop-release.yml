@@ -6,6 +6,9 @@ on:
     # workflow keeps working if the default is renamed.
     branches: [main, master]
     tags: ["v*"]
+    # Documentation-only changes should not burn a 38-minute build matrix.
+    paths-ignore:
+      - "**/*.md"
   pull_request:
     branches: [main, master]
   workflow_dispatch:

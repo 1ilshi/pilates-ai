@@ -18,10 +18,10 @@
 
 | Sprint | State | Note |
 |---|---|---|
-| 1 — Windows installable | ✅ **verified** | NSIS installer built (39.63 MiB with the WebView2 bootstrapper); installed-layout launch confirmed — no `_up_`, config resolves, ONNX runtime found, DB created |
-| 2 — macOS/Linux compile | ✅ implemented | `coreml` feature, dylib/versioned lookup, per-OS configs, Info.plist, `paths` module — macOS/Linux still need a CI run |
-| 3 — CI matrix | ✅ implemented | `desktop-release.yml` (3 OS), functions test+deploy, frozen lockfile |
-| 4 — Signing / updates | 🟡 partial | **updater wired** (plugin, banner, signature produced); OS code signing deliberately deferred — pipeline ready for secrets |
+| 1 — Windows installable | ✅ **verified** | NSIS installer built locally (39.63 MiB) and in CI; installed-layout launch confirmed — no `_up_`, config resolves, ONNX runtime found, DB created |
+| 2 — macOS/Linux compile | ✅ **verified** | macOS arm64 and Linux x64 compile and pass the full suite in CI |
+| 3 — CI matrix | ✅ **green** | all three jobs pass: 84.5 MiB (Windows), 142.8 MiB (macOS), 194.6 MiB (Linux) of installers + signatures |
+| 4 — Signing / updates | 🟡 partial | **updater wired and signing**; OS code signing deliberately deferred — pipeline ready for secrets |
 | 5 — Hardware correctness | ✅ **decided** | B8 withdrawn by measurement; DirectML removed (D5); Linux camera hint and startup log done; MSVC standardised |
 | 6 — Release train | 🟡 partial | `tools/set-version.mjs` done; Changesets and `channel.json` not started |
 
@@ -37,7 +37,9 @@
 | Deploys never ran | web steps gated on `refs/heads/main`, but the default branch is `master` | gate on `master` |
 | Opaque failures | a failed step reports only "exit code 1" | fetch and bundle steps now emit the real error as an annotation |
 
-**Confirmed by CI:** macOS arm64 compiles and passes all 140 tests, as do Windows and Linux. The only remaining blocker is the missing `TAURI_SIGNING_PRIVATE_KEY` secret.
+**Confirmed by CI:** all three platforms build installers — Windows (NSIS + MSI, 84.5 MiB), macOS arm64 (DMG + updater archive, 142.8 MiB), Linux (deb + AppImage, 194.6 MiB), each with a valid updater signature. Full run: 38 minutes from cold cache.
+
+**Remaining to ship:** publish `latest.json` + installers to Firebase so the updater can find them; add certificates when they exist; Changesets and `channel.json`.
 
 ## Do this before the first CI run
 

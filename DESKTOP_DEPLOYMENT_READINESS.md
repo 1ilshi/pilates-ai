@@ -13,10 +13,10 @@
 
 | Platform | Compiles from source today | Produces an installer today | That installer would launch | Readiness |
 |---|---|---|---|---|
-| **Windows 10/11 x64** | ✅ (GNU host toolchain; MSVC in CI) | ⚠️ workflow now exists; not yet run | ⚠️ expected to launch once CI produces a bundle | 🟠 **Pending CI** |
-| **macOS 12+ (Apple Silicon)** | ⚠️ `coreml` feature added; not yet compiled | ⚠️ matrix targets `aarch64-apple-darwin` | ⚠️ pending CI | 🟠 **Pending CI** |
+| **Windows 10/11 x64** | ✅ verified (MSVC, local + CI) | ✅ NSIS + MSI, 84.5 MiB | ✅ verified from a simulated install | 🟢 **Ready (unsigned)** |
+| **macOS 12+ (Apple Silicon)** | ✅ verified in CI | ✅ DMG + updater archive, 142.8 MiB | ⚠️ not launched here (no Mac) | 🟢 **Ready (unsigned)** |
 | **macOS Intel** | ❌ no ONNX Runtime build exists (B20) | — | — | 🔴 **Unsupported** |
-| **Linux (x64)** | ⚠️ untested; needs `libclang`, `libssl-dev`, `webkit2gtk-4.1` | ⚠️ matrix targets `ubuntu-22.04` | ⚠️ pending CI | 🟠 **Pending CI** |
+| **Linux (x64)** | ✅ verified in CI | ✅ deb + AppImage, 194.6 MiB | ⚠️ not launched here (no Linux host) | 🟢 **Ready (unsigned)** |
 
 **Readiness by layer (revision 2):**
 

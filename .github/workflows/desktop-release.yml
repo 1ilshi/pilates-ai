@@ -123,8 +123,19 @@ jobs:
       # ONNX Runtime shared libraries are gitignored, so a fresh checkout has
       # none. Without this step the bundle ships with no inference engine and
       # the app silently degrades at runtime.
+      #
+      # Wrapped so a failure puts the real message into an annotation: the
+      # default annotation for a failed step is only "exit code 1", and the
+      # log is not readable from an unauthenticated client.
       - name: Fetch ONNX Runtime
-        run: python tools/fetch_onnxruntime.py --platform ${{ matrix.onnx_platform }}
+        shell: bash
+        run: |
+          set -o pipefail
+          log="$RUNNER_TEMP/fetch.log"
+          if ! python tools/fetch_onnxruntime.py --platform ${{ matrix.onnx_platform }} 2>&1 | tee "$log"; then
+            echo "::error::$(tail -n 12 "$log" | tr '\n' ' ' | cut -c1-1200)"
+            exit 1
+          fi
 
       - name: Verify ONNX Runtime library is bundled
         shell: bash
@@ -177,27 +188,27 @@ jobs:
           fi
           echo "updater signing key present (${#TAURI_SIGNING_PRIVATE_KEY} bytes)"
 
+      # tauri-action is not used here on purpose: its failures surface only as
+      # "npm run tauri build failed", and its Node 20 runtime is deprecated.
+      # Running the CLI directly also lets the real error reach an annotation.
       - name: Build and bundle desktop app
-        uses: tauri-apps/tauri-action@v0
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        with:
-          projectPath: apps/desktop
-          args: ${{ matrix.args }}
-          # Only tag pushes (v*) attach to a GitHub release; on main/PR the
-          # empty tagName keeps tauri-action to a plain build.
-          tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
-          releaseName: ${{ startsWith(github.ref, 'refs/tags/') && format('Pilates AI {0}', github.ref_name) || '' }}
-          releaseDraft: true
+        run: |
+          set -o pipefail
+          log="$RUNNER_TEMP/bundle.log"
+          if ! pnpm --filter @pilates/desktop exec tauri build ${{ matrix.args }} 2>&1 | tee "$log"; then
+            echo "::error::$(tail -n 25 "$log" | tr '\n' ' ' | cut -c1-1500)"
+            exit 1
+          fi
 
       - name: Upload installers
-        if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: desktop-installers-${{ matrix.name }}

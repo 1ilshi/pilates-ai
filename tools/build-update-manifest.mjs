@@ -29,18 +29,22 @@ const DEFAULT_BASE =
  *
  * Only artifacts with a signature are updatable, and the key must match what
  * `tauri-plugin-updater` asks for on the host.
+ *
+ * `priority` breaks ties *within* a platform: lower wins. On Windows both the
+ * NSIS installer and the MSI are signed, but the NSIS installer is the update
+ * path — a per-user NSIS install cannot be updated by a per-machine MSI.
  */
 const RULES = [
-  { test: /-setup\.exe\.sig$/i, platform: "windows-x86_64" },
-  { test: /\.msi\.sig$/i, platform: "windows-x86_64" },
-  { test: /\.app\.tar\.gz\.sig$/i, platform: "darwin-aarch64" },
-  { test: /\.AppImage\.tar\.gz\.sig$/i, platform: "linux-x86_64" },
-  { test: /\.AppImage\.sig$/i, platform: "linux-x86_64" },
+  { test: /-setup\.exe\.sig$/i, platform: "windows-x86_64", priority: 0 },
+  { test: /\.msi\.sig$/i, platform: "windows-x86_64", priority: 1 },
+  { test: /\.app\.tar\.gz\.sig$/i, platform: "darwin-aarch64", priority: 0 },
+  { test: /\.AppImage\.tar\.gz\.sig$/i, platform: "linux-x86_64", priority: 0 },
+  { test: /\.AppImage\.sig$/i, platform: "linux-x86_64", priority: 1 },
 ];
 
 function classify(name) {
   for (const rule of RULES) {
-    if (rule.test.test(name)) return rule.platform;
+    if (rule.test.test(name)) return { platform: rule.platform, priority: rule.priority };
   }
   return null;
 }
@@ -85,10 +89,11 @@ function main() {
   }));
 
   const platforms = {};
+  const chosen = {};
 
   for (const { path, name } of files) {
-    const platform = classify(name);
-    if (!platform) continue;
+    const kind = classify(name);
+    if (!kind) continue;
 
     // `foo.exe.sig` -> `foo.exe`
     const artifactName = name.replace(/\.sig$/, "");
@@ -104,17 +109,23 @@ function main() {
       continue;
     }
 
-    if (platforms[platform]) {
-      // NSIS and MSI both map to windows-x86_64; the NSIS installer is the
-      // update path, so keep the first (rules are ordered by preference).
-      console.log(`  ${platform}: already set, ignoring ${artifactName}`);
+    // Walk order is filesystem order, so "first match wins" is not stable:
+    // msi/ sorts before nsis/ and would win on Windows. Compare priority.
+    const current = chosen[kind.platform];
+    if (current && current.priority <= kind.priority) {
+      console.log(`  ${kind.platform}: keeping ${current.artifactName}, ignoring ${artifactName}`);
       continue;
     }
 
+    if (current) {
+      console.log(`  ${kind.platform}: preferring ${artifactName} over ${current.artifactName}`);
+    }
+
+    chosen[kind.platform] = { priority: kind.priority, artifactName };
     copyFileSync(artifact.path, join(outDir, artifactName));
     copyFileSync(path, join(outDir, name));
-    platforms[platform] = { signature, url: assetUrl(baseUrl, artifactName) };
-    console.log(`  ${platform}: ${artifactName}`);
+    platforms[kind.platform] = { signature, url: assetUrl(baseUrl, artifactName) };
+    console.log(`  ${kind.platform}: ${artifactName}`);
   }
 
   if (Object.keys(platforms).length === 0) {

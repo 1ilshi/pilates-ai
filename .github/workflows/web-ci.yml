@@ -41,10 +41,12 @@ jobs:
         with:
           node-version: 22
 
+      # `pnpm/action-setup@v4` fails on this runner ("self-installer exits with
+      # code 1"), so pnpm is installed from npm instead.
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 12.16.1
+        run: |
+          npm install -g pnpm@12.16.1
+          pnpm --version
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
@@ -68,13 +70,13 @@ jobs:
       # Rules and indexes are deployed before hosting: a portal that ships
       # against stale rules is a portal whose reads start failing.
       - name: Authenticate to Google Cloud
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PILATES }}'
 
       - name: Deploy security rules, indexes and functions
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
         run: |
           npm install -g firebase-tools
           firebase deploy \
@@ -82,7 +84,7 @@ jobs:
             --project pilates-ai --non-interactive
 
       - name: Deploy to Firebase Hosting
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'

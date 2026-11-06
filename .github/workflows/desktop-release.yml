@@ -71,18 +71,18 @@ jobs:
             file \
             build-essential
 
-      # pnpm must be on PATH *before* setup-node: setup-node resolves its
-      # `cache: pnpm` store by invoking pnpm itself.
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 12.16.1
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
+
+      # `pnpm/action-setup@v4` fails on this runner ("self-installer exits with
+      # code 1" — the action is forced onto Node 24 and its installer breaks),
+      # so pnpm is installed from npm instead. Pinned to packageManager.
+      - name: Install pnpm
+        run: |
+          npm install -g pnpm@12.16.1
+          pnpm --version
 
       # Pinned rather than relying on the runner's `python`: the ONNX fetch
       # script and the Parquet verifier both run in this job.

@@ -27,6 +27,18 @@
 
 **Verification.** `cargo test --locked` on `x86_64-pc-windows-msvc`: **140 passed, 0 failed, 1 ignored** — with the updater and process plugins linked. `tauri build --bundles nsis` → 39.63 MiB installer plus `Pilates AI_2.0.0_x64-setup.exe.sig`. macOS and Linux have not been compiled yet; the workflow is their first compiler.
 
+## CI findings (first runs on GitHub Actions)
+
+| Problem | Cause | Fix |
+|---|---|---|
+| Every job died at "Install pnpm" | `pnpm/action-setup@v4` is forced onto Node 24 and its self-installer exits 1 | install pnpm with `npm install -g pnpm@12.16.1` |
+| macOS job cancelled before its first step | `macos-14` is no longer an offered runner configuration | `macos-latest` (Apple Silicon) |
+| macOS download rejected | the pinned SHA-256 was mistyped (one character dropped) | re-pinned and verified against the archive |
+| Deploys never ran | web steps gated on `refs/heads/main`, but the default branch is `master` | gate on `master` |
+| Opaque failures | a failed step reports only "exit code 1" | fetch and bundle steps now emit the real error as an annotation |
+
+**Confirmed by CI:** macOS arm64 compiles and passes all 140 tests, as do Windows and Linux. The only remaining blocker is the missing `TAURI_SIGNING_PRIVATE_KEY` secret.
+
 ## Do this before the first CI run
 
 `createUpdaterArtifacts` is now on, so **every** bundle must be signed with the update key. A local keypair was generated at `%USERPROFILE%\.tauri\pilates-updater.key` (private) and `.pub` (public, already embedded in `tauri.conf.json`).

@@ -9,6 +9,7 @@
 
 ## How to use this file
 
+- **For the current state and what is blocking a release, read [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** — it is the short, honest page.
 - Work top-down. Sprints 1–3 are strictly ordered; 4–5 can overlap with 6.
 - Every item has an **acceptance check** — do not mark it done on "it compiles".
 - `B*` refers to the blocker register in the report; `§` refers to its sections.

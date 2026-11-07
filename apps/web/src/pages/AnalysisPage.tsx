@@ -33,6 +33,7 @@ import {
   type Cohort,
 } from "../lib/cohorts";
 import { ChartCard, ChartOverlay, useExpandedChart } from "../components/ChartCard";
+import { poseDisplayLabel } from "@pilates/types";
 import { PoseSelect } from "../components/PoseSelect";
 import { Modal } from "../components/Modal";
 import { useClinicData } from "../lib/useClinicData";
@@ -150,6 +151,15 @@ export function AnalysisPage() {
       scores: collect(everyone.filter((row) => matchesCohort(row, cohort))),
     }));
   }, [cohorts, everyone, cohortPose]);
+
+  // Distinguishes "no cohorts configured" from "cohorts exist but nobody has
+  // this pose" — the old single message claimed the first in both cases.
+  const cohortEmptyMessage =
+    enabledCohorts(cohorts).length === 0
+      ? "Add a cohort above to compare groups."
+      : cohortPose
+        ? `No patients in these cohorts have ${poseDisplayLabel(cohortPose)}.`
+        : "These cohorts have no recorded sessions yet.";
 
   const bars = useMemo(
     () => cohortBars(cohorts, everyone, cohortPose),
@@ -454,9 +464,21 @@ export function AnalysisPage() {
               {cohorts.map((cohort, index) => {
                 const color = COHORT_COLORS[index % COHORT_COLORS.length];
                 const included = cohort.enabled !== false;
+                // Population matching the cohort, and how many of those
+                // actually have the selected pose. With a pose chosen the two
+                // differ, and showing only the first overstates the chart.
                 const matched = everyone.filter(
                   (row) => row.sessions.length > 0 && matchesCohort(row, cohort),
                 ).length;
+                const scoped = cohortPose
+                  ? everyone.filter(
+                      (row) =>
+                        matchesCohort(row, cohort) &&
+                        row.sessions.some(
+                          (session) => session.pose_id === cohortPose,
+                        ),
+                    ).length
+                  : matched;
                 const label = cohort.name.trim() || `Cohort ${index + 1}`;
                 return (
                   <span
@@ -489,8 +511,21 @@ export function AnalysisPage() {
                       <span className={included ? undefined : "line-through"}>
                         {label}
                       </span>
-                      <span className="text-slate-400">
-                        {isCohortEmpty(cohort) ? "all" : `${matched}`}
+                      <span
+                        className="text-slate-400"
+                        title={
+                          isCohortEmpty(cohort)
+                            ? "Matches every patient"
+                            : cohortPose
+                              ? `${scoped} of ${matched} patients have ${poseDisplayLabel(cohortPose)}`
+                              : `${matched} patients match this cohort`
+                        }
+                      >
+                        {isCohortEmpty(cohort)
+                          ? "all"
+                          : cohortPose
+                            ? `${scoped}/${matched}`
+                            : `${matched}`}
                       </span>
                     </button>
                     <button
@@ -531,14 +566,14 @@ export function AnalysisPage() {
                 }
                 unit="%"
                 fixedMax={100}
-                emptyMessage="Add a cohort above to compare groups."
+                emptyMessage={cohortEmptyMessage}
               />
             ) : (
               <CohortStripPlot
                 series={scoreSeries}
                 unit="%"
                 fixedMax={100}
-                emptyMessage="No repetition scores for these cohorts and pose yet."
+                emptyMessage={cohortEmptyMessage}
               />
             )}
           </ChartCard>
@@ -557,13 +592,13 @@ export function AnalysisPage() {
               <SegmentComparisonChart
                 bars={bars.holdPerRep}
                 unit="s"
-                emptyMessage="Add a cohort above to compare groups."
+                emptyMessage={cohortEmptyMessage}
               />
             ) : (
               <CohortStripPlot
                 series={holdSeries}
                 unit="s"
-                emptyMessage="No hold durations for these cohorts and pose yet."
+                emptyMessage={cohortEmptyMessage}
               />
             )}
           </ChartCard>
@@ -582,14 +617,14 @@ export function AnalysisPage() {
               <SegmentComparisonChart
                 bars={bars.sessions}
                 unit=""
-                emptyMessage="Add a cohort above to compare groups."
+                emptyMessage={cohortEmptyMessage}
               />
             ) : (
               <CohortScatterPlot
                 points={bars.scatter}
                 xLabel="sessions"
                 yLabel="reps / session"
-                emptyMessage="No sessions for these cohorts and pose yet."
+                emptyMessage={cohortEmptyMessage}
               />
             )}
           </ChartCard>
@@ -601,7 +636,7 @@ export function AnalysisPage() {
           >
             <CohortHistogram
               series={histogramSeries}
-              emptyMessage="No repetition scores for these cohorts and pose yet."
+              emptyMessage={cohortEmptyMessage}
             />
           </ChartCard>
         </div>

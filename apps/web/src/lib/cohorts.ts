@@ -234,21 +234,52 @@ export function cohortBars(
       }
     }
 
-    const patients = rows.filter((row) => row.sessions.length > 0).length;
+    // The pose narrows *what is measured*, so the population must narrow with
+    // it. Counting every patient who ever had a session made a chart drawn from
+    // three people advertise the whole cohort.
+    const patients = rows.filter((row) =>
+      row.sessions.some((session) => !poseId || session.pose_id === poseId),
+    ).length;
+
+    // The score and hold charts are built from scored repetitions, so their
+    // denominator is the patients who actually contributed one.
+    const scoredPatients = rows.filter((row) =>
+      row.sessions.some(
+        (session) =>
+          (!poseId || session.pose_id === poseId) &&
+          (session.reps ?? []).some((rep) => Number(rep.form_score ?? 0) > 0),
+      ),
+    ).length;
+
     const sessionCount = scopedSessions.length;
     const mean = (values: number[]) =>
       values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
     const density = sessionCount > 0 ? repTotal / sessionCount : 0;
 
     const base = { id: entry.id, label: entry.label, color, patients, sessions: sessionCount };
+    const plural = (count: number, one: string, many: string) =>
+      `${count} ${count === 1 ? one : many}`;
+    const people = plural(scoredPatients, "patient", "patients");
 
-    formScoreByRep.push({ ...base, value: mean(repScores) });
-    formScoreBySession.push({ ...base, value: mean(sessionScores) });
-    holdPerRep.push({ ...base, value: mean(durations) });
+    formScoreByRep.push({
+      ...base,
+      value: mean(repScores),
+      note: `${people} · ${plural(repScores.length, "rep", "reps")}`,
+    });
+    formScoreBySession.push({
+      ...base,
+      value: mean(sessionScores),
+      note: `${people} · ${plural(sessionScores.length, "session", "sessions")}`,
+    });
+    holdPerRep.push({
+      ...base,
+      value: mean(durations),
+      note: `${people} · ${plural(durations.length, "rep", "reps")}`,
+    });
     sessions.push({
       ...base,
       value: sessionCount,
-      note: `${sessionCount} · ${density.toFixed(1)} reps/session`,
+      note: `${plural(patients, "patient", "patients")} · ${plural(sessionCount, "session", "sessions")} · ${density.toFixed(1)} reps/session`,
     });
     scatter.push({
       id: entry.id,

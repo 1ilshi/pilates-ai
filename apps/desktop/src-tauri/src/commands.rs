@@ -162,7 +162,7 @@ struct ManifestModel {
 fn resolve_model(pose_id: &str) -> EngineResult<(PathBuf, usize, usize, String, Vec<String>)> {
     let manifest_path = find_config_file("model-manifest.json")
         .ok_or_else(|| EngineError::Config("model-manifest.json not found".into()))?;
-    let raw = std::fs::read_to_string(&manifest_path)
+    let raw = crate::pose_config::read_config_text(&manifest_path)
         .map_err(|e| EngineError::Config(format!("cannot read model manifest: {e}")))?;
     let manifest: ManifestDocument = serde_json::from_str(&raw)
         .map_err(|e| EngineError::Config(format!("invalid model manifest: {e}")))?;

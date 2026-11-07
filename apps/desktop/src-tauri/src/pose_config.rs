@@ -169,6 +169,20 @@ fn push_resource_candidates(candidates: &mut Vec<PathBuf>, relative: &Path) {
     }
 }
 
+/// Read a config file, tolerating a UTF-8 byte-order mark.
+///
+/// Windows tooling writes a BOM by default — Notepad, and PowerShell's
+/// `Set-Content -Encoding utf8` — and `serde_json` rejects it. Without this the
+/// app reports the file as invalid and silently falls back to defaults, which
+/// looks exactly like "my edit did nothing".
+pub fn read_config_text(path: &Path) -> std::io::Result<String> {
+    let text = std::fs::read_to_string(path)?;
+    Ok(match text.strip_prefix('\u{feff}') {
+        Some(stripped) => stripped.to_string(),
+        None => text,
+    })
+}
+
 /// Candidate locations for `pose-definitions.json`, most specific first.
 fn candidate_paths() -> Vec<PathBuf> {
     let mut candidates = Vec::new();
@@ -246,7 +260,7 @@ impl PoseDefinitionDocument {
         let candidates = candidate_paths();
         for candidate in &candidates {
             if candidate.is_file() {
-                let raw = std::fs::read_to_string(candidate).map_err(|e| {
+                let raw = read_config_text(candidate).map_err(|e| {
                     EngineError::Config(format!("cannot read {}: {e}", candidate.display()))
                 })?;
                 let document: PoseDefinitionDocument = serde_json::from_str(&raw).map_err(|e| {
@@ -493,6 +507,22 @@ mod tests {
             }
             let _ = std::fs::remove_dir_all(&self.dir);
         }
+    }
+
+    #[test]
+    fn config_reader_strips_a_utf8_bom() {
+        // Windows editors add a BOM; serde_json rejects it, and the failure is
+        // otherwise indistinguishable from "the file is not there".
+        let dir = std::env::temp_dir().join(format!("pilates-bom-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).expect("mkdir");
+        let path = dir.join("cloud.json");
+        std::fs::write(&path, "\u{feff}{\"bucket\":\"b\"}").expect("write");
+
+        let text = read_config_text(&path).expect("read");
+        assert_eq!(text, "{\"bucket\":\"b\"}");
+        assert!(serde_json::from_str::<serde_json::Value>(&text).is_ok());
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

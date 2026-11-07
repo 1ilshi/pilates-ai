@@ -75,7 +75,10 @@ impl CloudConfig {
         }
 
         for path in candidates {
-            let Ok(text) = std::fs::read_to_string(&path) else {
+            // Tolerate a UTF-8 BOM: a clinic administrator editing cloud.json
+            // on Windows gets one from Notepad or `Set-Content -Encoding utf8`,
+            // and serde_json would reject the whole file.
+            let Ok(text) = crate::pose_config::read_config_text(&path) else {
                 continue;
             };
             match serde_json::from_str::<CloudConfig>(&text) {

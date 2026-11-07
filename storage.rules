@@ -11,9 +11,19 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
+    // Clinic accounts allowed to read and write the archive.
+    //
+    // A `clinic` custom claim is the clean mechanism, but it has to be set with
+    // the Admin SDK; the desktop account is provisioned by hand in the console,
+    // so the known clinic addresses are also accepted explicitly. Add an address
+    // here when a workstation or portal operator is added.
     function isClinician() {
       return request.auth != null
-        && request.auth.token.get('clinic', '') == 'pilates-ai';
+        && (request.auth.token.get('clinic', '') == 'pilates-ai'
+            || request.auth.token.email in [
+                 'desktopaccess@pilatesai.com',
+                 '6531503067@lamduan.mfu.ac.th'
+               ]);
     }
 
     match /telemetry/{patientId}/{fileName} {

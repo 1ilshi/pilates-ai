@@ -62,7 +62,37 @@ https://github.com/1ilshi/pilates-ai/releases/latest/download/latest.json
 3. The manifest took the first match in filesystem order, and `msi/` sorts before `nsis/` — Windows updates pointed at the MSI, which cannot update a per-user NSIS install.
 
 
-## How a release works now
+## Clinic provisioning runbook
+
+Both files below are runtime inputs — neither is shipped by the installer, and neither needs a rebuild.
+
+1. **`cloud.json`** in `%LOCALAPPDATA%\PilatesAI\` (or `PILATES_AI_DATA_DIR`):
+
+   ```json
+   {
+     "project_id": "pilates-ai",
+     "api_key": "...",
+     "bucket": "pilates-ai.firebasestorage.app",
+     "email": "desktopaccess@pilatesai.com",
+     "password": "..."
+   }
+   ```
+
+   The app now tolerates a UTF-8 BOM here, but the file must still be valid JSON. Without `bucket`, sessions queue locally and the capture page warns.
+
+2. **The `clinic` claim** on the account — this is what both rule sets actually check:
+
+   ```bash
+   pnpm claim:clinic desktopaccess@pilatesai.com
+   ```
+
+   The account must sign in again afterwards for the claim to take effect. Without it, Firestore *and* Storage both answer `PERMISSION_DENIED`, and the desktop shows "Account not provisioned for this clinic".
+
+3. Deploy rules after any change: `pnpm deploy:rules` (or let CI do it on `master`).
+
+**Do not fix a 403 by adding email addresses to `storage.rules`.** That patches Storage only — `firestore.rules` still requires the claim, so patient and session sync stays broken. The claim fixes both, and is revocable without a deploy.
+
+
 
 ```bash
 pnpm changeset            # record the intent of a change (patch/minor/major)

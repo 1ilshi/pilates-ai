@@ -13,17 +13,14 @@ service firebase.storage {
 
     // Clinic accounts allowed to read and write the archive.
     //
-    // A `clinic` custom claim is the clean mechanism, but it has to be set with
-    // the Admin SDK; the desktop account is provisioned by hand in the console,
-    // so the known clinic addresses are also accepted explicitly. Add an address
-    // here when a workstation or portal operator is added.
+    // The `clinic` claim is the only mechanism: every clinic account carries it
+    // (see `pnpm claim:clinic --list`). An email allow-list was used briefly
+    // while the desktop account was being provisioned, but it hardcodes
+    // personal addresses in a deployed file — adding or removing a clinician
+    // would mean a rules deploy, and a claim is revoked in one command.
     function isClinician() {
       return request.auth != null
-        && (request.auth.token.get('clinic', '') == 'pilates-ai'
-            || request.auth.token.email in [
-                 'desktopaccess@pilatesai.com',
-                 '6531503067@lamduan.mfu.ac.th'
-               ]);
+        && request.auth.token.get('clinic', '') == 'pilates-ai';
     }
 
     match /telemetry/{patientId}/{fileName} {

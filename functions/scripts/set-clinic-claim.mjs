@@ -84,7 +84,30 @@ function initialise() {
 async function main() {
   const args = process.argv.slice(2);
   const revoke = args.includes("--revoke");
-  const emails = args.filter((arg) => arg !== "--revoke");
+
+  // Audit mode: who exists, and who already carries the claim. Rules are
+  // claim-only, so an account without it is locked out of both Firestore and
+  // Storage — worth being able to see at a glance before deploying rules.
+  if (args.includes("--list")) {
+    const auth = getAuth(initialise());
+    const result = await auth.listUsers(1000);
+    if (result.users.length === 0) {
+      console.log("no accounts in this project");
+      return;
+    }
+    console.log(`${result.users.length} account(s) in ${projectId()}:`);
+    for (const user of result.users) {
+      const clinic = user.customClaims?.clinic ?? "(none)";
+      const marker = clinic === CLINIC_ID ? "ok  " : "MISS";
+      console.log(`  [${marker}] ${(user.email ?? user.uid).padEnd(38)} clinic=${clinic}`);
+    }
+    if (result.pageToken) {
+      console.log("  (more than 1000 accounts; only the first page was read)");
+    }
+    return;
+  }
+
+  const emails = args.filter((arg) => arg !== "--revoke" && !arg.startsWith("--"));
 
   if (emails.length === 0) usage("no email addresses given");
 

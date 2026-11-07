@@ -82,18 +82,22 @@ These are built and tested in code, but no human has run them. Each is a five-mi
 | C5 | Intel Macs unsupported | ONNX Runtime built from source for x86_64 | decide: build it, or document Apple Silicon only |
 | C6 | Update path unproven | a version newer than what is installed | bump to `2.0.1`, tag, publish |
 
-### ⚠️ Before C4: every clinic account needs the claim
+### ✅ Before C4: every clinic account now has the claim
 
-The desktop account is done. `firestore.rules` in this repo is **claim-only**, and the portal signs in with its own accounts. If any of them lack the claim, deploying the repo's rules locks them out.
+Verified with `pnpm claim:clinic --list`:
 
-```powershell
-# grant the claim to every account that uses the desktop OR the portal
-pnpm claim:clinic desktopaccess@pilatesai.com <portal-account@example.com> ...
-```
+| Account | Claim |
+|---|---|
+| `desktopaccess@pilatesai.com` | ✅ `pilates-ai` |
+| `yadanuch@pilatesai.com` | ✅ `pilates-ai` |
+| `6531503067@lamduan.mfu.ac.th` | ✅ `pilates-ai` |
+| `firebase@flutterflow.io` | — deliberately not granted (legacy vendor integration, not a clinician) |
 
-Each account must sign in again afterwards. Only then is deploying `firestore.rules` safe — and only then does production match the repo.
+Each account must sign in again for its new token to carry the claim.
 
-`storage.rules` still carries an email allow-list. It is now redundant for the desktop account and can be removed once the other address in that list is either given the claim or dropped.
+`storage.rules` has been reduced to the claim check only — the email allow-list is gone, so both rule files now share one authorization mechanism. **That edit needs `pnpm deploy:rules` to reach production**; until then production still runs the email list, which is harmless but redundant.
+
+The `firebase@flutterflow.io` account is denied by both rule sets. If the legacy FlutterFlow integration still needs access to anything, that is a separate decision — it is not a clinic user.
 
 ---
 

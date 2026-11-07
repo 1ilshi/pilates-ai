@@ -42,7 +42,7 @@
 
 **Remaining to ship:** OS code signing only (certificates). Everything else in this plan is implemented and verified.
 
-## Release v2.0.0 — live
+## Release v2.0.1 — live
 
 ```
 https://github.com/1ilshi/pilates-ai/releases/latest/download/latest.json
@@ -50,11 +50,13 @@ https://github.com/1ilshi/pilates-ai/releases/latest/download/latest.json
 
 | Platform | Update artifact | Also published |
 |---|---|---|
-| Windows | `Pilates AI_2.0.0_x64-setup.exe` (NSIS) | MSI for managed deployment, both signatures |
+| Windows | `Pilates AI_2.0.1_x64-setup.exe` (NSIS) | MSI for managed deployment, both signatures |
 | macOS arm64 | `Pilates AI.app.tar.gz` | `.dmg` |
-| Linux | `Pilates AI_2.0.0_amd64.AppImage` | `.deb` |
+| Linux | `Pilates AI_2.0.1_amd64.AppImage` | `.deb` |
 
-`channel.json` sits beside the manifest with `minimum: 2.0.0`. Raise it only for a change that is genuinely incompatible with older clients.
+`channel.json` reports `latest: 2.0.1, minimum: 2.0.0`. The minimum is the schema floor and must not track the release — defaulting it to the new version would turn every update into a forced one.
+
+**Update-path caveat:** the manifest points Windows at the **NSIS** installer. A machine installed from the MSI will be offered the NSIS installer, which installs per-user alongside the MSI rather than upgrading it. Either install from NSIS (the intended update channel), or accept the duplicate entry for a one-off test.
 
 ### Three bugs the publish job surfaced (all fixed)
 

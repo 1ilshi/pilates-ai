@@ -25,6 +25,15 @@ const DEFAULT_BASE =
   "https://github.com/1ilshi/pilates-ai/releases/latest/download";
 
 /**
+ * Oldest version that can still talk to the current schema.
+ *
+ * Raise this only for a change that is genuinely incompatible with older
+ * clients — never because a new version exists. If enforcement is ever added,
+ * this value decides who is forced to update.
+ */
+const MINIMUM_SUPPORTED = "2.0.0";
+
+/**
  * Map an artifact to a Tauri updater platform key.
  *
  * Only artifacts with a signature are updatable, and the key must match what
@@ -154,13 +163,14 @@ function main() {
   console.log(`wrote ${out} (version ${version}, ${Object.keys(platforms).length} platform(s))`);
 
   // `channel.json` is the policy file, separate from the artifact list: it
-  // records the oldest version still supported. It is raised only when a
-  // change is genuinely incompatible with older clients (a MAJOR), never for
-  // ordinary fixes, so a clinic on an older build keeps working.
+  // records the oldest version still supported. It must NOT track the release:
+  // defaulting it to the new version would raise the floor on every release and
+  // turn an ordinary update into a forced one. It stays at the schema floor
+  // until someone deliberately raises it with MINIMUM_VERSION.
   const channel = {
     schema_version: 1,
     latest: version,
-    minimum: process.env.MINIMUM_VERSION ?? version,
+    minimum: process.env.MINIMUM_VERSION ?? MINIMUM_SUPPORTED,
     updated_at: new Date().toISOString(),
   };
   const channelPath = join(outDir, "channel.json");

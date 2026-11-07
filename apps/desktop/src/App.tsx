@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getVersion } from "@tauri-apps/api/app";
 import { BarChart3, Camera, ExternalLink, Users } from "lucide-react";
 import type { ClinicalSessionDocument } from "@pilates/types";
 import { poseDisplayLabel } from "@pilates/types";
@@ -77,6 +78,18 @@ export function App() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // The version comes from the bundle, not from a literal: a hardcoded string
+  // kept reporting 2.0.0 after an update, which made a successful update look
+  // like it had not happened.
+  const [appVersion, setAppVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isTauri()) return;
+    getVersion()
+      .then(setAppVersion)
+      .catch(() => setAppVersion(null));
   }, []);
 
   const navigate = (next: Partial<View>) => {
@@ -230,7 +243,9 @@ export function App() {
               {sync.lastError}
             </p>
           )}
-          <p className="mt-0.5">Tauri 2.0 · Rust Engine v2.0.0</p>
+          <p className="mt-0.5">
+            Tauri 2.0 · Rust Engine v{appVersion ?? "…"}
+          </p>
         </div>
       </aside>
 

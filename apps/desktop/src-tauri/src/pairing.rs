@@ -256,7 +256,46 @@ pub fn exchange_custom_token(
         instance_id: instance_id.to_string(),
     };
     save_auth(&state)?;
+    // A pairing on a clean install has no `cloud.json`, and without one the
+    // sync client has no project to talk to: the app would open, look healthy,
+    // and upload nothing. Write the project details pairing already implies.
+    ensure_cloud_config()?;
     Ok(state)
+}
+
+/// Bucket the telemetry archive is written to.
+///
+/// Fixed per deployment, like `DEFAULT_PROJECT_ID`: the workstation is paired
+/// to one clinic project.
+pub const DEFAULT_BUCKET: &str = "pilates-ai.firebasestorage.app";
+
+/// Write a minimal `cloud.json` when pairing ran on a machine that had none.
+///
+/// It carries no password — the refresh token in `auth.json` is the credential.
+/// An existing `cloud.json` is never touched: it may hold a clinic's own
+/// project, bucket or legacy password.
+pub fn ensure_cloud_config() -> EngineResult<()> {
+    let path = crate::paths::data_dir().join("cloud.json");
+    if path.exists() {
+        return Ok(());
+    }
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| {
+            EngineError::Storage(format!("could not create {}: {e}", parent.display()))
+        })?;
+    }
+
+    let config = serde_json::json!({
+        "project_id": DEFAULT_PROJECT_ID,
+        "api_key": DEFAULT_API_KEY,
+        "bucket": DEFAULT_BUCKET,
+        "email": "",
+        "password": "",
+    });
+    let body = serde_json::to_string_pretty(&config)
+        .map_err(|e| EngineError::Storage(format!("cloud config encode: {e}")))?;
+    std::fs::write(&path, body)
+        .map_err(|e| EngineError::Storage(format!("could not write {}: {e}", path.display())))
 }
 
 /// Exchange a stored refresh token for a fresh ID token.
@@ -314,8 +353,7 @@ mod tests {
     }
 
     #[test]
-    fn a_typed_code_is_normalised() {
-        assert_eq!(normalise_code("abcd-efgh"), "ABCDEFGH");
+    fn a_typed_code_is_normalised() {        assert_eq!(normalise_code("abcd-efgh"), "ABCDEFGH");
         assert_eq!(normalise_code(" ABCD EFGH "), "ABCDEFGH");
         assert_eq!(normalise_code("AB-CD-EF-GH"), "ABCDEFGH");
         assert_eq!(normalise_code(""), "");
@@ -411,5 +449,72 @@ mod tests {
         assert_eq!(loaded.refresh_token, "bom-token");
 
         let _ = std::fs::remove_dir_all(path.parent().unwrap());
+    }
+
+    /// `PILATES_AI_DATA_DIR` is process-global; these tests must not overlap.
+    static DATA_DIR_ENV: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    struct DataDir(Option<std::ffi::OsString>);
+
+    impl DataDir {
+        fn set(dir: &Path) -> Self {
+            let previous = std::env::var_os("PILATES_AI_DATA_DIR");
+            std::env::set_var("PILATES_AI_DATA_DIR", dir);
+            Self(previous)
+        }
+    }
+
+    impl Drop for DataDir {
+        fn drop(&mut self) {
+            match self.0.take() {
+                Some(value) => std::env::set_var("PILATES_AI_DATA_DIR", value),
+                None => std::env::remove_var("PILATES_AI_DATA_DIR"),
+            }
+        }
+    }
+
+    #[test]
+    fn pairing_on_a_clean_install_writes_a_project_config() {
+        // Without this the workstation pairs, opens, and uploads nothing: it
+        // has a token but no project to talk to.
+        let _guard = DATA_DIR_ENV.lock().unwrap_or_else(|error| error.into_inner());
+        let dir = std::env::temp_dir().join(format!("pilates-clean-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).expect("dir");
+        let _env = DataDir::set(&dir);
+
+        ensure_cloud_config().expect("write config");
+
+        let text = std::fs::read_to_string(dir.join("cloud.json")).expect("cloud.json written");
+        let config: crate::cloud_sync::CloudConfig =
+            serde_json::from_str(&text).expect("valid config");
+        assert_eq!(config.project_id, DEFAULT_PROJECT_ID);
+        assert_eq!(config.api_key, DEFAULT_API_KEY);
+        assert_eq!(config.bucket, DEFAULT_BUCKET);
+        // No password: the refresh token is the credential.
+        assert!(config.password.is_empty());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn an_existing_cloud_config_is_left_alone() {
+        // A clinic may point the workstation at its own project or bucket.
+        let _guard = DATA_DIR_ENV.lock().unwrap_or_else(|error| error.into_inner());
+        let dir = std::env::temp_dir().join(format!("pilates-clean-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).expect("dir");
+        let _env = DataDir::set(&dir);
+        let path = dir.join("cloud.json");
+        std::fs::write(
+            &path,
+            r#"{"project_id":"other","api_key":"k","bucket":"b","email":"e","password":"p"}"#,
+        )
+        .expect("write");
+
+        ensure_cloud_config().expect("no error");
+
+        let text = std::fs::read_to_string(&path).expect("still there");
+        assert!(text.contains("\"other\""), "existing config was overwritten: {text}");
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

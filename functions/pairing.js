@@ -47,6 +47,10 @@ const START_WINDOW_MS = 10 * 60 * 1000;
 const POLL_LIMIT = 120;
 const POLL_WINDOW_MS = 10 * 60 * 1000;
 
+/** `pairApprove` budget per approving account. */
+const APPROVE_LIMIT = 30;
+const APPROVE_WINDOW_MS = 10 * 60 * 1000;
+
 /* ------------------------------------------------------------------ */
 /* Pure helpers — unit tested in test/pairing.test.js                  */
 /* ------------------------------------------------------------------ */
@@ -144,6 +148,11 @@ async function takeRateLimit(db, prefix, address, limit, windowMs) {
             count: next.count,
             window_start: next.windowStart,
             expires_at: new Date(now + windowMs * 2).toISOString(),
+            // Firestore TTL only honours a Timestamp field, so the string above
+            // (used by the logic) is paired with a real one for cleanup.
+            expires_at_ts: admin.firestore.Timestamp.fromDate(
+                new Date(now + windowMs * 2),
+            ),
         },
         {merge: true},
     );
@@ -192,6 +201,11 @@ exports.pairStart = onRequest(
                     instance_id: instanceId,
                     created_at: new Date(now).toISOString(),
                     expires_at: expiresAt,
+                    // The TTL policy watches this field; Firestore ignores a
+                    // string, so the timestamp is stored separately.
+                    expires_at_ts: admin.firestore.Timestamp.fromDate(
+                        new Date(now + CODE_TTL_MS),
+                    ),
                     approved_at: null,
                     approved_by: null,
                     custom_token: null,
@@ -255,6 +269,13 @@ exports.pairApprove = onRequest(
         }
 
         const db = admin.firestore();
+
+        // Per-approver budget. Approving is a deliberate human act, so this only
+        // stops a loop or a stolen token from pairing machine after machine.
+        if (!(await takeRateLimit(db, "rl_approve", decoded.uid, APPROVE_LIMIT, APPROVE_WINDOW_MS))) {
+            res.status(429).json({error: "too-many-requests"});
+            return;
+        }
         const ref = db.collection(PAIRING_COLLECTION).doc(code);
         const snapshot = await ref.get();
 

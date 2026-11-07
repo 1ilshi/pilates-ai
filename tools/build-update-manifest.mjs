@@ -58,8 +58,21 @@ function classify(name) {
   return null;
 }
 
+/**
+ * Turn a local file name into the name GitHub actually stores.
+ *
+ * `gh release upload` hands the name to GitHub, which replaces spaces with dots
+ * (`Pilates AI_2.0.1_x64-setup.exe` is published as
+ * `Pilates.AI_2.0.1_x64-setup.exe`). A manifest that keeps the space builds a
+ * URL that 404s, so every client fails to download — while the update check
+ * itself still succeeds and shows a banner.
+ */
+function githubAssetName(name) {
+  return name.replace(/ /g, ".");
+}
+
 function assetUrl(baseUrl, name) {
-  return `${baseUrl.replace(/\/$/, "")}/${encodeURIComponent(name)}`;
+  return `${baseUrl.replace(/\/$/, "")}/${encodeURIComponent(githubAssetName(name))}`;
 }
 
 /** Every file under `dir`, at any depth. */

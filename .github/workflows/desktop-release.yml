@@ -289,3 +289,23 @@ jobs:
           echo "$out"
 
           gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name'
+
+      # A manifest whose URLs 404 still passes every build step, and the app
+      # still shows "update available" — it just fails to download. GitHub
+      # rewrites spaces in asset names to dots, so the two can silently differ.
+      - name: Verify every manifest URL resolves
+        run: |
+          set -euo pipefail
+          node -e '
+            const m = require("./release-assets/latest.json");
+            for (const [platform, entry] of Object.entries(m.platforms)) {
+              console.log(`${platform} ${entry.url}`);
+            }
+          ' | while read -r platform url; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" -L --retry 3 --retry-delay 2 "$url")
+            echo "  $platform -> HTTP $code"
+            if [ "$code" != "200" ]; then
+              echo "::error::$platform points at a URL that returns $code: $url"
+              exit 1
+            fi
+          done

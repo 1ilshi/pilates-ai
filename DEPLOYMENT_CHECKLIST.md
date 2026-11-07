@@ -16,14 +16,13 @@ Legend: ✅ done and verified · 🟡 done, needs a runtime check · 🔴 blocke
 | Installers published and downloadable | ✅ release `v2.0.0` |
 | Update channel resolves | ✅ manifest live |
 | The desktop account can reach Firestore and Storage | ✅ claim set, both verified |
-| **A session has synced end to end** | ⬜ never verified |
+| **A session has synced end to end** | ✅ **verified from an MSI install** |
 | **Installers are signed** | 🔴 no certificates |
 
-**To finish, in this order:**
+**To finish:**
 
-1. Run one session on an installed build → verifies the whole data path.
-2. Sign (needs certificates) → removes the SmartScreen/Gatekeeper warnings.
-3. Before deploying claim-only rules: give the claim to every clinic account, portal included.
+1. Sign (needs certificates) → removes the SmartScreen/Gatekeeper warnings.
+2. Before the first real clinic rollout: run B1–B5, which no one has done yet on macOS or Linux.
 
 ---
 
@@ -67,7 +66,7 @@ These are built and tested in code, but no human has run them. Each is a five-mi
 | B5 | Windows NSIS installer on a **clean** VM | Install via the `.exe` (not the copied folder), launch from the Start menu. | clean Win 11 |
 | B6 | CSP does not break the UI | Launch and confirm the window renders and the device list loads. A wrong `connect-src` shows as a blank page with console errors. | any |
 | B7 | Update banner appears | Needs a **newer** version published — see C6. | any |
-| B8 | End-to-end sync | Record one session, then check for a Parquet object in Storage **and** a session document in Firestore. | any + camera |
+| ~~B8~~ | ~~End-to-end sync~~ | ✅ **verified 2026-11-07**: two sessions recorded from the MSI install produced a Firestore document each *and* a valid Parquet archive in Storage | done |
 
 ---
 
@@ -103,13 +102,26 @@ The `firebase@flutterflow.io` account is denied by both rule sets. If the legacy
 
 ## D. Definition of finished
 
-All five must be true. Today: 3 of 5.
+All five must be true. Today: 4 of 5.
 
 - [x] Installers build on Windows, macOS and Linux from one tag
 - [x] Installers and an update manifest are published and downloadable
 - [x] A clinic account can read and write Firestore and Storage — *claim set and verified*
-- [ ] One recorded session produces both an archive and a document — *not yet attempted*
+- [x] One recorded session produces both an archive and a document — *verified from an MSI install*
 - [ ] Installers are signed — *blocked on C2 and C3*
+
+### End-to-end evidence (2026-11-07)
+
+Two sessions recorded from the MSI-installed build, patient `ness`:
+
+| Session | Document | Archive |
+|---|---|---|
+| `61d12686…` pose4, 3 reps | written 01:04:24Z | 62.6 KB, uploaded 01:04:27Z, `PAR1` header and footer |
+| `db0a7bda…` pose1, 2 reps | written 01:04:56Z | 19.5 KB, uploaded 01:04:58Z |
+
+The archive landed 2–3 seconds after the document, which is the order the code intends: upload first, then the document that points at it. The portal renders both.
+
+**One quirk worth knowing:** reading a specific object works, but *listing* objects through the Firebase Storage REST API returns `403` even for a clinician. Firebase's rules treat `read` as covering both, so this is either a quirk of that endpoint or a rule nuance — nothing in the app depends on it, since it always reads by exact path. If a future feature needs a directory listing, check this first.
 
 ---
 

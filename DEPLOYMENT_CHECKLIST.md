@@ -95,7 +95,7 @@ Verified with `pnpm claim:clinic --list`:
 
 Each account must sign in again for its new token to carry the claim.
 
-`storage.rules` has been reduced to the claim check only — the email allow-list is gone, so both rule files now share one authorization mechanism. **That edit needs `pnpm deploy:rules` to reach production**; until then production still runs the email list, which is harmless but redundant.
+`storage.rules` has been reduced to the claim check only — the email allow-list is gone, so both rule files now share one authorization mechanism. **Deployed and verified**: with a claim-bearing token, Storage authorises and Firestore returns 200.
 
 The `firebase@flutterflow.io` account is denied by both rule sets. If the legacy FlutterFlow integration still needs access to anything, that is a separate decision — it is not a clinic user.
 

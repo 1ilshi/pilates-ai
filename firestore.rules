@@ -107,6 +107,23 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------
+    // Collection-group reads
+    // ---------------------------------------------------------------------
+
+    // The portal lists recent sessions across every patient in a single query
+    // (`collectionGroup("sessions")`). Firestore authorises that from a rule
+    // matching the collection group itself: the nested
+    // `/patients/{patientId}/sessions/{sessionId}` block above covers a known
+    // patient, not a cross-patient query, so the portal was denied while every
+    // ordinary read succeeded.
+    //
+    // Read-only: creating, updating and deleting a session still goes through
+    // the nested block, where the patient and session ids are checked.
+    match /{path=**}/sessions/{sessionId} {
+      allow read: if isClinician();
+    }
+
+    // ---------------------------------------------------------------------
     // Server-owned collections
     // ---------------------------------------------------------------------
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ref, getDownloadURL } from "firebase/storage";
+import { getDownloadURL, getMetadata, ref } from "firebase/storage";
 import { SessionView, type SessionDetailLike } from "@pilates/patient-view";
 import { Card } from "@pilates/ui";
 import { listenSession, type PortalSession } from "../lib/data";
@@ -37,6 +37,10 @@ export function SessionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  // `null` while unknown: the archive is probed once per session rather than
+  // offering a download that is certain to 404. Sessions recorded before the
+  // bucket was configured carry a storage path but no object.
+  const [archiveAvailable, setArchiveAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,12 +75,36 @@ export function SessionPage() {
       const url = await getDownloadURL(ref(storage, path));
       window.open(url, "_blank", "noopener");
     } catch (caught) {
+      setArchiveAvailable(false);
       setDownloadError(
-        `Could not resolve the archive: ${(caught as Error).message}. ` +
-          "A Cloud Storage bucket must be configured for research telemetry.",
+        `Could not resolve the archive: ${(caught as Error).message}`,
       );
     }
   };
+
+  // Probe the object once, when the session loads, so the download is only
+  // offered when there is something to download.
+  useEffect(() => {
+    const path = session?.research_telemetry?.storage_path;
+    if (!path) {
+      setArchiveAvailable(null);
+      return;
+    }
+    let cancelled = false;
+    setArchiveAvailable(null);
+    getMetadata(ref(storage, path))
+      .then(() => {
+        if (!cancelled) setArchiveAvailable(true);
+      })
+      .catch(() => {
+        // A missing object is the common case for older sessions; a denied
+        // read is indistinguishable here and both mean "do not offer it".
+        if (!cancelled) setArchiveAvailable(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
 
   if (error) {
     return (
@@ -101,13 +129,19 @@ export function SessionPage() {
           {downloadError}
         </Card>
       )}
+      {archiveAvailable === false && (
+        <Card className="border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-200">
+          This session has no stored telemetry archive — it was recorded before
+          archiving was enabled. The analysis above is unaffected.
+        </Card>
+      )}
       <SessionView
         session={toSessionDetail(session)}
         onBack={() =>
           origin ? navigate(-1) : navigate(`/patients/${patientId}`)
         }
         backLabel={backLabel}
-        onDownloadTelemetry={downloadParquet}
+        onDownloadTelemetry={archiveAvailable ? downloadParquet : undefined}
       />
     </div>
   );

@@ -260,7 +260,55 @@ pub fn exchange_custom_token(
     // sync client has no project to talk to: the app would open, look healthy,
     // and upload nothing. Write the project details pairing already implies.
     ensure_cloud_config()?;
+    // Once there is a token, the shared password has no purpose and is the
+    // thing pairing exists to remove. Best effort: if the file cannot be
+    // rewritten, keeping the password is the safe outcome, never a failed pair.
+    clear_legacy_password();
     Ok(state)
+}
+
+/// Blank the shared password in `cloud.json` after a successful pairing.
+///
+/// Deliberately infallible. Pairing has already succeeded by the time this
+/// runs; reporting a failure here would tell the user pairing did not work
+/// when it did. If the rewrite fails the password simply stays, which is the
+/// more forgiving state.
+///
+/// The email is kept: it is not a secret and makes the workstation identifiable
+/// in `cloud.json`. With the password empty, `is_paired` no longer counts this
+/// file as a credential, so deleting `auth.json` really does re-trigger pairing.
+pub fn clear_legacy_password() {
+    let path = crate::paths::data_dir().join("cloud.json");
+    let Ok(text) = crate::pose_config::read_config_text(&path) else {
+        return;
+    };
+    let Ok(mut value) = serde_json::from_str::<serde_json::Value>(&text) else {
+        return;
+    };
+    let Some(object) = value.as_object_mut() else {
+        return;
+    };
+    let present = object
+        .get("password")
+        .and_then(|entry| entry.as_str())
+        .map(|password| !password.is_empty())
+        .unwrap_or(false);
+    if !present {
+        return;
+    }
+
+    object.insert("password".into(), serde_json::Value::String(String::new()));
+    match serde_json::to_string_pretty(&value) {
+        Ok(body) => {
+            if let Err(error) = std::fs::write(&path, body) {
+                eprintln!(
+                    "[pilates] paired, but could not remove the password from {}: {error}",
+                    path.display()
+                );
+            }
+        }
+        Err(error) => eprintln!("[pilates] cloud config encode failed: {error}"),
+    }
 }
 
 /// Bucket the telemetry archive is written to.
@@ -492,6 +540,35 @@ mod tests {
         assert_eq!(config.bucket, DEFAULT_BUCKET);
         // No password: the refresh token is the credential.
         assert!(config.password.is_empty());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn pairing_removes_the_shared_password() {
+        let _guard = DATA_DIR_ENV.lock().unwrap_or_else(|error| error.into_inner());
+        let dir = std::env::temp_dir().join(format!("pilates-pair-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).expect("dir");
+        let _env = DataDir::set(&dir);
+        let path = dir.join("cloud.json");
+        std::fs::write(
+            &path,
+            r#"{"project_id":"pilates-ai","api_key":"k","bucket":"b","email":"e@x","password":"secret"}"#,
+        )
+        .expect("write");
+
+        clear_legacy_password();
+
+        let text = std::fs::read_to_string(&path).expect("read");
+        let value: serde_json::Value = serde_json::from_str(&text).expect("json");
+        assert_eq!(value["password"], "");
+        // The email is not a secret and stays, for identification.
+        assert_eq!(value["email"], "e@x");
+        // With no password this file is no longer a credential, so deleting
+        // auth.json re-triggers pairing instead of silently continuing.
+        let config: crate::cloud_sync::CloudConfig =
+            serde_json::from_str(&text).expect("valid config");
+        assert!(!legacy_credential_present(Some(&config)));
 
         let _ = std::fs::remove_dir_all(&dir);
     }

@@ -126,6 +126,28 @@ The app polls `https://github.com/1ilshi/pilates-ai/releases/latest/download/lat
 
 ---
 
+## Signing Windows — the ordering trap
+
+Tauri writes the updater signature (`*.exe.sig`) **over the installer bytes**. Signing the installer afterwards changes those bytes, so the `.sig` no longer matches and every client rejects the update — and you will not see it, because the check happens on the clinic's machine at install time.
+
+Two correct options:
+
+**A. Let Tauri sign during bundling (preferred).** In `tauri.windows.conf.json`:
+
+```json
+"bundle": {
+  "windows": {
+    "certificateThumbprint": "<SHA-1 thumbprint of a cert in the runner's store>",
+    "digestAlgorithm": "sha256",
+    "timestampUrl": "http://timestamp.digicert.com"
+  }
+}
+```
+
+Tauri then signs the installer *before* generating the updater signature, so the ordering is right by construction. In CI the certificate must be imported into the store first.
+
+**B. Sign afterwards with `tools/sign-windows.ps1`.** It signs, verifies, deletes the stale `.sig`, regenerates it with the updater key, rebuilds `latest.json`/`channel.json`, and stages everything for `gh release upload`. Use this only if A is not possible — it exists precisely because the manual path is easy to get wrong.
+
 ## Definition of done
 
 The project is done when a clinic can install without an administrator, without a console, and without a support call — and a bad release can be corrected without visiting the site.

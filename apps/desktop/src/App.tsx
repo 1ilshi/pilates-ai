@@ -125,6 +125,8 @@ export function App() {
   // `pnpm claim:clinic`. "Sync failed" would leave the clinic guessing.
   const notProvisioned =
     !!sync.lastError && /permission_denied|403|insufficient permissions/i.test(sync.lastError);
+  const notConfigured =
+    !!sync.lastError && /not configured/i.test(sync.lastError);
 
   const syncLabel = sync.syncing
     ? "Syncing…"
@@ -132,11 +134,14 @@ export function App() {
       ? "Offline — queued locally"
       : notProvisioned
         ? "Account not provisioned for this clinic"
-        : sync.lastError
-          ? "Sync failed — retrying"
-          : sync.lastSyncAt
-            ? `Synced ${relativeTime(sync.lastSyncAt)}`
-            : "Not synced yet";
+        : notConfigured
+          ? // Retrying will not help: there is no cloud configuration to use.
+            "Cloud sync off — not configured"
+          : sync.lastError
+            ? "Sync failed — retrying"
+            : sync.lastSyncAt
+              ? `Synced ${relativeTime(sync.lastSyncAt)}`
+              : "Not synced yet";
 
   const heading =
     tab === "patient"

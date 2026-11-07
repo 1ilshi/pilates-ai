@@ -53,13 +53,30 @@ export function useAutoSync(): AutoSyncStatus {
       // Upload and download are attempted independently: a failed upload must
       // not prevent new sessions from arriving.
       try {
-        await syncNow();
+        // The report matters: `flush` records per-session failures inside it
+        // and still resolves. Treating a resolved promise as success made the
+        // sidebar say "Synced just now" while every upload was failing.
+        const report = await syncNow();
+        if (!report.enabled) {
+          failure = "cloud sync is not configured";
+        } else if (report.failed > 0) {
+          failure =
+            report.errors[0] ?? `${report.failed} session(s) could not be uploaded`;
+        } else if (report.conflicts > 0) {
+          failure =
+            report.conflicts === 1
+              ? "a patient edit was refused: another workstation changed it first"
+              : `${report.conflicts} patient edits were refused: another workstation changed them first`;
+        }
       } catch (error) {
         failure = String(error);
       }
       if (pull) {
         try {
-          await syncPullPatients();
+          const pulled = await syncPullPatients();
+          if (!failure && pulled && !pulled.enabled) {
+            failure = "cloud sync is not configured";
+          }
         } catch (error) {
           failure = failure ?? String(error);
         }

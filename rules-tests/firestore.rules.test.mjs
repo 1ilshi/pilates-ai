@@ -101,6 +101,10 @@ const patchDoc = (path, value, mask, claims) =>
 const getDoc = (path, claims) => call("GET", `/${path}`, { claims });
 const deleteDoc = (path, claims) => call("DELETE", `/${path}`, { claims });
 
+/** A structured query, the same shape the desktop sends for `pull_sessions`. */
+const runQuery = (structuredQuery, claims) =>
+  call("POST", ":runQuery", { claims, body: { structuredQuery } });
+
 /** A patient document exactly as the desktop writes it. */
 const patientBody = () => ({
   name: "Ada Lovelace",
@@ -235,6 +239,34 @@ describe("sessions", () => {
 
   test("a session cannot be deleted", async () => {
     const result = await deleteDoc("patients/ada/sessions/session-1", CLINICIAN);
+    assert.equal(result.status, 403);
+  });
+
+  // The portal dashboard and the desktop's `pull_sessions` both query sessions
+  // across every patient. That is authorised by a collection-group rule, not by
+  // the nested `/patients/{patientId}/sessions` block: the nested rule binds a
+  // parent the query cannot supply. Without this test the regression returned
+  // as a 403 that no other case noticed, because every other case reads a
+  // session under a known patient.
+  test("a clinician can query sessions across every patient", async () => {
+    const result = await runQuery(
+      {
+        from: [{ collectionId: "sessions", allDescendants: true }],
+        limit: 10,
+      },
+      CLINICIAN,
+    );
+    assert.equal(result.status, 200, JSON.stringify(result.body));
+  });
+
+  test("an account without the claim cannot query sessions across patients", async () => {
+    const result = await runQuery(
+      {
+        from: [{ collectionId: "sessions", allDescendants: true }],
+        limit: 10,
+      },
+      OUTSIDER,
+    );
     assert.equal(result.status, 403);
   });
 });

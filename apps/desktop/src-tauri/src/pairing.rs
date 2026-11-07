@@ -115,6 +115,35 @@ pub fn clear_auth() -> EngineResult<()> {
     Ok(())
 }
 
+/// What the credential file looks like on disk.
+///
+/// Three states, not two: a file that exists but cannot be read is **not** the
+/// same as no file at all. Treating them alike would show the pairing gate to a
+/// workstation that is already paired, hiding its local patient list behind a
+/// screen that needs the network — the failure this whole design exists to
+/// prevent.
+pub enum AuthFile {
+    /// No credential: a first run, and the only case that gates.
+    Missing,
+    /// A file is there but unreadable or malformed. Fail open.
+    Unreadable,
+    Present(AuthState),
+}
+
+pub fn auth_file_state() -> AuthFile {
+    let path = auth_path();
+    if !path.exists() {
+        return AuthFile::Missing;
+    }
+    match crate::pose_config::read_config_text(&path) {
+        Ok(text) => match serde_json::from_str::<AuthState>(&text) {
+            Ok(state) if !state.refresh_token.trim().is_empty() => AuthFile::Present(state),
+            _ => AuthFile::Unreadable,
+        },
+        Err(_) => AuthFile::Unreadable,
+    }
+}
+
 /// True when the workstation has a credential at all.
 ///
 /// Note this says nothing about whether the credential still works — a rejected
@@ -125,10 +154,12 @@ pub fn clear_auth() -> EngineResult<()> {
 /// every existing clinic workstation to re-pair after an update, and would lock
 /// them out of the patient list entirely if the pairing service is unreachable.
 pub fn is_paired() -> bool {
-    if load_auth().is_some() {
-        return true;
+    match auth_file_state() {
+        AuthFile::Present(_) => true,
+        // Fail open. Sync will report the problem; the patient list stays.
+        AuthFile::Unreadable => true,
+        AuthFile::Missing => legacy_credential_present(crate::cloud_sync::CloudConfig::load().as_ref()),
     }
-    legacy_credential_present(crate::cloud_sync::CloudConfig::load().as_ref())
 }
 
 /// Whether a `cloud.json` credential is complete enough to authenticate.
@@ -540,6 +571,23 @@ mod tests {
         assert_eq!(config.bucket, DEFAULT_BUCKET);
         // No password: the refresh token is the credential.
         assert!(config.password.is_empty());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn an_unreadable_credential_does_not_gate() {
+        // A file that exists but cannot be parsed must not be mistaken for a
+        // first run: that would hide the local patient list behind a screen
+        // that needs the network.
+        let _guard = DATA_DIR_ENV.lock().unwrap_or_else(|error| error.into_inner());
+        let dir = std::env::temp_dir().join(format!("pilates-bad-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).expect("dir");
+        let _env = DataDir::set(&dir);
+        std::fs::write(dir.join(AUTH_FILENAME), "not json at all").expect("write");
+
+        assert!(matches!(auth_file_state(), AuthFile::Unreadable));
+        assert!(is_paired(), "an unreadable credential must fail open");
 
         let _ = std::fs::remove_dir_all(&dir);
     }

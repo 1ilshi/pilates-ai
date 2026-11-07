@@ -297,13 +297,15 @@ fn firestore_value_to_json(value: &Value) -> Value {
 /// minutes ago would undo a newer aggregate. Omitting them entirely makes that
 /// impossible rather than merely unlikely.
 ///
-/// The mask lists only fields this application owns, so a `PATCH` leaves
-/// `address`, `note`, `tel_number` and the legacy `pose{N}_*` aggregates
-/// untouched.
+/// The contact fields (`address`, `note`, `tel_number`) are included **only
+/// when this workstation knows a value**. The clinician can edit them, so they
+/// must reach Firestore — but a workstation that has never pulled would
+/// otherwise push an empty string and wipe an address that only exists in the
+/// legacy records. Absent means "not mine to say", not "cleared".
 pub fn patient_document_body(patient: &StoredPatient) -> (Value, Vec<String>) {
     let origin = patient_origin();
 
-    let document = json!({
+    let mut document = json!({
         "name": patient.name,
         "age": patient.age,
         "weight": patient.weight,
@@ -319,7 +321,18 @@ pub fn patient_document_body(patient: &StoredPatient) -> (Value, Vec<String>) {
         "updated_by": origin,
     });
 
-    let mask: Vec<String> = OWNED_PATIENT_FIELDS.iter().map(|f| f.to_string()).collect();
+    let mut mask: Vec<String> = OWNED_PATIENT_FIELDS.iter().map(|f| f.to_string()).collect();
+
+    for (name, value) in [
+        ("address", &patient.address),
+        ("note", &patient.note),
+        ("tel_number", &patient.tel_number),
+    ] {
+        if let Some(text) = value {
+            document[name] = json!(text);
+            mask.push(name.to_string());
+        }
+    }
 
     (document, mask)
 }

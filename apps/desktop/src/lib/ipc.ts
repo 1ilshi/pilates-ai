@@ -263,6 +263,8 @@ export const pairingPoll = (code: string, secret: string) =>
 
 /** Opens the clinical portal in the default browser. */
 export const openPortal = () => call<void>("open_portal");
+/** Open any https URL in the default browser (used by the pairing screen). */
+export const openExternal = (url: string) => call<void>("open_external", { url });
 export const captureStatus = () => call<CaptureStatus>("capture_status");
 export const engineStatus = () => call<EngineStatus>("engine_status");
 export const movementPhases = () => call<MovementPhase[]>("movement_phases");

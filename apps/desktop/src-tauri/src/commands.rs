@@ -927,11 +927,32 @@ pub const PORTAL_URL: &str = "https://pilates-ai.web.app";
 /// analysis belongs in the portal, where the data is shared and always current.
 #[tauri::command]
 pub fn open_portal() -> EngineResult<()> {
+    open_url(PORTAL_URL)
+}
+
+/// Open an arbitrary URL in the user's default browser.
+///
+/// Used by the pairing screen, which has to open `/pair?code=…`. The front end
+/// previously used the shell plugin's `open`, but no capability granted
+/// `shell:allow-open`, so the ACL rejected it and the promise was swallowed —
+/// the button silently did nothing. Going through Rust keeps one code path for
+/// every platform and needs no plugin permission.
+#[tauri::command]
+pub fn open_external(url: String) -> EngineResult<()> {
+    if !url.starts_with("https://") {
+        return Err(EngineError::Invalid(
+            "only https URLs can be opened".to_string(),
+        ));
+    }
+    open_url(&url)
+}
+
+fn open_url(url: &str) -> EngineResult<()> {
     #[cfg(target_os = "windows")]
     {
         // `start` treats its first quoted argument as a window title, hence "".
         std::process::Command::new("cmd")
-            .args(["/C", "start", "", PORTAL_URL])
+            .args(["/C", "start", "", url])
             .spawn()
             .map_err(|error| {
                 EngineError::Storage(format!("cannot open the browser: {error}"))
@@ -942,7 +963,7 @@ pub fn open_portal() -> EngineResult<()> {
     #[cfg(target_os = "macos")]
     {
         std::process::Command::new("open")
-            .arg(PORTAL_URL)
+            .arg(url)
             .spawn()
             .map_err(|error| {
                 EngineError::Storage(format!("cannot open the browser: {error}"))
@@ -953,7 +974,7 @@ pub fn open_portal() -> EngineResult<()> {
     #[cfg(all(unix, not(target_os = "macos")))]
     {
         std::process::Command::new("xdg-open")
-            .arg(PORTAL_URL)
+            .arg(url)
             .spawn()
             .map_err(|error| {
                 EngineError::Storage(format!("cannot open the browser: {error}"))

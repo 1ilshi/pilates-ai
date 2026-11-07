@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle2, ExternalLink, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
 import { Button, Card } from "@pilates/ui";
-import { open } from "@tauri-apps/plugin-shell";
-import { pairingPoll, pairingStart, type PairingStart } from "../lib/ipc";
+import { openExternal, pairingPoll, pairingStart, type PairingStart } from "../lib/ipc";
 
 const PORTAL_PAIR_URL = "https://pilates-ai.web.app/pair";
+
+/** The portal URL for a code, shown as text as well as opened. */
+function pairUrl(code: string): string {
+  return `${PORTAL_PAIR_URL}?code=${encodeURIComponent(code)}`;
+}
 
 type Phase =
   | { kind: "idle" }
@@ -24,6 +28,8 @@ type Phase =
 export function PairingGate({ onPaired }: { onPaired: () => void }) {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const [remaining, setRemaining] = useState(0);
+  // Set when the browser could not be launched, so the URL can be shown.
+  const [openError, setOpenError] = useState<string | null>(null);
   const polling = useRef<number | null>(null);
   const deadline = useRef<number>(0);
 
@@ -44,9 +50,10 @@ export function PairingGate({ onPaired }: { onPaired: () => void }) {
       setPhase({ kind: "waiting", pairing });
       deadline.current = Date.parse(pairing.expires_at) || Date.now() + 600_000;
 
-      // Open the portal once; the user can reopen it from the button.
-      void open(`${PORTAL_PAIR_URL}?code=${encodeURIComponent(pairing.code)}`).catch(
-        () => undefined,
+      // Open the portal once. A failure is recorded rather than swallowed: the
+      // code is also shown as text below, so the user is never stuck.
+      void openExternal(pairUrl(pairing.code)).catch((error) =>
+        setOpenError(String(error)),
       );
 
       polling.current = window.setInterval(async () => {
@@ -128,15 +135,25 @@ export function PairingGate({ onPaired }: { onPaired: () => void }) {
           </p>
         )}
 
+        {openError && pairing && (
+          <div className="mt-3 rounded-control border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
+            <p>Could not open the browser automatically. Open this address yourself:</p>
+            <p className="mt-1 select-all break-all font-mono text-[11px] text-amber-100">
+              {pairUrl(pairing.code)}
+            </p>
+            <p className="mt-1 text-amber-300/70">{openError}</p>
+          </div>
+        )}
+
         <div className="mt-5 space-y-2">
           {pairing && phase.kind === "waiting" && (
             <Button
               variant="secondary"
               className="w-full"
               onClick={() =>
-                void open(
-                  `${PORTAL_PAIR_URL}?code=${encodeURIComponent(pairing.code)}`,
-                ).catch(() => undefined)
+                void openExternal(pairUrl(pairing.code)).catch((error) =>
+                  setOpenError(String(error)),
+                )
               }
             >
               <ExternalLink className="h-4 w-4" aria-hidden="true" />

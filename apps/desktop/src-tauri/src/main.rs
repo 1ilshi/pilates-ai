@@ -143,6 +143,7 @@ fn main() {
             commands::list_cameras,
             commands::capture_status,
             commands::open_portal,
+            commands::open_external,
             commands::sync_check_remote,
             commands::pairing_status,
             commands::pairing_start,

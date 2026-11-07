@@ -21,10 +21,35 @@
 
 import { applicationDefault, cert, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /** Must match `isClinician()` in firestore.rules and storage.rules. */
 const CLINIC_ID = process.env.PILATES_CLINIC_ID ?? "pilates-ai";
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+
+/**
+ * The Firebase project to act on.
+ *
+ * Application Default Credentials from `gcloud auth application-default login`
+ * are user credentials and carry no project, so the Admin SDK cannot infer one
+ * and fails with "Failed to determine project ID for Auth". A service-account
+ * key does carry it, which is why this only bites the ADC path.
+ */
+function projectId() {
+  if (process.env.PILATES_FIREBASE_PROJECT_ID) return process.env.PILATES_FIREBASE_PROJECT_ID;
+  if (process.env.GOOGLE_CLOUD_PROJECT) return process.env.GOOGLE_CLOUD_PROJECT;
+  try {
+    const rc = JSON.parse(readFileSync(join(ROOT, ".firebaserc"), "utf8"));
+    const id = rc?.projects?.default;
+    if (id) return id;
+  } catch {
+    // Fall through to the known default.
+  }
+  return "pilates-ai";
+}
 
 function usage(message) {
   if (message) console.error(`error: ${message}`);
@@ -35,12 +60,25 @@ function usage(message) {
 }
 
 function initialise() {
+  const project = projectId();
   const credentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
   if (credentials) {
-    const serviceAccount = JSON.parse(readFileSync(credentials, "utf8"));
-    return initializeApp({ credential: cert(serviceAccount) });
+    if (existsSync(credentials)) {
+      const serviceAccount = JSON.parse(readFileSync(credentials, "utf8"));
+      return initializeApp({ credential: cert(serviceAccount), projectId: project });
+    }
+    // A stale value here is common: the variable is often left over from
+    // another project, and a bare ENOENT gives no hint that ADC would work.
+    // Fall back, but say so — silently authenticating as a different identity
+    // is worse than stopping.
+    console.warn(
+      `warning: GOOGLE_APPLICATION_CREDENTIALS points at ${credentials}, which does not exist.`,
+    );
+    console.warn(
+      "         falling back to Application Default Credentials. Unset the variable to silence this.",
+    );
   }
-  return initializeApp({ credential: applicationDefault() });
+  return initializeApp({ credential: applicationDefault(), projectId: project });
 }
 
 async function main() {

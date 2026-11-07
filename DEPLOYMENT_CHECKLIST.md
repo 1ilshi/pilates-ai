@@ -15,15 +15,15 @@ Legend: ✅ done and verified · 🟡 done, needs a runtime check · 🔴 blocke
 | Builds on all three platforms | ✅ green in CI |
 | Installers published and downloadable | ✅ release `v2.0.0` |
 | Update channel resolves | ✅ manifest live |
-| **The desktop account can sync** | 🔴 **claim not set — sync will break** |
+| The desktop account can reach Firestore and Storage | ✅ claim set, both verified |
 | **A session has synced end to end** | ⬜ never verified |
 | **Installers are signed** | 🔴 no certificates |
 
 **To finish, in this order:**
 
-1. Set the `clinic` claim → unblocks sync, and removes the rules drift.
-2. Run one session on an installed build → verifies the whole data path.
-3. Sign (needs certificates) → removes the SmartScreen/Gatekeeper warnings.
+1. Run one session on an installed build → verifies the whole data path.
+2. Sign (needs certificates) → removes the SmartScreen/Gatekeeper warnings.
+3. Before deploying claim-only rules: give the claim to every clinic account, portal included.
 
 ---
 
@@ -75,28 +75,35 @@ These are built and tested in code, but no human has run them. Each is a five-mi
 
 | # | Blocker | What it needs | Exact action |
 |---|---|---|---|
-| C1 | **Sync will break** — the account has no `clinic` claim | gcloud application-default credentials | `gcloud auth application-default login` then `pnpm claim:clinic desktopaccess@pilatesai.com`, then sign in again in the app |
+| ~~C1~~ | ~~The account has no `clinic` claim~~ | — | ✅ **done** — `clinic=pilates-ai` verified on a fresh token; Firestore returns 200, Storage authorises |
 | C2 | Windows SmartScreen warning | Authenticode certificate (or Azure Trusted Signing) | obtain cert → follow "Signing Windows" in the plan |
 | C3 | macOS Gatekeeper blocks the app | Apple Developer Program ($99/yr) | obtain cert → re-add the `APPLE_*` env block in `desktop-release.yml` |
-| C4 | Portal does not auto-deploy | `FIREBASE_SERVICE_ACCOUNT_PILATES` secret | add the secret — **only after C1** |
+| C4 | Portal does not auto-deploy | `FIREBASE_SERVICE_ACCOUNT_PILATES` secret | add the secret — **but see the warning below** |
 | C5 | Intel Macs unsupported | ONNX Runtime built from source for x86_64 | decide: build it, or document Apple Silicon only |
 | C6 | Update path unproven | a version newer than what is installed | bump to `2.0.1`, tag, publish |
 
-### ⚠️ C4 is a trap until C1 is done
+### ⚠️ Before C4: every clinic account needs the claim
 
-`firestore.rules` in this repo is **claim-only**. Production currently is not — that is the only reason sync works today. The moment `FIREBASE_SERVICE_ACCOUNT_PILATES` exists, every push to `master` deploys the repo's rules and **sync stops working for the clinic account**.
+The desktop account is done. `firestore.rules` in this repo is **claim-only**, and the portal signs in with its own accounts. If any of them lack the claim, deploying the repo's rules locks them out.
 
-Set the claim first (C1), then add the secret (C4). After the claim, production and the repo agree.
+```powershell
+# grant the claim to every account that uses the desktop OR the portal
+pnpm claim:clinic desktopaccess@pilatesai.com <portal-account@example.com> ...
+```
+
+Each account must sign in again afterwards. Only then is deploying `firestore.rules` safe — and only then does production match the repo.
+
+`storage.rules` still carries an email allow-list. It is now redundant for the desktop account and can be removed once the other address in that list is either given the claim or dropped.
 
 ---
 
 ## D. Definition of finished
 
-All five must be true. Today: 2 of 5.
+All five must be true. Today: 3 of 5.
 
 - [x] Installers build on Windows, macOS and Linux from one tag
 - [x] Installers and an update manifest are published and downloadable
-- [ ] A clinic account can read and write Firestore and Storage — *blocked on C1*
+- [x] A clinic account can read and write Firestore and Storage — *claim set and verified*
 - [ ] One recorded session produces both an archive and a document — *not yet attempted*
 - [ ] Installers are signed — *blocked on C2 and C3*
 

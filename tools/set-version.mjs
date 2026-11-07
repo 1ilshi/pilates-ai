@@ -16,7 +16,7 @@
  * or if a manifest cannot be updated.
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -26,6 +26,11 @@ const MANIFESTS = {
   package: join(ROOT, "apps", "desktop", "package.json"),
   tauri: join(ROOT, "apps", "desktop", "src-tauri", "tauri.conf.json"),
   cargo: join(ROOT, "apps", "desktop", "src-tauri", "Cargo.toml"),
+  // Cargo.lock records the crate's own version too. Leaving it behind makes
+  // `cargo test --locked` fail on every CI runner with "cannot update the lock
+  // file because --locked was passed" — which is exactly how a release build
+  // breaks after a version bump.
+  lock: join(ROOT, "apps", "desktop", "src-tauri", "Cargo.lock"),
 };
 
 const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/;
@@ -104,11 +109,29 @@ function writeCargo(version) {
   writeFileSync(MANIFESTS.cargo, lines.join("\n"));
 }
 
+function writeCargoLock(version) {
+  if (!existsSync(MANIFESTS.lock)) return;
+  const text = readFileSync(MANIFESTS.lock, "utf8");
+  // The format is stable: a `[[package]]` block, then name, then version.
+  const pattern = /(\[\[package\]\]\r?\nname = "pilates-desktop"\r?\nversion = ")[^"]+(")/;
+  if (!pattern.test(text)) return;
+  writeFileSync(MANIFESTS.lock, text.replace(pattern, `$1${version}$2`));
+}
+
+function readCargoLockVersion() {
+  if (!existsSync(MANIFESTS.lock)) return null;
+  const match = readFileSync(MANIFESTS.lock, "utf8").match(
+    /\[\[package\]\]\r?\nname = "pilates-desktop"\r?\nversion = "([^"]+)"/,
+  );
+  return match ? match[1] : null;
+}
+
 function report() {
   const versions = {
     "apps/desktop/package.json": readPackageVersion(),
     "apps/desktop/src-tauri/tauri.conf.json": readTauriVersion(),
     "apps/desktop/src-tauri/Cargo.toml": readCargoVersion(),
+    "apps/desktop/src-tauri/Cargo.lock": readCargoLockVersion(),
   };
   for (const [file, value] of Object.entries(versions)) {
     console.log(`  ${file}: ${value ?? "(missing)"}`);
@@ -126,6 +149,7 @@ function main() {
     if (!version) fail("apps/desktop/package.json has no version");
     writeTauri(version);
     writeCargo(version);
+    writeCargoLock(version);
     console.log(`Synced ${version} from package.json`);
     report();
     return;
@@ -154,6 +178,7 @@ function main() {
   writePackage(version);
   writeTauri(version);
   writeCargo(version);
+  writeCargoLock(version);
   report();
   console.log("  done — rebuild the installers so the bundles carry the new version");
 }

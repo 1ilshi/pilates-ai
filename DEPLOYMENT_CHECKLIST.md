@@ -51,6 +51,16 @@ Legend: ✅ done and verified · 🟡 done, needs a runtime check · 🔴 blocke
 | A19 | `.venv` (1.4 GB) no longer committable | `.gitignore` |
 | A20 | `storage.rules` in git matches production | Committed after your deploy |
 | A21 | Device-code pairing | Server endpoints deployed and round-tripped: start → approve → poll → exchange, replay refused. Refresh token in `auth.json`, password path preserved for existing installs. `devicePairings` denied to all clients |
+| A22 | Update channel actually works | Every manifest URL returns **200** and the manifest signature matches the published `.sig`. A release now fails in CI if any URL does not resolve |
+
+### Update channel — the bug that made it look like it worked
+
+The banner appeared and said "2.0.1 is available", but "Install and restart" failed. Two independent causes:
+
+1. **The manifest pointed at URLs that 404.** GitHub rewrites spaces in release asset names to dots, so the asset is `Pilates.AI_2.0.1_x64-setup.exe` while the manifest said `Pilates%20AI_2.0.1_x64-setup.exe`. The *check* only reads the manifest, so it succeeded; the failure surfaced at download, after the user clicked. This affected all three platforms. Fixed, and the publish job now fetches every URL and fails the release if one is not 200.
+2. **Install mode mismatch.** The app was installed from the **MSI**, which is per-machine (`C:\Program Files\Pilates AI`). The manifest ships the **NSIS** installer, which is per-user. Even with a working URL, that installs a second copy alongside rather than upgrading the first.
+
+**Policy:** NSIS is the self-updating channel; MSI is for estates that push updates with their own tooling (Intune/GPO). A machine installed from the MSI cannot self-update and must not be expected to.
 
 ### Pairing — operational notes
 

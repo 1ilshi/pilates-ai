@@ -50,6 +50,15 @@ Legend: ✅ done and verified · 🟡 done, needs a runtime check · 🔴 blocke
 | A18 | Provisioning is visible in the UI | Amber banner when no bucket; "account not provisioned" on `PERMISSION_DENIED` |
 | A19 | `.venv` (1.4 GB) no longer committable | `.gitignore` |
 | A20 | `storage.rules` in git matches production | Committed after your deploy |
+| A21 | Device-code pairing | Server endpoints deployed and round-tripped: start → approve → poll → exchange, replay refused. Refresh token in `auth.json`, password path preserved for existing installs. `devicePairings` denied to all clients |
+
+### Pairing — operational notes
+
+- **An existing install is not gated.** A workstation with a complete `cloud.json` credential counts as paired; only a machine with no credential at all shows the pairing screen.
+- **Approval is a privileged act.** `pairApprove` requires the `clinic` claim, and the minted token carries it — approving grants read/write on patient records.
+- **Project-level IAM is required.** `createCustomToken` needs `roles/iam.serviceAccountTokenCreator` on the Cloud Functions runtime service account, granted to itself. This is not in the repo; it was applied to `pilates-ai` and must be re-applied to any new project.
+- **Cleanup is by TTL.** `devicePairings.expires_at_ts` carries a Firestore TTL policy; the string `expires_at` is only used by the logic.
+- **Approval should come from the dedicated workstation account** (`desktopaccess@`), which is a synthetic account, not a person's. If a real clinician ever approves, their account removal takes every workstation they paired with it.
 
 ---
 

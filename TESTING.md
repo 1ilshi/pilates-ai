@@ -371,3 +371,51 @@ pnpm --filter @pilates/viz smoke                  # component tests
 node tools\generate-pose-definitions.mjs --check  # config in sync
 ```
 
+---
+
+## Workstation pairing (first run)
+
+A new install has no credential. It must be paired once, in the portal.
+
+### First run
+
+1. Launch the app on a machine with no `auth.json`.
+2. It shows **Pair this workstation** with a code such as `K7M4-QP2X`, and opens
+   `https://pilates-ai.web.app/pair?code=K7M4-QP2X`.
+3. Sign in to the portal as a clinician who carries the `clinic=pilates-ai`
+   claim. The page states that the workstation will be able to read and write
+   patient records.
+4. Press **Authorise workstation**. The portal confirms.
+5. The desktop polls every two seconds and enters the workstation on its own.
+6. The code expires after ten minutes; if it lapses, press **Get a new code**.
+
+Check `%LOCALAPPDATA%\PilatesAI\auth.json` exists. It holds a refresh token —
+never a password.
+
+### Re-pairing
+
+Re-pair when the credential is revoked, the account is disabled, or the
+workstation moves to another clinic.
+
+1. The app opens normally and shows an amber banner:
+   *"Sync is paused — this workstation's pairing was rejected."*
+2. Press **Re-pair** and repeat the first-run steps.
+
+**The app never refuses to open because a credential was rejected.** Recording
+and the local outbox keep working; only upload is paused. Sessions queued during
+that time drain once pairing succeeds.
+
+### What to check after pairing
+
+- A session recorded on the paired machine reaches Firestore **and** Storage.
+- `firebase functions:log --only pairApprove` shows the approving account.
+- A client cannot read `devicePairings` (expect `403`).
+
+### Failure modes
+
+| Symptom | Meaning |
+|---|---|
+| Portal says *"not a clinic account"* | The signed-in account lacks the `clinic` claim. |
+| Portal says *"That code has expired"* | More than ten minutes passed; get a new code. |
+| App shows the banner immediately | The stored token was revoked — re-pair. |
+| `pairApprove` returns 500 `mint-failed` | The functions service account lacks `roles/iam.serviceAccountTokenCreator`. |

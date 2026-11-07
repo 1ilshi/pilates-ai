@@ -122,5 +122,13 @@ service cloud.firestore {
       allow read: if isClinician();
       allow write: if false;
     }
+
+    // Device pairing records, including their rate-limit counters. Written and
+    // read only by the Cloud Functions (the Admin SDK bypasses these rules).
+    // A client that could read one would learn which codes are outstanding, and
+    // one that could write would be able to approve its own workstation.
+    match /devicePairings/{document} {
+      allow read, write: if false;
+    }
   }
 }

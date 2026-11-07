@@ -515,6 +515,41 @@ impl CloudSync {
             }
         }
 
+        // A paired workstation authenticates with its refresh token. The
+        // password path stays for installations that predate pairing: they must
+        // keep working after the upgrade with no re-pairing.
+        if let Some(state) = crate::pairing::load_auth() {
+            match crate::pairing::refresh_id_token(
+                &self.client,
+                &self.config.api_key,
+                &state.refresh_token,
+            ) {
+                Ok((id_token, seconds)) => {
+                    let ttl = seconds.saturating_sub(60).max(30);
+                    self.token = Some(IdToken {
+                        value: id_token.clone(),
+                        expires_at: std::time::Instant::now() + Duration::from_secs(ttl),
+                    });
+                    self.auth_failures = 0;
+                    self.auth_retry_after = None;
+                    self.auth_error = None;
+                    return Ok(id_token);
+                }
+                Err(error) => {
+                    // A rejected token must not hide the patient list. Fall
+                    // through to the password when one is configured; otherwise
+                    // report degraded and let the caller keep working offline.
+                    if self.config.email.trim().is_empty()
+                        || self.config.password.trim().is_empty()
+                    {
+                        let message = error.to_string();
+                        self.record_auth_failure(message.clone());
+                        return Err(EngineError::Sync(message));
+                    }
+                }
+            }
+        }
+
         let response = self
             .client
             .post(format!("{AUTH_ENDPOINT}?key={}", self.config.api_key))

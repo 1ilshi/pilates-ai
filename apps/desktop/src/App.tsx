@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BarChart3, Camera, ExternalLink, Users } from "lucide-react";
 import type { ClinicalSessionDocument } from "@pilates/types";
 import { poseDisplayLabel } from "@pilates/types";
@@ -9,7 +9,8 @@ import { ActiveCapturePage } from "./pages/ActiveCapturePage";
 import { SessionDetailPage } from "./pages/SessionDetailPage";
 import { Logo } from "./components/Logo";
 import { UpdateBanner } from "./components/UpdateBanner";
-import { isTauri, openPortal, type PatientRecord } from "./lib/ipc";
+import { PairingGate } from "./components/PairingGate";
+import { isTauri, openPortal, pairingStatus, type PatientRecord } from "./lib/ipc";
 import { useAutoSync } from "./hooks/useAutoSync";
 import { useUpdate } from "./hooks/useUpdate";
 
@@ -56,7 +57,27 @@ export function App() {
   // Every navigation pushes the view it left, so "back" returns to wherever
   // the user actually came from instead of a hardcoded destination.
   const [history, setHistory] = useState<View[]>([]);
+  // `checking` avoids flashing the gate before the credential is read.
+  const [pairing, setPairing] = useState<"checking" | "required" | "paired">(
+    "checking",
+  );
   const { tab, patient, session } = view;
+
+  useEffect(() => {
+    let cancelled = false;
+    pairingStatus()
+      .then((status) => {
+        if (!cancelled) setPairing(status.paired ? "paired" : "required");
+      })
+      .catch(() => {
+        // Never block the app on a status failure: an unreadable status file is
+        // not a reason to deny a clinician access to local records.
+        if (!cancelled) setPairing("paired");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const navigate = (next: Partial<View>) => {
     setHistory((current) => [...current, view]);
@@ -116,6 +137,19 @@ export function App() {
   const navActive = "border-brand-500/20 bg-brand-500/10 text-brand-400";
   const navIdle =
     "border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200";
+
+  if (pairing === "checking") {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center gap-2 bg-slate-950 text-sm text-slate-500">
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-700 border-t-brand-400" />
+        Starting…
+      </div>
+    );
+  }
+
+  if (pairing === "required") {
+    return <PairingGate onPaired={() => setPairing("paired")} />;
+  }
 
   return (
     <div className="flex h-screen w-screen bg-slate-950 font-sans text-slate-100">
@@ -210,6 +244,22 @@ export function App() {
 
         {/* Never prompt while a session could be recording. */}
         <UpdateBanner update={update} />
+
+        {sync.lastError && /token refresh rejected|credential|401/i.test(sync.lastError) && (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-500/30 bg-amber-500/10 px-6 py-2 text-xs text-amber-200">
+            <span>
+              Sync is paused — this workstation&apos;s pairing was rejected. You can
+              keep recording; sessions will upload once it is re-paired.
+            </span>
+            <button
+              type="button"
+              onClick={() => setPairing("required")}
+              className="rounded-control border border-amber-500/40 px-2 py-1 font-medium hover:bg-amber-500/20"
+            >
+              Re-pair
+            </button>
+          </div>
+        )}
 
         <section className="flex-1 overflow-y-auto p-6">
           {tab === "patients" && (

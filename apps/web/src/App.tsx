@@ -8,6 +8,7 @@ import { PatientsPage } from "./pages/PatientsPage";
 import { PatientPage } from "./pages/PatientPage";
 import { SessionPage } from "./pages/SessionPage";
 import { AnalysisPage } from "./pages/AnalysisPage";
+import { PairingPage } from "./pages/PairingPage";
 
 const NAV = [
   { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
@@ -88,6 +89,7 @@ export function App() {
           <Route path="/analysis" element={<AnalysisPage />} />
           <Route path="/patients/:id" element={<PatientPage />} />
           <Route path="/patients/:patientId/sessions/:sessionId" element={<SessionPage />} />
+          <Route path="/pair" element={<PairingPage />} />
           <Route path="*" element={<OverviewPage />} />
         </Routes>
       </main>

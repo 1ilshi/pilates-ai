@@ -87,3 +87,10 @@ exports.onPatientWritten = onDocumentWritten(
         await recordChange(data.last_origin || "");
     },
 );
+
+// Device-code pairing. See functions/pairing.js for the security notes.
+const pairing = require("./pairing");
+
+exports.pairStart = pairing.pairStart;
+exports.pairApprove = pairing.pairApprove;
+exports.pairPoll = pairing.pairPoll;

@@ -9,6 +9,7 @@ mod error;
 mod inference;
 mod mock_source;
 mod outbox;
+mod pairing;
 mod paths;
 mod pose_config;
 mod rep_tracker;
@@ -143,6 +144,9 @@ fn main() {
             commands::capture_status,
             commands::open_portal,
             commands::sync_check_remote,
+            commands::pairing_status,
+            commands::pairing_start,
+            commands::pairing_poll,
             commands::list_comments,
             commands::add_comment,
             commands::delete_comment,

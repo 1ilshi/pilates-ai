@@ -1227,6 +1227,57 @@ pub fn delete_comment(
     cloud.delete_comment(&patient_id, &comment_id)
 }
 
+/// Whether this workstation has a credential, and which machine it is.
+///
+/// Deliberately infallible: the pairing gate must render even when the file
+/// system or the network is misbehaving.
+#[derive(serde::Serialize)]
+pub struct PairingStatus {
+    paired: bool,
+    instance_id: String,
+}
+
+#[tauri::command]
+pub fn pairing_status() -> PairingStatus {
+    PairingStatus {
+        paired: crate::pairing::is_paired(),
+        instance_id: crate::cloud_sync::patient_origin(),
+    }
+}
+
+/// Ask the pairing service for a code to show the user.
+#[tauri::command]
+pub fn pairing_start() -> EngineResult<crate::pairing::PairingStart> {
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| EngineError::Sync(format!("pairing client: {e}")))?;
+    crate::pairing::start(&client, &crate::cloud_sync::patient_origin())
+}
+
+/// Poll once. Returns `true` when the workstation is now paired.
+#[tauri::command]
+pub fn pairing_poll(code: String, secret: String) -> EngineResult<bool> {
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| EngineError::Sync(format!("pairing client: {e}")))?;
+
+    let normalised = crate::pairing::normalise_code(&code);
+    match crate::pairing::poll(&client, &normalised, &secret)? {
+        crate::pairing::PollOutcome::Pending => Ok(false),
+        crate::pairing::PollOutcome::Approved(custom_token) => {
+            crate::pairing::exchange_custom_token(
+                &client,
+                crate::pairing::DEFAULT_API_KEY,
+                &custom_token,
+                &crate::cloud_sync::patient_origin(),
+            )?;
+            Ok(true)
+        }
+    }
+}
+
 #[tauri::command]
 pub fn sync_status(state: State<'_, AppState>) -> EngineResult<OutboxStats> {
     outbox_stats(state)

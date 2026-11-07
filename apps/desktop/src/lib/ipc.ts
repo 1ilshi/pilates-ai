@@ -242,6 +242,25 @@ export interface CaptureStatus {
 }
 
 export const listCameras = () => call<CameraDescriptor[]>("list_cameras");
+/** One pairing code, shown to the user while they authorise the machine. */
+export interface PairingStart {
+  code: string;
+  secret: string;
+  expires_at: string;
+}
+
+export interface PairingStatus {
+  paired: boolean;
+  instance_id: string;
+}
+
+/** Never fails: the gate must render even if the file system misbehaves. */
+export const pairingStatus = () => call<PairingStatus>("pairing_status");
+export const pairingStart = () => call<PairingStart>("pairing_start");
+/** Polls once; `true` means the workstation is now paired. */
+export const pairingPoll = (code: string, secret: string) =>
+  call<boolean>("pairing_poll", { code, secret });
+
 /** Opens the clinical portal in the default browser. */
 export const openPortal = () => call<void>("open_portal");
 export const captureStatus = () => call<CaptureStatus>("capture_status");

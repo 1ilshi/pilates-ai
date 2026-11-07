@@ -16,10 +16,10 @@ Windows ships **two** formats. They are not interchangeable: only one of them ca
 |---|---|---|---|---|
 | **Artifact** | `Pilates.AI_2.0.5_x64-setup.exe` | `Pilates.AI_2.0.5_x64_en-US.msi` | `…_aarch64.dmg` (71.1 MiB) + `Pilates.AI.app.tar.gz` (72.3 MiB) | `…_amd64.AppImage` (124 MiB) + `…_amd64.deb` (71.4 MiB) |
 | **Size** | 39.7 MiB | 45.2 MiB | 71.1 / 72.3 MiB | 124 / 71.4 MiB |
-| **Install scope** | per-user, no admin | per-machine, needs admin | drag to `/Applications` | deb: system-wide · AppImage: anywhere |
+| **Install scope** | asks at install time: *all users* (`Program Files`) or *just me* (`%LOCALAPPDATA%`) — but the installer itself elevates, so **UAC fires either way** | per-machine only, no choice, **admin required** | drag to `/Applications` | deb: system-wide · AppImage: anywhere |
 | **Updates itself** | ✅ **yes** | ❌ **no** — re-deploy the MSI | ✅ yes | ✅ AppImage · ❌ deb |
 | **Update artifact** | the `.exe` | — (not the update target) | `app.tar.gz` | `.AppImage` |
-| **Runtime dependency** | WebView2 (embedded bootstrapper, needs internet once) | WebView2 **must already be present** | none (WKWebView) | glibc ≥ 2.35, WebKitGTK 4.1 |
+| **Runtime dependency** | WebView2 (embedded bootstrapper, needs internet once) | WebView2 **must already be present** | none — WKWebView ships with macOS | glibc ≥ 2.35, WebKitGTK 4.1 |
 | **Camera API** | MediaFoundation / DirectShow | same | AVFoundation + TCC prompt | V4L2 (`video` group) |
 | **Camera permission** | OS prompt | same | `NSCameraUsageDescription` in Info.plist | group membership, no prompt |
 | **Inference provider** | CPU | CPU | **CoreML** | CPU |
@@ -31,9 +31,13 @@ Windows ships **two** formats. They are not interchangeable: only one of them ca
 
 ### Reading the Windows columns
 
-**Ship the NSIS `.exe` to clinics.** It installs without admin, and it is the only format the updater can replace — the manifest points Windows at the `.exe`, so an MSI install will be offered an NSIS installer, which installs *alongside* it rather than upgrading. You would end up with two entries in Apps & Features.
+**Ship the NSIS `.exe` to clinics.** It is the only format the updater can replace — the manifest points Windows at the `.exe`, so an MSI install will be offered an NSIS installer, which installs *alongside* it rather than upgrading. You would end up with two entries in Apps & Features.
 
 **Use the MSI when IT pushes updates** with Intune, GPO or similar. An MSI-installed machine cannot self-update, by design, and should not be expected to.
+
+**Why the `.exe` still shows a UAC prompt.** `tauri.windows.conf.json` sets `nsis.installMode: "both"`, which lets the user choose all-users or just-me — but Tauri requires elevation to offer that choice, and the generated installer declares `MULTIUSER_EXECUTIONLEVEL Highest`. So a clinic user sees an elevation prompt at install *and* at update, even if they pick "just me".
+
+Changing it to `"currentUser"` removes the prompt entirely (`RequestExecutionLevel user`, installs to `%LOCALAPPDATA%`, no admin ever) at the cost of losing the machine-wide option. For a clinic where staff are not administrators, `currentUser` is the smoother 1-click experience; `both` suits mixed estates but costs a UAC prompt on every update.
 
 ---
 

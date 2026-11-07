@@ -149,6 +149,13 @@ pub struct PullReport {
     pub sessions_imported: usize,
     /// Patients skipped because this workstation still has unsynced edits.
     pub skipped_pending: usize,
+    /// Why the session pull failed, if it did.
+    ///
+    /// The pull used to log this to stderr and report success, so sessions
+    /// recorded on another workstation never arrived and nothing said so —
+    /// invisible in a release build, which has no console.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
     pub enabled: bool,
 }
 
@@ -833,10 +840,35 @@ impl CloudSync {
     /// Mark a patient deleted in Firestore without destroying its other fields.
     pub fn tombstone_patient_document(&mut self, patient_id: &str) -> EngineResult<()> {
         let token = self.ensure_token()?;
-        let url = format!(
-            "{FIRESTORE_BASE}/projects/{}/databases/(default)/documents/patients/{patient_id}?updateMask.fieldPaths=local_state",
+        let base = format!(
+            "{FIRESTORE_BASE}/projects/{}/databases/(default)/documents/patients/{patient_id}",
             self.config.project_id
         );
+
+        // A PATCH with an update mask is an upsert. On a patient created and
+        // deleted before it ever reached Firestore it would become a create
+        // carrying only `local_state`, which the rules refuse (no `name`), and
+        // the queue entry would retry forever. There is nothing to tombstone.
+        let existing = self
+            .client
+            .get(&base)
+            .bearer_auth(&token)
+            .send()
+            .map_err(|e| EngineError::Sync(format!("patient lookup failed: {e}")))?;
+
+        if existing.status() == reqwest::StatusCode::NOT_FOUND {
+            return Ok(());
+        }
+        if !existing.status().is_success() {
+            let status = existing.status();
+            let text = existing.text().unwrap_or_default();
+            return Err(EngineError::Sync(format!(
+                "patient lookup rejected ({status}): {}",
+                truncate(&text, 300)
+            )));
+        }
+
+        let url = format!("{base}?updateMask.fieldPaths=local_state");
         let body = json!({ "fields": { "local_state": { "stringValue": "tombstone" } } });
 
         let response = self
@@ -1392,8 +1424,25 @@ impl CloudSync {
                     let result = if patient.local_state == PatientState::Tombstone {
                         self.tombstone_patient_document(&patient.id).map(|()| None)
                     } else {
-                        let precondition = outbox.remote_update_time(&patient.id).ok().flatten();
-                        self.write_patient_document(&patient, precondition.as_deref())
+                        // A failed baseline read must not silently downgrade the
+                        // write to an unconditional one: that is exactly the
+                        // overwrite the precondition exists to prevent. Skip
+                        // this entry and let the next sweep retry with a fresh
+                        // read rather than clobber a colleague's edit.
+                        match outbox.remote_update_time(&patient.id) {
+                            Ok(precondition) => {
+                                self.write_patient_document(&patient, precondition.as_deref())
+                            }
+                            Err(error) => {
+                                report.failed += 1;
+                                report.errors.push(format!(
+                                    "patient {}: cannot read the last known version ({error}); \
+                                     write skipped rather than risking an overwrite",
+                                    entry.entity_id
+                                ));
+                                continue;
+                            }
+                        }
                     };
 
                     match result {

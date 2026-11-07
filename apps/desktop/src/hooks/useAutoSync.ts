@@ -76,6 +76,10 @@ export function useAutoSync(): AutoSyncStatus {
           const pulled = await syncPullPatients();
           if (!failure && pulled && !pulled.enabled) {
             failure = "cloud sync is not configured";
+          } else if (!failure && pulled?.error) {
+            // Sessions recorded on another workstation never arrived. Saying
+            // "synced" here would hide a real gap in the patient's history.
+            failure = pulled.error;
           }
         } catch (error) {
           failure = failure ?? String(error);

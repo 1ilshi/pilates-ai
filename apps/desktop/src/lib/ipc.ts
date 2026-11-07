@@ -160,6 +160,8 @@ export interface PullReport {
   kept_deleted: number;
   /** Session documents downloaded from other workstations. */
   sessions_imported: number;
+  /** Why the session pull failed, if it did. */
+  error?: string | null;
   enabled: boolean;
 }
 
@@ -239,6 +241,12 @@ export interface CaptureStatus {
   active_hold_sec: number;
   /** Latest composite form score, 0-100. */
   last_form_score: number;
+  /**
+   * Last fatal error from the capture thread. The preview freezes on the last
+   * frame when this is set, so the UI must say so rather than keep showing a
+   * live badge over a still image.
+   */
+  camera_error?: string | null;
 }
 
 export const listCameras = () => call<CameraDescriptor[]>("list_cameras");

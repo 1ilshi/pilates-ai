@@ -223,6 +223,14 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
         </Card>
       )}
 
+      {capture?.camera_error && (
+        <Card className="border-rose-500/30 bg-rose-500/5 p-3 text-sm text-rose-200">
+          The camera stopped delivering frames — {capture.camera_error}. The preview
+          is showing its last image, so anything recorded now is not from the camera.
+          Check the connection, then stop and start the preview.
+        </Card>
+      )}
+
       {capture?.preview_running && !capture.engine_available && (
         <Card className="border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-300">
           Pose detection has not loaded — {engine?.detail ?? "unknown error"}. Recording

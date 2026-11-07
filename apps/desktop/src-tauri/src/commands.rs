@@ -345,6 +345,13 @@ pub struct CaptureStatus {
     pub rejected_reps: u32,
     /// Duration of the most recently counted repetition, in seconds.
     pub last_rep_duration_sec: f32,
+    /// Last fatal error from the capture thread, if any.
+    ///
+    /// The camera thread records decode and frame-grab failures but nothing
+    /// surfaced them, so an unplugged webcam left a frozen frame under a green
+    /// "Live" badge while the session recorded nothing.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub camera_error: Option<String>,
     /// Time since the current `start`, in seconds (0 when idle).
     pub active_hold_sec: f32,
     /// Latest composite form score, 0-100.
@@ -371,12 +378,21 @@ pub fn capture_status(state: State<'_, AppState>) -> CaptureStatus {
     let session = state.session.lock().ok();
     let active = session.as_ref().and_then(|guard| guard.as_ref());
 
+    // The capture thread records why a frame could not be read; without this
+    // the UI showed a frozen frame and no reason for it.
+    let camera_error = state
+        .camera
+        .lock()
+        .ok()
+        .and_then(|guard| guard.as_ref().and_then(|camera| camera.last_error()));
+
     CaptureStatus {
         preview_running,
         session_active: active.is_some(),
         session_frames: active.map(|s| s.frame_count()).unwrap_or(0),
         engine_available,
         camera_frames,
+        camera_error,
         rep_count: active.map(|s| s.rep_count()).unwrap_or(0),
         attempts: active.map(|s| s.attempts()).unwrap_or(0),
         rejected_reps: active.map(|s| s.rejected_reps()).unwrap_or(0),
@@ -720,14 +736,14 @@ pub fn start_session(
         return Err(EngineError::Invalid(format!("unknown patient {patient_id}")));
     }
 
-    let (_, _, _, version, _) = resolve_model(&pose_id).unwrap_or_else(|_| {
-        (
-            PathBuf::new(),
-            0,
-            0,
-            "2.0.0".to_string(),
-            Vec::new(),
-        )
+    // A session records which model produced its numbers, so a fabricated
+    // version is worse than an absent one: "2.0.0" would look like real
+    // provenance in a clinical record. If the manifest cannot be read the
+    // session still starts (capture must not be blocked by a config problem)
+    // and the field says plainly that it is unknown.
+    let (_, _, _, version, _) = resolve_model(&pose_id).unwrap_or_else(|error| {
+        eprintln!("[pilates] model manifest unavailable, recording an unknown version: {error}");
+        (PathBuf::new(), 0, 0, "unknown".to_string(), Vec::new())
     });
 
     let session = CaptureSession::new(
@@ -1165,7 +1181,10 @@ pub fn sync_pull_patients(state: State<'_, AppState>) -> EngineResult<crate::clo
     report.sessions_imported = match cloud.pull_sessions(&mut outbox) {
         Ok(imported) => imported,
         Err(error) => {
+            // Reported, not just logged: a failed session pull looks exactly
+            // like "no new sessions" and a release build has no console.
             eprintln!("[pilates] session pull failed: {error}");
+            report.error = Some(format!("session pull failed: {error}"));
             0
         }
     };

@@ -120,6 +120,17 @@ export function App() {
   // restart can never interrupt a recording.
   const update = useUpdate(isTauri() && tab !== "capture");
 
+  // Opening the portal is best-effort: the browser may be missing or blocked.
+  // Without this the Analysis button would fail silently, so the reason is
+  // surfaced in the footer next to the sync status instead of a new toast.
+  const [portalError, setPortalError] = useState<string | null>(null);
+
+  const openAnalysis = () => {
+    // Clear first, so a successful retry does not leave a stale warning.
+    setPortalError(null);
+    openPortal().catch((error) => setPortalError(String(error)));
+  };
+
   // A `PERMISSION_DENIED` from Firestore almost always means the account is
   // missing the `clinic` custom claim, which an administrator has to set with
   // `pnpm claim:clinic`. "Sync failed" would leave the clinic guessing.
@@ -205,7 +216,7 @@ export function App() {
             */}
             <button
               type="button"
-              onClick={() => void openPortal()}
+              onClick={openAnalysis}
               title="Opens the clinical portal in your browser"
               className={cn(navItem, navIdle)}
             >
@@ -246,6 +257,14 @@ export function App() {
               title={sync.lastError}
             >
               {sync.lastError}
+            </p>
+          )}
+          {portalError && (
+            <p
+              className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-amber-500/80"
+              title={portalError}
+            >
+              Could not open portal — {portalError}
             </p>
           )}
           <p className="mt-0.5">

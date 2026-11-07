@@ -133,6 +133,15 @@ const PROFILE_FIELDS: Array<[keyof ProfileDraft, string]> = [
   ["telNumber", "Phone"],
 ];
 
+// `firestore.rules` rejects notes longer than 4000 characters, so the composer
+// stops at the same limit: over-length text used to be accepted here, sent, and
+// then silently refused by the server.
+const COMMENT_MAX_LENGTH = 4000;
+// Only surface the counter once the note is long enough for the limit to matter.
+const COMMENT_COUNTER_FROM = 3500;
+// Amber from here on, so running out of room is visible before it happens.
+const COMMENT_COUNTER_WARN = COMMENT_MAX_LENGTH - 100;
+
 /* ------------------------------------------------------------------ */
 /* Small presentational pieces                                         */
 /* ------------------------------------------------------------------ */
@@ -715,14 +724,28 @@ export function PatientView({
                   value={commentDraft}
                   onChange={(event) => setCommentDraft(event.target.value)}
                   rows={2}
+                  maxLength={COMMENT_MAX_LENGTH}
                   placeholder="Add a note for the next session…"
                   aria-label="New clinical note"
                   className="w-full resize-none bg-transparent px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none"
                 />
                 <div className="flex items-center justify-between gap-2 border-t border-slate-800/70 px-2 py-1.5">
-                  <span className="pl-1 text-[10px] text-slate-600">
-                    Visible to everyone in the clinic
-                  </span>
+                  <div className="flex min-w-0 items-center gap-2 pl-1">
+                    <span className="truncate text-[10px] text-slate-600">
+                      Visible to everyone in the clinic
+                    </span>
+                    {commentDraft.length > COMMENT_COUNTER_FROM && (
+                      <span
+                        className={
+                          commentDraft.length >= COMMENT_COUNTER_WARN
+                            ? "shrink-0 text-[10px] tabular-nums text-amber-400"
+                            : "shrink-0 text-[10px] tabular-nums text-slate-500"
+                        }
+                      >
+                        {commentDraft.length}/{COMMENT_MAX_LENGTH}
+                      </span>
+                    )}
+                  </div>
                   <Button
                     onClick={() => void submitComment()}
                     disabled={commentBusy || !commentDraft.trim()}

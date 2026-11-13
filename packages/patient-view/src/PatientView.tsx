@@ -984,7 +984,7 @@ export function PatientView({
                               <TableHead>#</TableHead>
                               <TableHead>Duration</TableHead>
                               <TableHead>Peak ROM</TableHead>
-                              <TableHead>Form</TableHead>
+                              <TableHead>Accuracy</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>

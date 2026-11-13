@@ -92,7 +92,7 @@ export function PoseDifficultyChart({ rows, rowHeight = 30 }: PoseDifficultyChar
         width="100%"
         height={height}
         role="img"
-        aria-label="Score range per pose"
+        aria-label="Pose accuracy range per pose"
       >
         {[0, 25, 50, 75, 100].map((tick) => (
           <g key={tick}>

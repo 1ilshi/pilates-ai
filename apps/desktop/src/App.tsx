@@ -346,7 +346,7 @@ export function App() {
         </header>
 
         {/* Never prompt while a session could be recording. */}
-        <UpdateBanner update={update} />
+        {tab !== "capture" && <UpdateBanner update={update} />}
 
         {sync.authRejected && (
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-500/30 bg-amber-500/10 px-6 py-2 text-xs text-amber-200">

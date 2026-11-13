@@ -15,7 +15,7 @@ use tauri::{AppHandle, Emitter, State};
 
 use crate::biomechanics::{MovementPhase, RepFsm};
 use crate::camera::{self, CameraDescriptor};
-use crate::cloud_sync::{CloudSync, SyncReport};
+use crate::cloud_sync::{CloudConfig, CloudSync, SyncReport};
 use crate::error::{EngineError, EngineResult};
 use crate::inference::{ExecutionProviderKind, InferenceEngine, InferenceOutput};
 use crate::outbox::{OutboxStats, StoredPatient, StoredSession};
@@ -354,7 +354,7 @@ pub struct CaptureStatus {
     pub camera_error: Option<String>,
     /// Time since the current `start`, in seconds (0 when idle).
     pub active_hold_sec: f32,
-    /// Latest composite form score, 0-100.
+    /// Latest composite pose accuracy, 0-100.
     pub last_form_score: f32,
 }
 
@@ -937,13 +937,78 @@ pub fn list_all_sessions(state: State<'_, AppState>) -> EngineResult<Vec<Session
 /// The clinical portal, hosted on Firebase Hosting.
 pub const PORTAL_URL: &str = "https://pilates-ai.web.app";
 
-/// Open the portal in the user's default browser.
+/// Issues a one-time code that the browser exchanges for a portal session.
+const PORTAL_LOGIN_START: &str =
+    "https://asia-east2-pilates-ai.cloudfunctions.net/portalLoginStart";
+
+/// Open the portal in the user's default browser, already signed in.
 ///
 /// The desktop deliberately has no analysis page of its own: cohort-level
 /// analysis belongs in the portal, where the data is shared and always current.
+/// The browser is a separate security context and cannot inherit this session,
+/// so the workstation asks for a one-time code and opens `/auth#code=…`; the
+/// portal exchanges it for a session as the same account. Any failure falls back
+/// to the plain portal, which has its own sign-in screen — a broken handoff must
+/// never block analysis.
 #[tauri::command]
-pub fn open_portal() -> EngineResult<()> {
-    open_url(PORTAL_URL)
+pub fn open_portal(state: State<'_, AppState>) -> EngineResult<()> {
+    match portal_handoff_url(&state) {
+        Ok(url) => open_url(&url),
+        Err(error) => {
+            eprintln!("[pilates] portal handoff unavailable ({error}); opening the portal");
+            open_url(PORTAL_URL)
+        }
+    }
+}
+
+/// Ask the login service for a code and build the `/auth` URL.
+fn portal_handoff_url(state: &AppState) -> EngineResult<String> {
+    let token = {
+        let mut guard = state
+            .cloud
+            .lock()
+            .map_err(|_| EngineError::Sync("cloud lock poisoned".into()))?;
+        let Some(cloud) = guard.as_mut() else {
+            return Err(EngineError::Sync(
+                "this workstation is not signed in".to_string(),
+            ));
+        };
+        cloud.id_token()?
+    };
+
+    let client = reqwest::blocking::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()
+        .map_err(|e| EngineError::Sync(format!("portal handoff client: {e}")))?;
+
+    let response = client
+        .post(PORTAL_LOGIN_START)
+        .bearer_auth(&token)
+        .json(&serde_json::json!({}))
+        .send()
+        .map_err(|e| EngineError::Sync(format!("portal handoff request: {e}")))?;
+
+    if !response.status().is_success() {
+        return Err(EngineError::Sync(format!(
+            "portal handoff rejected ({})",
+            response.status()
+        )));
+    }
+
+    let value: Value = response
+        .json()
+        .map_err(|e| EngineError::Sync(format!("portal handoff response: {e}")))?;
+    let code = value
+        .get("code")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    if code.is_empty() {
+        return Err(EngineError::Sync(
+            "portal handoff returned no code".to_string(),
+        ));
+    }
+
+    Ok(format!("{PORTAL_URL}/auth#code={code}"))
 }
 
 /// Open an arbitrary URL in the user's default browser.
@@ -1267,6 +1332,66 @@ pub fn delete_comment(
     cloud.delete_comment(&patient_id, &comment_id)
 }
 
+/// Sign this workstation in with a clinic account.
+///
+/// The low-friction first-run path: one form, no code, no second device. The
+/// stored credential is the same refresh token pairing produces, so everything
+/// downstream (sync, token refresh, the "signed in again" recovery) is shared.
+#[tauri::command]
+pub fn auth_sign_in(
+    state: State<'_, AppState>,
+    email: String,
+    password: String,
+) -> EngineResult<()> {
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| EngineError::Sync(format!("sign-in client: {e}")))?;
+
+    // A clean install has no `cloud.json` yet, so fall back to the public
+    // identifiers the deployment ships with — the same values pairing uses.
+    let api_key = CloudConfig::load()
+        .map(|config| config.api_key)
+        .filter(|key| !key.is_empty())
+        .unwrap_or_else(|| crate::pairing::DEFAULT_API_KEY.to_string());
+
+    crate::pairing::sign_in(
+        &client,
+        &api_key,
+        &email,
+        &password,
+        &crate::cloud_sync::patient_origin(),
+    )?;
+
+    // The sync client is built once at startup. On a clean install it was
+    // `None` then, because there was no project config; sign-in has just
+    // written one. Attach it now so the first session can upload without a
+    // restart. A failure here is not a sign-in failure — the credential is
+    // already saved and the next launch retries.
+    if let Err(error) = initialise_cloud_sync(&state) {
+        eprintln!("[pilates] signed in, but cloud sync did not start: {error}");
+    }
+
+    Ok(())
+}
+
+/// Remove this workstation's credential and forget the cached token.
+///
+/// The next launch shows the sign-in screen. Used when a shared laptop changes
+/// hands, so switching accounts does not require finding and deleting a file.
+#[tauri::command]
+pub fn auth_sign_out(state: State<'_, AppState>) -> EngineResult<()> {
+    crate::pairing::clear_auth()?;
+    let mut guard = state
+        .cloud
+        .lock()
+        .map_err(|_| EngineError::Sync("cloud lock poisoned".into()))?;
+    if let Some(cloud) = guard.as_mut() {
+        cloud.forget_token();
+    }
+    Ok(())
+}
+
 /// Whether this workstation has a credential, and which machine it is.
 ///
 /// Deliberately infallible: the pairing gate must render even when the file
@@ -1297,7 +1422,11 @@ pub fn pairing_start() -> EngineResult<crate::pairing::PairingStart> {
 
 /// Poll once. Returns `true` when the workstation is now paired.
 #[tauri::command]
-pub fn pairing_poll(code: String, secret: String) -> EngineResult<bool> {
+pub fn pairing_poll(
+    state: State<'_, AppState>,
+    code: String,
+    secret: String,
+) -> EngineResult<bool> {
     let client = reqwest::blocking::Client::builder()
         .timeout(std::time::Duration::from_secs(30))
         .build()
@@ -1313,6 +1442,11 @@ pub fn pairing_poll(code: String, secret: String) -> EngineResult<bool> {
                 &custom_token,
                 &crate::cloud_sync::patient_origin(),
             )?;
+            // Same reason as sign-in: on a clean install the sync client was
+            // built before `cloud.json` existed, so attach it now.
+            if let Err(error) = initialise_cloud_sync(&state) {
+                eprintln!("[pilates] paired, but cloud sync did not start: {error}");
+            }
             Ok(true)
         }
     }

@@ -288,7 +288,7 @@ the owning patient document should gain:
 | Field | Expected |
 | :--- | :--- |
 | `total_sessions` | incremented by 1 |
-| `lifetime_avg_score` | running weighted mean of `summary.mean_form_score` |
+| `lifetime_avg_score` | running weighted mean of `summary.mean_form_score` (pose accuracy) |
 | `last_active` | the session's `completed_at` |
 
 To check by hand, open the Firebase console → Firestore → `patients` → a
@@ -373,49 +373,62 @@ node tools\generate-pose-definitions.mjs --check  # config in sync
 
 ---
 
-## Workstation pairing (first run)
+## Signing in (first run)
 
-A new install has no credential. It must be paired once, in the portal.
+A new install has no credential. It shows **Sign in**, and any account that
+exists in Firebase Auth is accepted.
 
 ### First run
 
 1. Launch the app on a machine with no `auth.json`.
-2. It shows **Pair this workstation** with a code such as `K7M4-QP2X`, and opens
+2. Enter the email and password created in the Firebase console, then press
+   **Sign in**. No claim, allow-list or portal approval is involved.
+3. The app opens on the patient list and starts syncing. The stored credential
+   is a refresh token in `auth.json`; the password is never written.
+4. Reopening the app does not ask again. **Switch account** in the sidebar
+   footer removes the credential and returns to the sign-in screen.
+
+Check `%LOCALAPPDATA%\PilatesAI\auth.json` exists and contains a
+`refresh_token`, never a password.
+
+### Pairing instead (shared or unattended machines)
+
+Choose **Pair it with a code instead** on the sign-in screen.
+
+1. The app shows a code such as `K7M4-QP2X` and opens
    `https://pilates-ai.web.app/pair?code=K7M4-QP2X`.
-3. Sign in to the portal as a clinician who carries the `clinic=pilates-ai`
-   claim. The page states that the workstation will be able to read and write
-   patient records.
-4. Press **Authorise workstation**. The portal confirms.
-5. The desktop polls every two seconds and enters the workstation on its own.
-6. The code expires after ten minutes; if it lapses, press **Get a new code**.
+2. Sign in to the portal with any clinic account and press **Authorise
+   workstation**. The page states that the workstation will be able to read and
+   write patient records.
+3. The desktop polls every two seconds and enters the workstation on its own.
+4. The code expires after ten minutes; if it lapses, press **Get a new code**.
 
-Check `%LOCALAPPDATA%\PilatesAI\auth.json` exists. It holds a refresh token —
-never a password.
+### Signing in again
 
-### Re-pairing
+Sign in again when the credential is revoked, the account is disabled, or the
+workstation changes hands.
 
-Re-pair when the credential is revoked, the account is disabled, or the
-workstation moves to another clinic.
-
-1. The app opens normally and shows an amber banner:
-   *"Sync is paused — this workstation's pairing was rejected."*
-2. Press **Re-pair** and repeat the first-run steps.
+1. The app opens normally and shows an amber banner: *"Sync is paused — the
+   account on this workstation was rejected."*
+2. Press **Sign in** and repeat the first-run steps.
 
 **The app never refuses to open because a credential was rejected.** Recording
 and the local outbox keep working; only upload is paused. Sessions queued during
-that time drain once pairing succeeds.
+that time drain once sign-in succeeds.
 
-### What to check after pairing
+### What to check after signing in
 
-- A session recorded on the paired machine reaches Firestore **and** Storage.
+- A session recorded on the workstation reaches Firestore **and** Storage.
+- Clicking **Analysis** opens the portal already signed in as the same account.
+- A client cannot read `devicePairings` or `portalLogins` (expect `403`).
 - `firebase functions:log --only pairApprove` shows the approving account.
-- A client cannot read `devicePairings` (expect `403`).
 
 ### Failure modes
 
 | Symptom | Meaning |
 |---|---|
-| Portal says *"not a clinic account"* | The signed-in account lacks the `clinic` claim. |
+| Portal says *"not a clinic account"* | The deployed `pairApprove` is stale — redeploy functions. |
 | Portal says *"That code has expired"* | More than ten minutes passed; get a new code. |
-| App shows the banner immediately | The stored token was revoked — re-pair. |
+| App shows the banner immediately | The stored token was revoked — sign in again. |
 | `pairApprove` returns 500 `mint-failed` | The functions service account lacks `roles/iam.serviceAccountTokenCreator`. |
+| Analysis opens the plain portal | The handoff function is unreachable or not deployed; the portal's own sign-in works. |

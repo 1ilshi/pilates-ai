@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CheckCircle2, ExternalLink, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  ExternalLink,
+  Loader2,
+  RefreshCw,
+  ShieldCheck,
+} from "lucide-react";
 import { Button, Card } from "@pilates/ui";
 import { openExternal, pairingPoll, pairingStart, type PairingStart } from "../lib/ipc";
 
@@ -18,14 +25,22 @@ type Phase =
   | { kind: "error"; message: string };
 
 /**
- * First-run pairing.
+ * First-run pairing for a shared or unattended machine.
  *
- * Shown only when the workstation has **no credential at all**. A credential
- * that exists but is rejected never reaches this screen — the app opens and
- * shows a banner instead, because a credential problem that hides the patient
- * list is indistinguishable from data loss.
+ * Shown when the workstation has **no credential at all**, or when someone
+ * chooses it from the sign-in screen. A credential that exists but is rejected
+ * never reaches this screen — the app opens and shows a banner instead, because
+ * a credential problem that hides the patient list is indistinguishable from
+ * data loss.
  */
-export function PairingGate({ onPaired }: { onPaired: () => void }) {
+export function PairingGate({
+  onPaired,
+  onBack,
+}: {
+  onPaired: () => void;
+  /** Present when the sign-in screen offered pairing as an alternative. */
+  onBack?: () => void;
+}) {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const [remaining, setRemaining] = useState(0);
   // Set when the browser could not be launched, so the URL can be shown.
@@ -191,6 +206,17 @@ export function PairingGate({ onPaired }: { onPaired: () => void }) {
           <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
           Needs internet once. After pairing it works offline.
         </p>
+
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="mt-3 flex w-full items-center justify-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-300"
+          >
+            <ArrowLeft className="h-3 w-3" aria-hidden="true" />
+            Sign in with an account instead
+          </button>
+        )}
       </Card>
     </div>
   );

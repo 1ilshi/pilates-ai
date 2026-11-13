@@ -94,3 +94,10 @@ const pairing = require("./pairing");
 exports.pairStart = pairing.pairStart;
 exports.pairApprove = pairing.pairApprove;
 exports.pairPoll = pairing.pairPoll;
+
+// One-time handoff so "Analysis" opens the portal already signed in.
+// See functions/portal_login.js for the security notes.
+const portalLogin = require("./portal_login");
+
+exports.portalLoginStart = portalLogin.portalLoginStart;
+exports.portalLoginExchange = portalLogin.portalLoginExchange;

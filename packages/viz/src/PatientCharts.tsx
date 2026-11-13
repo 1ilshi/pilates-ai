@@ -80,7 +80,7 @@ export interface SessionMetricChartProps {
 }
 
 const METRIC_SPECS: Record<SessionMetric, { label: string; unit: string; fixedMax?: number }> = {
-  form_score: { label: "Form score", unit: "%", fixedMax: 100 },
+  form_score: { label: "Pose accuracy", unit: "%", fixedMax: 100 },
   avg_hold_seconds: { label: "Hold time per rep", unit: "s" },
   reps: { label: "Reps", unit: "" },
 };
@@ -222,7 +222,7 @@ export interface RepProfileChartProps {
 /**
  * Rep-by-rep mechanics inside a single session.
  *
- * Two aligned rows share the rep index: form score on top, hold duration
+ * Two aligned rows share the rep index: pose accuracy on top, hold duration
  * below. Aligned rather than overlaid, because seconds and percent are not
  * comparable on one axis.
  */
@@ -278,10 +278,10 @@ export function RepProfileChart({ reps, rowHeight = 110 }: RepProfileChartProps)
         </span>
       </div>
 
-      {/* Form score across reps */}
+      {/* Pose accuracy across reps */}
       <div>
         <div className="mb-1 flex items-baseline justify-between text-xs">
-          <span className="font-medium text-slate-400">Form score</span>
+          <span className="font-medium text-slate-400">Pose accuracy</span>
           <span className="text-slate-600">max 100%</span>
         </div>
         <svg
@@ -289,7 +289,7 @@ export function RepProfileChart({ reps, rowHeight = 110 }: RepProfileChartProps)
           width="100%"
           height={rowHeight}
           role="img"
-          aria-label="Form score per repetition"
+          aria-label="Pose accuracy per repetition"
         >
           {[0, 50, 100].map((tick) => (
             <g key={tick}>
@@ -432,7 +432,7 @@ export interface HoldQualityScatterProps {
 }
 
 /**
- * Scatter of every repetition: hold duration against form score.
+ * Scatter of every repetition: hold duration against pose accuracy.
  *
  * A downward slope means longer holds degrade quality — a treatment signal
  * that no session average can express.
@@ -480,7 +480,7 @@ export function HoldQualityScatter({ points, height = 260 }: HoldQualityScatterP
         width="100%"
         height={height}
         role="img"
-        aria-label="Hold duration against form score for each repetition"
+        aria-label="Hold duration against pose accuracy for each repetition"
       >
         {[0, 50, 100].map((tick) => (
           <g key={tick}>

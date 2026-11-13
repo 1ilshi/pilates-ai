@@ -10,8 +10,8 @@ import { ActiveCapturePage } from "./pages/ActiveCapturePage";
 import { SessionDetailPage } from "./pages/SessionDetailPage";
 import { Logo } from "./components/Logo";
 import { UpdateBanner } from "./components/UpdateBanner";
-import { PairingGate } from "./components/PairingGate";
-import { isTauri, openPortal, pairingStatus, type PatientRecord } from "./lib/ipc";
+import { AccessGate } from "./components/AccessGate";
+import { authSignOut, isTauri, openPortal, pairingStatus, type PatientRecord } from "./lib/ipc";
 import { useAutoSync } from "./hooks/useAutoSync";
 import { useUpdate } from "./hooks/useUpdate";
 
@@ -59,7 +59,7 @@ export function App() {
   // the user actually came from instead of a hardcoded destination.
   const [history, setHistory] = useState<View[]>([]);
   // `checking` avoids flashing the gate before the credential is read.
-  const [pairing, setPairing] = useState<"checking" | "required" | "paired">(
+  const [access, setAccess] = useState<"checking" | "required" | "ready">(
     "checking",
   );
   const { tab, patient, session } = view;
@@ -68,12 +68,12 @@ export function App() {
     let cancelled = false;
     pairingStatus()
       .then((status) => {
-        if (!cancelled) setPairing(status.paired ? "paired" : "required");
+        if (!cancelled) setAccess(status.paired ? "ready" : "required");
       })
       .catch(() => {
         // Never block the app on a status failure: an unreadable status file is
         // not a reason to deny a clinician access to local records.
-        if (!cancelled) setPairing("paired");
+        if (!cancelled) setAccess("ready");
       });
     return () => {
       cancelled = true;
@@ -131,6 +131,14 @@ export function App() {
     openPortal().catch((error) => setPortalError(String(error)));
   };
 
+  // Shared laptop: hand the workstation to the next person. Blocked during a
+  // recording, where losing the credential would strand the session.
+  const switchAccount = () => {
+    authSignOut()
+      .then(() => setAccess("required"))
+      .catch((error) => setPortalError(String(error)));
+  };
+
   // A `PERMISSION_DENIED` from Firestore almost always means the account is
   // missing the `clinic` custom claim, which an administrator has to set with
   // `pnpm claim:clinic`. "Sync failed" would leave the clinic guessing.
@@ -167,7 +175,7 @@ export function App() {
   const navIdle =
     "border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200";
 
-  if (pairing === "checking") {
+  if (access === "checking") {
     return (
       <div className="flex h-screen w-screen items-center justify-center gap-2 bg-slate-950 text-sm text-slate-500">
         <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-700 border-t-brand-400" />
@@ -176,8 +184,8 @@ export function App() {
     );
   }
 
-  if (pairing === "required") {
-    return <PairingGate onPaired={() => setPairing("paired")} />;
+  if (access === "required") {
+    return <AccessGate onSignedIn={() => setAccess("ready")} />;
   }
 
   return (
@@ -270,6 +278,19 @@ export function App() {
           <p className="mt-0.5">
             Tauri 2.0 · Rust Engine v{appVersion ?? "…"}
           </p>
+          <button
+            type="button"
+            onClick={switchAccount}
+            disabled={tab === "capture"}
+            title={
+              tab === "capture"
+                ? "Finish the recording before switching account"
+                : "Remove this workstation's credential"
+            }
+            className="mt-1 text-[10px] text-slate-500 hover:text-slate-300 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Switch account
+          </button>
         </div>
       </aside>
 
@@ -287,15 +308,15 @@ export function App() {
         {sync.lastError && /token refresh rejected|credential|401/i.test(sync.lastError) && (
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-500/30 bg-amber-500/10 px-6 py-2 text-xs text-amber-200">
             <span>
-              Sync is paused — this workstation&apos;s pairing was rejected. You can
-              keep recording; sessions will upload once it is re-paired.
+              Sync is paused — the account on this workstation was rejected. You
+              can keep recording; sessions will upload once you sign in again.
             </span>
             <button
               type="button"
-              onClick={() => setPairing("required")}
+              onClick={() => setAccess("required")}
               className="rounded-control border border-amber-500/40 px-2 py-1 font-medium hover:bg-amber-500/20"
             >
-              Re-pair
+              Sign in
             </button>
           </div>
         )}

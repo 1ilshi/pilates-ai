@@ -147,7 +147,7 @@ pub struct CaptureSession {
     model_version: String,
     started_at: DateTime<Utc>,
     started_ms: i64,
-    /// Angle-based metrics (phase, angle, form score). Secondary.
+    /// Angle-based metrics (phase, angle, pose accuracy). Secondary.
     fsm: RepFsm,
     /// Detection-duration repetition counter. Authoritative.
     tracker: DetectionRepTracker,
@@ -232,7 +232,7 @@ impl CaptureSession {
         self.tracker.attempts()
     }
 
-    /// Most recent composite form score, 0 when nothing has been measured.
+    /// Most recent composite pose accuracy, 0 when nothing has been measured.
     pub fn last_form_score(&self) -> f32 {
         self.last_metrics
             .map(|metrics| metrics.instantaneous_form_score)

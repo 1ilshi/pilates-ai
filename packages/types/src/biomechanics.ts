@@ -80,7 +80,7 @@ export interface LiveTelemetryFrame {
 }
 
 /**
- * Composite form score breakdown. The engine weights these components to
+ * Composite pose accuracy breakdown. The engine weights these components to
  * produce `instantaneous_form_score`.
  */
 export interface FormScoreBreakdown {

@@ -607,6 +607,26 @@ impl CloudSync {
         Ok(parsed.id_token)
     }
 
+    /// The current ID token, refreshed if needed.
+    ///
+    /// Exposed so the portal handoff can prove which account this workstation is
+    /// signed in as without reaching into the token cache.
+    pub fn id_token(&mut self) -> EngineResult<String> {
+        self.ensure_token()
+    }
+
+    /// Drop the cached ID token after the credential is removed.
+    ///
+    /// Without this a signed-out workstation would keep using the token it
+    /// already holds until it expires, which is the opposite of what signing
+    /// out promises.
+    pub fn forget_token(&mut self) {
+        self.token = None;
+        self.auth_failures = 0;
+        self.auth_retry_after = None;
+        self.auth_error = None;
+    }
+
     /// Remember a failed sign-in and hold off before the next attempt.
     fn record_auth_failure(&mut self, message: String) {
         self.auth_failures = self.auth_failures.saturating_add(1);

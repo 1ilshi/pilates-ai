@@ -197,7 +197,7 @@ export function ImprovementRankingChart({ rows, rowHeight = 26 }: ImprovementRan
         width="100%"
         height={height}
         role="img"
-        aria-label="Change in form score between first and latest session"
+        aria-label="Change in pose accuracy between first and latest session"
       >
         <line
           x1={zero}
@@ -278,7 +278,7 @@ export interface BmiScoreChartProps {
 }
 
 /**
- * Body-mass index against mean form score.
+ * Body-mass index against mean pose accuracy.
  *
  * Individual patients are small dots; the band averages are larger markers on
  * the same axes. Both encode the same two units, so this is not a dual axis —
@@ -313,7 +313,7 @@ export function BmiScoreChart({ points, bands, height = 280 }: BmiScoreChartProp
         width="100%"
         height={height}
         role="img"
-        aria-label="Body mass index against mean form score"
+        aria-label="Body mass index against mean pose accuracy"
       >
         {[0, 25, 50, 75, 100].map((tick) => (
           <g key={tick}>
@@ -877,7 +877,7 @@ export interface HistogramSeries {
   id: string;
   label: string;
   color: string;
-  /** Every repetition's form score for this series, 0-100. */
+  /** Every repetition's pose accuracy for this series, 0-100. */
   scores: number[];
 }
 
@@ -943,7 +943,7 @@ export function CohortHistogram({
         width="100%"
         height={height}
         role="img"
-        aria-label="Distribution of repetition form scores per cohort"
+        aria-label="Distribution of repetition pose accuracy per cohort"
       >
         {[0, Math.round(maxCount / 2), maxCount].map((tick) => (
           <g key={tick}>
@@ -1007,7 +1007,7 @@ export function CohortHistogram({
           fontSize={9}
           fill="#475569"
         >
-          form score (%)
+          pose accuracy (%)
         </text>
       </svg>
 
@@ -1298,6 +1298,221 @@ export function CohortScatterPlot({
             </text>
           </g>
         ))}
+      </svg>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* J. Hold time against pose accuracy, one dot per repetition          */
+/* ------------------------------------------------------------------ */
+
+export interface RepAccuracyPoint {
+  /** Hold duration of this repetition, in seconds. */
+  hold: number;
+  /** Pose accuracy of this repetition, 0-100. */
+  accuracy: number;
+}
+
+export interface RepAccuracySeries {
+  id: string;
+  label: string;
+  color: string;
+  points: RepAccuracyPoint[];
+}
+
+export interface CohortRepScatterProps {
+  series: RepAccuracySeries[];
+  height?: number;
+  xLabel?: string;
+  yLabel?: string;
+  emptyMessage?: string;
+}
+
+/** Least-squares line, or null when the points cannot define one. */
+function trendLine(points: RepAccuracyPoint[]): { slope: number; intercept: number } | null {
+  const n = points.length;
+  if (n < 2) return null;
+
+  let sumX = 0;
+  let sumY = 0;
+  let sumXY = 0;
+  let sumXX = 0;
+  for (const point of points) {
+    sumX += point.hold;
+    sumY += point.accuracy;
+    sumXY += point.hold * point.accuracy;
+    sumXX += point.hold * point.hold;
+  }
+
+  const denominator = n * sumXX - sumX * sumX;
+  if (Math.abs(denominator) < 1e-9) return null;
+
+  const slope = (n * sumXY - sumX * sumY) / denominator;
+  const intercept = (sumY - slope * sumX) / n;
+  return { slope, intercept };
+}
+
+/**
+ * Every repetition as a dot: how long the hold lasted against how accurate the
+ * pose was, one colour per cohort, with a dashed least-squares line per cohort.
+ *
+ * A mean hides the relationship this chart is for — whether longer holds go
+ * with better or worse accuracy, and whether that differs between groups.
+ */
+export function CohortRepScatter({
+  series,
+  height = 280,
+  xLabel = "hold time per rep (s)",
+  yLabel = "pose accuracy (%)",
+  emptyMessage = "No repetitions to plot.",
+}: CohortRepScatterProps) {
+  const [containerRef, width] = useElementWidth<HTMLDivElement>();
+
+  const usable = series
+    .map((entry) => ({
+      ...entry,
+      points: entry.points.filter(
+        (point) =>
+          Number.isFinite(point.hold) &&
+          Number.isFinite(point.accuracy) &&
+          point.hold > 0 &&
+          point.accuracy > 0,
+      ),
+    }))
+    .filter((entry) => entry.points.length > 0);
+
+  if (usable.length === 0) {
+    return <Empty message={emptyMessage} height={height} />;
+  }
+
+  const padding = { top: 16, right: 18, bottom: 40, left: 44 };
+  const plotWidth = Math.max(40, width - padding.left - padding.right);
+  const plotHeight = Math.max(20, height - padding.top - padding.bottom);
+
+  const xMax = niceMax(
+    Math.max(...usable.flatMap((entry) => entry.points.map((point) => point.hold))),
+  );
+  const yMax = 100;
+
+  const x = (value: number) =>
+    padding.left + (Math.min(Math.max(value, 0), xMax) / xMax) * plotWidth;
+  const y = (value: number) =>
+    padding.top + plotHeight - (Math.min(Math.max(value, 0), yMax) / yMax) * plotHeight;
+
+  return (
+    <div ref={containerRef}>
+      <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+        {usable.map((entry) => (
+          <span
+            key={entry.id}
+            className="flex items-center gap-1.5 text-[11px] text-slate-400"
+          >
+            <span
+              className="inline-block h-2 w-2 rounded-full"
+              style={{ backgroundColor: entry.color }}
+            />
+            {entry.label}
+          </span>
+        ))}
+      </div>
+
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        width="100%"
+        height={height}
+        role="img"
+        aria-label="Pose accuracy against hold time per repetition, by cohort"
+      >
+        {[0, 25, 50, 75, 100].map((tick) => (
+          <g key={tick}>
+            <line
+              x1={padding.left}
+              y1={y(tick)}
+              x2={width - padding.right}
+              y2={y(tick)}
+              stroke={GRID}
+            />
+            <text
+              x={padding.left - 6}
+              y={y(tick) + 3}
+              textAnchor="end"
+              fontSize={9}
+              fill={AXIS_TEXT}
+            >
+              {tick}
+            </text>
+          </g>
+        ))}
+
+        {[0, xMax / 2, xMax].map((tick) => (
+          <text
+            key={`x-${tick}`}
+            x={x(tick)}
+            y={height - 20}
+            textAnchor="middle"
+            fontSize={9}
+            fill={AXIS_TEXT}
+          >
+            {Math.round(tick * 10) / 10}
+          </text>
+        ))}
+
+        <text
+          x={padding.left + plotWidth / 2}
+          y={height - 6}
+          textAnchor="middle"
+          fontSize={9}
+          fill="#475569"
+        >
+          {xLabel}
+        </text>
+        <text
+          x={10}
+          y={padding.top + plotHeight / 2}
+          textAnchor="middle"
+          fontSize={9}
+          fill="#475569"
+          transform={`rotate(-90 10 ${padding.top + plotHeight / 2})`}
+        >
+          {yLabel}
+        </text>
+
+        {usable.map((entry) => {
+          const trend = trendLine(entry.points);
+          if (!trend) return null;
+
+          const first = Math.min(...entry.points.map((point) => point.hold));
+          const last = Math.max(...entry.points.map((point) => point.hold));
+          const clamp = (value: number) => Math.min(Math.max(value, 0), yMax);
+
+          return (
+            <line
+              key={`trend-${entry.id}`}
+              x1={x(first)}
+              y1={y(clamp(trend.intercept + trend.slope * first))}
+              x2={x(last)}
+              y2={y(clamp(trend.intercept + trend.slope * last))}
+              stroke={entry.color}
+              strokeWidth={1.5}
+              strokeDasharray="4 3"
+              strokeOpacity={0.8}
+            />
+          );
+        })}
+
+        {usable.map((entry) =>
+          entry.points.map((point, index) => (
+            <circle
+              key={`${entry.id}-${index}`}
+              cx={x(point.hold)}
+              cy={y(point.accuracy)}
+              r={2.6}
+              fill={entry.color}
+              fillOpacity={0.55}
+            />
+          )),
+        )}
       </svg>
     </div>
   );

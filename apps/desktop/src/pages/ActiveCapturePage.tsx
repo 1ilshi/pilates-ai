@@ -435,7 +435,7 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
               </p>
             </Card>
             <Card className="p-4">
-              <span className="text-xs text-slate-400">Form score</span>
+              <span className="text-xs text-slate-400">Pose accuracy</span>
               <p className="mt-1 text-3xl font-bold text-slate-100">
                 {frame
                   ? formatPercent(frame.instantaneous_form_score, 0)

@@ -1,13 +1,21 @@
-//! Device-code pairing and the stored refresh token.
+//! Workstation credentials: email/password sign-in, device-code pairing, and
+//! the stored refresh token.
 //!
-//! A workstation with no credential shows a code; a clinician approves it in
-//! the portal; this module collects the resulting custom token and exchanges it
-//! for a Firebase refresh token, which is stored in `auth.json`.
+//! There are two ways to obtain the credential, and both end in the same place:
+//!
+//! * **Sign-in** — a colleague types their clinic email and password once. This
+//!   is the easy path: no code, no second device. The password is used for one
+//!   request and never stored.
+//! * **Pairing** — a shared or unattended machine shows a code, a clinician
+//!   approves it in the portal, and this module exchanges the custom token.
+//!
+//! Either way the persisted credential is a Firebase refresh token in
+//! `auth.json`, so sync has one code path.
 //!
 //! Why a separate file from `cloud.json`: `cloud.json` is hand-edited by
 //! administrators and copied between machines. A refresh token must not travel
 //! with it, or copying the file would clone the first workstation's identity.
-//! Deleting `auth.json` is the documented way to re-pair.
+//! Deleting `auth.json` is the documented way to sign in again.
 
 use std::path::{Path, PathBuf};
 
@@ -24,6 +32,10 @@ const PAIRING_BASE: &str = "https://asia-east2-pilates-ai.cloudfunctions.net";
 const SIGN_IN_WITH_CUSTOM_TOKEN: &str =
     "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken";
 const SECURE_TOKEN: &str = "https://securetoken.googleapis.com/v1/token";
+
+/// Email/password sign-in, used by the easy first-run path.
+const SIGN_IN_WITH_PASSWORD: &str =
+    "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword";
 
 /// Public Firebase identifiers for the clinic project.
 ///
@@ -298,12 +310,125 @@ pub fn exchange_custom_token(
     Ok(state)
 }
 
-/// Blank the shared password in `cloud.json` after a successful pairing.
+/// What Identity Toolkit returns for a password sign-in.
+#[derive(Debug, Deserialize)]
+struct PasswordSignInResponse {
+    #[serde(rename = "refreshToken")]
+    refresh_token: String,
+    #[serde(rename = "idToken")]
+    id_token: String,
+}
+
+/// Sign this workstation in with a clinic account.
 ///
-/// Deliberately infallible. Pairing has already succeeded by the time this
-/// runs; reporting a failure here would tell the user pairing did not work
-/// when it did. If the rewrite fails the password simply stays, which is the
-/// more forgiving state.
+/// This is the low-friction path for a colleague's own laptop: one form, one
+/// credential, no code and no second device. The password is used for a single
+/// request and never written anywhere — the persisted credential is the same
+/// refresh token pairing produces, so sync has one code path.
+///
+/// Any account that exists in Firebase Auth is accepted. Accounts are created
+/// only by the administrator in the Firebase console, and new-user sign-up is
+/// disabled, so account existence is the roster. Firestore still refuses the
+/// request if the account has been disabled.
+pub fn sign_in(
+    client: &Client,
+    api_key: &str,
+    email: &str,
+    password: &str,
+    instance_id: &str,
+) -> EngineResult<AuthState> {
+    if email.trim().is_empty() || password.is_empty() {
+        return Err(EngineError::Invalid(
+            "Enter the email and password your supervisor gave you.".into(),
+        ));
+    }
+
+    let response = client
+        .post(format!("{SIGN_IN_WITH_PASSWORD}?key={api_key}"))
+        .json(&json!({
+            "email": email.trim(),
+            "password": password,
+            "returnSecureToken": true,
+        }))
+        .send()
+        .map_err(|error| {
+            // The detail is for the log; the clinician gets something actionable.
+            eprintln!("[pilates] sign-in request failed: {error}");
+            EngineError::Sync(
+                "Could not reach the sign-in service. Check the connection and try again.".into(),
+            )
+        })?;
+
+    let status = response.status();
+    let text = response.text().unwrap_or_default();
+
+    if !status.is_success() {
+        return Err(EngineError::Sync(sign_in_failure(&text, status.as_u16())));
+    }
+
+    let parsed: PasswordSignInResponse = serde_json::from_str(&text)
+        .map_err(|error| EngineError::Sync(format!("sign-in response: {error}")))?;
+
+    if parsed.refresh_token.trim().is_empty() || parsed.id_token.trim().is_empty() {
+        return Err(EngineError::Sync(
+            "Sign-in did not return a credential. Try again.".into(),
+        ));
+    }
+
+    let state = AuthState {
+        schema_version: 1,
+        refresh_token: parsed.refresh_token,
+        paired_at: chrono::Utc::now().to_rfc3339(),
+        instance_id: instance_id.to_string(),
+    };
+    save_auth(&state)?;
+    // Same post-conditions as pairing: a clean install has no project config,
+    // and the shared password (if any) is now obsolete.
+    ensure_cloud_config()?;
+    clear_legacy_password();
+    Ok(state)
+}
+
+/// Turn an Identity Toolkit error body into something a clinician can act on.
+///
+/// Firebase deliberately merges "unknown email" and "wrong password" into one
+/// code, so this must not try to tell them apart.
+fn sign_in_failure(body: &str, status: u16) -> String {
+    let code = serde_json::from_str::<serde_json::Value>(body)
+        .ok()
+        .and_then(|value| {
+            value
+                .get("error")
+                .and_then(|error| error.get("message"))
+                .and_then(|message| message.as_str())
+                .map(str::to_string)
+        })
+        .unwrap_or_default();
+
+    match code.as_str() {
+        "EMAIL_NOT_FOUND" | "INVALID_PASSWORD" | "INVALID_LOGIN_CREDENTIALS" => {
+            "Email or password is incorrect.".to_string()
+        }
+        "INVALID_EMAIL" => "That does not look like an email address.".to_string(),
+        "USER_DISABLED" => "This account has been disabled. Ask your supervisor.".to_string(),
+        "TOO_MANY_ATTEMPTS_TRY_LATER" => {
+            "Too many attempts. Wait a few minutes and try again.".to_string()
+        }
+        _ if status == 429 => "Too many attempts. Wait a few minutes and try again.".to_string(),
+        _ if status >= 500 => {
+            "The sign-in service is unavailable. Try again shortly.".to_string()
+        }
+        _ => "Sign-in was rejected. Check the email and password, then try again.".to_string(),
+    }
+}
+
+/// Blank the shared password in `cloud.json` after a successful sign-in or
+/// pairing.
+///
+/// Deliberately infallible. The credential is already stored by the time this
+/// runs; reporting a failure here would tell the user it did not work when it
+/// did. If the rewrite fails the password simply stays, which is the more
+/// forgiving state.
 ///
 /// The email is kept: it is not a secret and makes the workstation identifiable
 /// in `cloud.json`. With the password empty, `is_paired` no longer counts this
@@ -641,5 +766,29 @@ mod tests {
         assert!(text.contains("\"other\""), "existing config was overwritten: {text}");
 
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn sign_in_rejects_an_empty_form_before_any_request() {
+        // A plain client is enough: validation must return before a request is
+        // attempted, so this test never touches the network.
+        let client = Client::new();
+        assert!(sign_in(&client, "key", "  ", "secret", "instance-1").is_err());
+        assert!(sign_in(&client, "key", "a@b.c", "", "instance-1").is_err());
+    }
+
+    #[test]
+    fn sign_in_errors_are_actionable_and_do_not_leak_codes() {
+        let wrong = r#"{"error":{"code":400,"message":"INVALID_LOGIN_CREDENTIALS"}}"#;
+        assert_eq!(sign_in_failure(wrong, 400), "Email or password is incorrect.");
+
+        let disabled = r#"{"error":{"code":400,"message":"USER_DISABLED"}}"#;
+        assert!(sign_in_failure(disabled, 400).contains("disabled"));
+        assert!(sign_in_failure("{}", 429).contains("Too many attempts"));
+        assert!(sign_in_failure("not json", 500).contains("unavailable"));
+
+        // An unrecognised code must not reach the user verbatim.
+        let unknown = sign_in_failure(r#"{"error":{"message":"SOMETHING_NEW"}}"#, 400);
+        assert!(!unknown.contains("SOMETHING_NEW"));
     }
 }

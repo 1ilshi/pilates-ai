@@ -49,7 +49,7 @@ interface MetricSpec {
 }
 
 const METRICS: MetricSpec[] = [
-  { key: "form_score", label: "Form score", unit: "%", fixedMax: 100 },
+  { key: "form_score", label: "Pose accuracy", unit: "%", fixedMax: 100 },
   { key: "hold_seconds", label: "Hold time", unit: "s" },
   { key: "reps", label: "Reps", unit: "" },
 ];
@@ -96,7 +96,7 @@ function useElementWidth<T extends HTMLElement>(): [React.RefObject<T | null>, n
 }
 
 /**
- * Progress chart showing form score, hold time and repetitions as three
+ * Progress chart showing pose accuracy, hold time and repetitions as three
  * stacked series on a shared time axis.
  *
  * Each row scales independently (a percentage, seconds and a count cannot

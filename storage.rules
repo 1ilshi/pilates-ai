@@ -13,20 +13,19 @@ service firebase.storage {
 
     // Clinic accounts allowed to read and write the archive.
     //
-    // The `clinic` claim is the only mechanism: every clinic account carries it
-    // (see `pnpm claim:clinic --list`). An email allow-list was used briefly
-    // while the desktop account was being provisioned, but it hardcodes
-    // personal addresses in a deployed file — adding or removing a clinician
-    // would mean a rules deploy, and a claim is revoked in one command.
-    function isClinician() {
-      return request.auth != null
-        && request.auth.token.get('clinic', '') == 'pilates-ai';
+    // Any signed-in account is accepted. Accounts are created only by the
+    // administrator in the Firebase console (new-user sign-up is disabled), so
+    // account existence is the roster. The `clinic` claim was removed because
+    // provisioning it was a separate CLI step that silently locked out every
+    // newly created account; see the note in `firestore.rules` to restore it.
+    function isSignedIn() {
+      return request.auth != null;
     }
 
     match /telemetry/{patientId}/{fileName} {
-      allow read: if isClinician();
+      allow read: if isSignedIn();
 
-      allow create: if isClinician()
+      allow create: if isSignedIn()
         && fileName.matches('.*\\.parquet')
         && request.resource.size < 200 * 1024 * 1024;
 

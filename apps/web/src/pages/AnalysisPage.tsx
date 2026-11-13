@@ -4,6 +4,7 @@ import {
   AdherenceChart,
   BmiScoreChart,
   CohortHistogram,
+  CohortRepScatter,
   CohortScatterPlot,
   CohortStripPlot,
   PoseDifficultyChart,
@@ -195,6 +196,21 @@ export function AnalysisPage() {
     [rawValues],
   );
 
+  /** Hold time and accuracy paired per repetition, for the relation chart. */
+  const relationSeries = useMemo(
+    () =>
+      rawValues.map((entry) => ({
+        id: entry.id,
+        label: entry.label,
+        color: entry.color,
+        points: entry.points.map((point) => ({
+          hold: point.hold,
+          accuracy: point.score,
+        })),
+      })),
+    [rawValues],
+  );
+
 
   const genders = useMemo(
     () => [...new Set(everyone.map((row) => row.gender).filter(Boolean))].sort(),
@@ -256,11 +272,12 @@ export function AnalysisPage() {
 
   const chartTitles: Record<string, string> = {
     difficulty: "Pose difficulty",
-    bmi: "BMI vs form score",
+    bmi: "BMI vs pose accuracy",
     adherence: "Adherence",
-    histogram: "Repetition score distribution",
-    cohortScore: "Form score by cohort",
+    histogram: "Repetition accuracy distribution",
+    cohortScore: "Pose accuracy by cohort",
     cohortHold: "Hold time per rep by cohort",
+    cohortRelation: "Hold time vs pose accuracy",
     cohortSessions: "Sessions by cohort",
   };
 
@@ -299,6 +316,14 @@ export function AnalysisPage() {
           />
         ) : (
           <CohortStripPlot series={holdSeries} unit="s" height={expandedHeight} />
+        );
+      case "cohortRelation":
+        return (
+          <CohortRepScatter
+            series={relationSeries}
+            height={expandedHeight}
+            emptyMessage={cohortEmptyMessage}
+          />
         );
       case "cohortSessions":
         return sessionsView === "count" ? (
@@ -407,7 +432,7 @@ export function AnalysisPage() {
         <h1 className="text-2xl font-bold text-white">Analysis</h1>
         <p className="mt-1 text-sm text-slate-400">
           {scoped.length} patient(s) · {sessions.length} session(s) synced.
-          Cohorts below affect only their own two charts.
+          Cohorts below affect only their own charts.
         </p>
       </div>
 
@@ -421,8 +446,8 @@ export function AnalysisPage() {
         </Card>
       )}
 
-      {/* One block: the cohort editor and the only two charts it drives, so
-          the grouping itself communicates that they are not clinic-wide. */}
+      {/* One block: the cohort editor and the charts it drives, so the grouping
+          itself communicates that they are not clinic-wide. */}
       <section className="rounded-card border border-brand-500/25 bg-brand-500/[0.04] p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
@@ -546,7 +571,7 @@ export function AnalysisPage() {
 
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
           <ChartCard
-            title="Form score by cohort"
+            title="Pose accuracy by cohort"
             description={
               scoreView === "mean"
                 ? scoreBasis === "rep"
@@ -604,6 +629,17 @@ export function AnalysisPage() {
           </ChartCard>
 
           <ChartCard
+            title="Hold time vs pose accuracy"
+            description="Every repetition as a dot: how long the target position was held against how accurate the pose was. Dashed lines are each cohort's trend."
+            onExpand={() => expand("cohortRelation")}
+          >
+            <CohortRepScatter
+              series={relationSeries}
+              emptyMessage={cohortEmptyMessage}
+            />
+          </ChartCard>
+
+          <ChartCard
             title="Sessions by cohort"
             description={
               sessionsView === "count"
@@ -630,7 +666,7 @@ export function AnalysisPage() {
           </ChartCard>
 
           <ChartCard
-            title="Repetition score distribution"
+            title="Repetition accuracy distribution"
             description="Every repetition from each cohort in ten-point buckets, one colour per cohort. A mean hides whether performance is consistent or split between strong and weak."
             onExpand={() => expand("histogram")}
           >
@@ -648,7 +684,7 @@ export function AnalysisPage() {
         <div>
           <h2 className="text-sm font-semibold text-slate-100">By exercise</h2>
           <p className="mt-1 text-xs text-slate-500">
-            Spread of session scores per pose across the whole clinic — the dot
+            Spread of session accuracy per pose across the whole clinic — the dot
             is the mean, the bar is the range.
           </p>
         </div>
@@ -670,7 +706,7 @@ export function AnalysisPage() {
         </div>
         <div className="space-y-4">
           <ChartCard
-            title="BMI vs form score"
+            title="BMI vs pose accuracy"
             description={`Each dot is a patient; the ringed marker is that band's average.${
               missingBmi > 0
                 ? ` ${missingBmi} patient(s) excluded — no usable weight or height.`

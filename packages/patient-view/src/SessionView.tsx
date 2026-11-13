@@ -123,7 +123,7 @@ export function SessionView({
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Repetitions" value={String(summary.total_reps ?? reps.length)} />
         <Stat
-          label="Mean form score"
+          label="Mean pose accuracy"
           value={
             summary.mean_form_score !== undefined
               ? formatPercent(summary.mean_form_score, 0)
@@ -152,7 +152,7 @@ export function SessionView({
         <CardHeader className="pb-0">
           <CardTitle>Angle trajectory</CardTitle>
           <p className="mt-1 text-xs text-slate-500">
-            Primary joint angle over the session, with the form score overlay.
+            Primary joint angle over the session, with the pose accuracy overlay.
           </p>
         </CardHeader>
         <CardContent className="pt-4">

@@ -34,6 +34,57 @@ pnpm --filter @pilates/desktop tauri dev
 See [TESTING.md](TESTING.md) for how to verify each layer, including checks that
 run without a webcam.
 
+## Setting up a workstation (students and colleagues)
+
+The normal path is **install, sign in, record** — one screen, one credential, no
+pairing code and no second device. Any account that exists in Firebase Auth can
+use the app; there is no claim or allow-list step.
+
+**Supervisor, once per person**
+
+1. Create the account in the Firebase console (Authentication → Users) with an
+   email and password.
+2. Hand the credentials over. That is the whole provisioning step.
+
+New-user sign-up must stay **disabled** in Authentication → Settings → User
+actions. If it is enabled, anyone with the public API key can create an account
+and read every patient record. Disabling an account (or deleting it) revokes
+access; the desktop stops syncing as soon as its token refresh is refused.
+
+**The colleague, on their own laptop**
+
+1. Install and open the app.
+2. Enter that email and password, press **Sign in**.
+3. That is the last time they sign in. The app stores a refresh token, so it
+   opens straight to the patient list from then on, online or offline.
+
+The internet is needed once, to sign in. Recording, the patient list and the
+local queue all work offline afterwards; sessions upload when the connection
+returns.
+
+**Analysis** opens the clinical portal in the browser already signed in as the
+same account: the workstation hands the browser a one-time code (60 seconds,
+single use) and the portal exchanges it for a session. If the handoff service is
+unreachable, the plain portal opens and asks for the password instead.
+
+Deployment note: the one-time codes are cleaned up by a Firestore TTL policy on
+`portalLogins.expires_at_ts` (Firestore → TTL). It is housekeeping only; sign-in
+works without it.
+
+**Shared or unattended machines** — choose **Pair it with a code instead** on
+the sign-in screen. The machine shows a code; a signed-in clinician approves it
+in the portal at `/pair`. Nothing is typed on the shared device.
+
+**Shared laptop, several students** — use **Switch account** in the sidebar
+footer between sessions. It removes the credential and returns to the sign-in
+screen, so each person's sessions are attributed to their own account. The
+button is disabled while a recording is open.
+
+**Lost or replaced laptop** — disable the account in the Firebase console, or
+delete its refresh tokens (Authentication → user → Revoke tokens). Use **Switch
+account** on the machine if it is still in hand; deleting `auth.json` in the app
+data directory has the same effect. Other workstations are unaffected.
+
 ## Documentation
 
 - [MASTER_EXECUTION_PLAN.md](MASTER_EXECUTION_PLAN.md) — architecture blueprint

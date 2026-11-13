@@ -115,3 +115,8 @@ apps/desktop/src-tauri/resources/.cache/
 
 # Staging directory for release assets (tools/build-update-manifest.mjs)
 /release-assets/
+
+# Local pnpm store and temporary build directories used by release checks
+.pnpm-store/
+.tmp-build/
+.cargo-target-*/

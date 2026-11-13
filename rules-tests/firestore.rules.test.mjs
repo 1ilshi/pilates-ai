@@ -17,12 +17,10 @@ const HOST = process.env.FIRESTORE_EMULATOR_HOST;
 const PROJECT = process.env.GCLOUD_PROJECT ?? "demo-pilates";
 const BASE = `http://${HOST}/v1/projects/${PROJECT}/databases/(default)/documents`;
 
-const CLINIC = "pilates-ai";
-
-/** Claims for an account that has not been granted the clinic claim. */
-const OUTSIDER = { sub: "outsider", email: "outsider@example.com" };
-/** Claims for a clinician: this is what `set-clinic-claim.mjs` produces. */
-const CLINICIAN = { sub: "clinician", email: "clinician@example.com", clinic: CLINIC };
+/** Claims for an ordinary signed-in account: no clinic claim is required. */
+const MEMBER = { sub: "member", email: "member@example.com" };
+/** A second account, used where the tests need two distinct identities. */
+const CLINICIAN = { sub: "clinician", email: "clinician@example.com" };
 
 function base64url(value) {
   return Buffer.from(JSON.stringify(value)).toString("base64url");
@@ -141,7 +139,7 @@ before(() => {
   assert.ok(HOST, "FIRESTORE_EMULATOR_HOST is not set — run under emulators:exec");
 });
 
-describe("unauthenticated and unaffiliated callers", () => {
+describe("unauthenticated callers", () => {
   test("anonymous reads are denied", async () => {
     const result = await getDoc("patients/seed", undefined);
     // The emulator answers 401 for "no credentials" and 403 for "denied by
@@ -152,9 +150,14 @@ describe("unauthenticated and unaffiliated callers", () => {
     );
   });
 
-  test("a signed-in account without the clinic claim is denied", async () => {
-    const result = await getDoc("patients/seed", OUTSIDER);
-    assert.equal(result.status, 403);
+  // Access is account existence: any user created in the Firebase console may
+  // work, with no custom claim to provision.
+  test("any signed-in account can create and read a patient", async () => {
+    const created = await createDoc("patients", "member-patient", patientBody(), MEMBER);
+    assert.equal(created.status, 200, JSON.stringify(created.body));
+
+    const read = await getDoc("patients/member-patient", MEMBER);
+    assert.equal(read.status, 200, JSON.stringify(read.body));
   });
 });
 
@@ -259,15 +262,15 @@ describe("sessions", () => {
     assert.equal(result.status, 200, JSON.stringify(result.body));
   });
 
-  test("an account without the claim cannot query sessions across patients", async () => {
+  test("any signed-in account can query sessions across patients", async () => {
     const result = await runQuery(
       {
         from: [{ collectionId: "sessions", allDescendants: true }],
         limit: 10,
       },
-      OUTSIDER,
+      MEMBER,
     );
-    assert.equal(result.status, 403);
+    assert.equal(result.status, 200, JSON.stringify(result.body));
   });
 });
 
@@ -349,6 +352,32 @@ describe("server-owned collections", () => {
       CLINICIAN,
     );
     assert.equal(result.status, 403);
+  });
+
+  test("device pairing records are invisible to clients", async () => {
+    const read = await getDoc("devicePairings/ABCD-EFGH", CLINICIAN);
+    assert.equal(read.status, 403);
+
+    const write = await createDoc(
+      "devicePairings",
+      "ABCD-EFGH",
+      { kind: "pairing", secret_hash: "x" },
+      CLINICIAN,
+    );
+    assert.equal(write.status, 403);
+  });
+
+  test("portal sign-in codes are invisible to clients", async () => {
+    const read = await getDoc("portalLogins/some-hash", CLINICIAN);
+    assert.equal(read.status, 403);
+
+    const write = await createDoc(
+      "portalLogins",
+      "some-hash",
+      { kind: "portal_login", uid: "someone" },
+      CLINICIAN,
+    );
+    assert.equal(write.status, 403);
   });
 });
 

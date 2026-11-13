@@ -132,7 +132,7 @@ export function SessionTrendCard({
                   fontSize: 12,
                 }}
                 labelStyle={{ color: "#94a3b8" }}
-                formatter={(value) => [`${Number(value).toFixed(1)}%`, "mean form score"]}
+                formatter={(value) => [`${Number(value).toFixed(1)}%`, "mean pose accuracy"]}
               />
               <Line
                 type="monotone"

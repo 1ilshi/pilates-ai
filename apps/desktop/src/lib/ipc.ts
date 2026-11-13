@@ -239,7 +239,7 @@ export interface CaptureStatus {
   last_rep_duration_sec: number;
   /** Time since the current `start`, in seconds (0 when idle). */
   active_hold_sec: number;
-  /** Latest composite form score, 0-100. */
+  /** Latest composite pose accuracy, 0-100. */
   last_form_score: number;
   /**
    * Last fatal error from the capture thread. The preview freezes on the last
@@ -268,6 +268,20 @@ export const pairingStart = () => call<PairingStart>("pairing_start");
 /** Polls once; `true` means the workstation is now paired. */
 export const pairingPoll = (code: string, secret: string) =>
   call<boolean>("pairing_poll", { code, secret });
+
+/**
+ * Sign this workstation in with a clinic account.
+ *
+ * The easy first-run path: the password is used once and never stored, and the
+ * credential that persists is the same refresh token pairing produces. Rejects
+ * an account without the `clinic` claim, so the user is told they need access
+ * instead of opening onto a patient list that never syncs.
+ */
+export const authSignIn = (email: string, password: string) =>
+  call<void>("auth_sign_in", { email, password });
+
+/** Remove this workstation's credential so the next person can sign in. */
+export const authSignOut = () => call<void>("auth_sign_out");
 
 /** Opens the clinical portal in the default browser. */
 export const openPortal = () => call<void>("open_portal");

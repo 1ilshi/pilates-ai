@@ -19,7 +19,7 @@ export interface RepTimelineChartProps {
   data: DownsampledPoint[];
   /** Target ROM band drawn as a highlighted horizontal region. */
   targetRom?: TargetRom;
-  /** Draw the instantaneous form score on a second axis. */
+  /** Draw the instantaneous pose accuracy on a second axis. */
   showScore?: boolean;
   height?: number;
   className?: string;

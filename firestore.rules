@@ -11,13 +11,19 @@ rules_version = '2';
 //    silently undo an aggregate the function had just computed.
 //
 // 2. **Server-owned collections are invisible to clients.** `sessionLedger`
-//    makes the aggregation trigger idempotent, and `syncState/current` is the
-//    change marker every workstation polls. A client able to write either one
-//    could double-count sessions or forge a change notification.
+//    makes the aggregation trigger idempotent, `syncState/current` is the
+//    change marker every workstation polls, and `portalLogins` holds one-time
+//    browser sign-in codes. A client able to write any of them could
+//    double-count sessions, forge a change notification, or mint a portal
+//    session.
 //
-// The `clinic` claim is set once per account by
-// `functions/scripts/set-clinic-claim.mjs`. Deploy that first: these rules
-// reject every request from an account that does not carry it.
+// **Access model.** Any account that exists in Firebase Auth may read and write
+// clinic data. Accounts are created only by the administrator in the Firebase
+// console, and new-user sign-up is disabled, so account existence *is* the
+// roster. The earlier `clinic` custom claim was removed because provisioning it
+// was a separate CLI step that silently locked out every newly created account.
+// To restore a claim boundary, put `request.auth.token.clinic == '...'` back in
+// `isSignedIn()` and re-run `functions/scripts/set-clinic-claim.mjs`.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -26,9 +32,8 @@ service cloud.firestore {
     // Identity
     // ---------------------------------------------------------------------
 
-    function isClinician() {
-      return request.auth != null
-        && request.auth.token.get('clinic', '') == 'pilates-ai';
+    function isSignedIn() {
+      return request.auth != null;
     }
 
     // ---------------------------------------------------------------------
@@ -52,13 +57,13 @@ service cloud.firestore {
     }
 
     match /patients/{patientId} {
-      allow read: if isClinician();
+      allow read: if isSignedIn();
 
-      allow create: if isClinician()
+      allow create: if isSignedIn()
         && validName()
         && request.resource.data.keys().hasOnly(patientOwnedFields());
 
-      allow update: if isClinician()
+      allow update: if isSignedIn()
         && validName()
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(patientOwnedFields());
@@ -72,9 +77,9 @@ service cloud.firestore {
       // Sessions: written once, by the workstation that recorded them.
       // -------------------------------------------------------------------
       match /sessions/{sessionId} {
-        allow read: if isClinician();
+        allow read: if isSignedIn();
 
-        allow create: if isClinician()
+        allow create: if isSignedIn()
           && request.resource.data.keys()
                .hasAll(['session_id', 'patient_id', 'pose_id', 'started_at',
                         'completed_at', 'summary', 'reps', 'kinematic_curve'])
@@ -93,15 +98,15 @@ service cloud.firestore {
       // Clinical comments: append and remove, never edit.
       // -------------------------------------------------------------------
       match /comments/{commentId} {
-        allow read: if isClinician();
+        allow read: if isSignedIn();
 
-        allow create: if isClinician()
+        allow create: if isSignedIn()
           && request.resource.data.keys().hasAll(['text', 'created_at'])
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 4000;
 
-        allow delete: if isClinician();
+        allow delete: if isSignedIn();
         allow update: if false;
       }
     }
@@ -120,7 +125,7 @@ service cloud.firestore {
     // Read-only: creating, updating and deleting a session still goes through
     // the nested block, where the patient and session ids are checked.
     match /{path=**}/sessions/{sessionId} {
-      allow read: if isClinician();
+      allow read: if isSignedIn();
     }
 
     // ---------------------------------------------------------------------
@@ -136,7 +141,7 @@ service cloud.firestore {
     // The change marker the desktops poll. Read-only for clients: a forged
     // bump would make every workstation re-download the whole roster.
     match /syncState/{document} {
-      allow read: if isClinician();
+      allow read: if isSignedIn();
       allow write: if false;
     }
 
@@ -145,6 +150,13 @@ service cloud.firestore {
     // A client that could read one would learn which codes are outstanding, and
     // one that could write would be able to approve its own workstation.
     match /devicePairings/{document} {
+      allow read, write: if false;
+    }
+
+    // One-time codes that hand a desktop session to the browser portal. Written
+    // and read only by the Cloud Functions; a client that could read one could
+    // exchange another workstation's code for a signed-in portal session.
+    match /portalLogins/{document} {
       allow read, write: if false;
     }
   }

@@ -134,7 +134,7 @@ function cohortEntries(
       }));
 }
 
-/** Every repetition's measurements, per cohort, for the scatter view. */
+/** Every repetition's measurements, per cohort, for the scatter views. */
 export interface CohortRawValues {
   id: string;
   label: string;
@@ -143,7 +143,10 @@ export interface CohortRawValues {
   scores: number[];
   /** One value per session average, for the session-weighted scatter. */
   sessionScores: number[];
+  /** Hold time per repetition, in seconds. */
   holds: number[];
+  /** Paired hold time and accuracy, one entry per repetition. */
+  points: Array<{ hold: number; score: number }>;
 }
 
 export function cohortValues(
@@ -160,14 +163,20 @@ export function cohortValues(
     const scores: number[] = [];
     const sessionScores: number[] = [];
     const holds: number[] = [];
+    const points: Array<{ hold: number; score: number }> = [];
     for (const session of sessions) {
       const sessionScore = Number(session.summary?.mean_form_score ?? 0);
       if (sessionScore > 0) sessionScores.push(sessionScore);
       for (const rep of session.reps ?? []) {
         const score = Number(rep.form_score ?? 0);
         if (Number.isFinite(score) && score > 0) scores.push(score);
-        const duration = Number(rep.duration_sec ?? 0);
-        if (duration > 0) holds.push(duration);
+        // `avg_hold_duration_sec` is the time held in the target position;
+        // `duration_sec` is the whole repetition and would overstate it.
+        const hold = Number(rep.avg_hold_duration_sec ?? 0);
+        if (Number.isFinite(hold) && hold > 0) {
+          holds.push(hold);
+          if (Number.isFinite(score) && score > 0) points.push({ hold, score });
+        }
       }
     }
 
@@ -178,6 +187,7 @@ export function cohortValues(
       scores,
       sessionScores,
       holds,
+      points,
     };
   });
 }
@@ -219,7 +229,7 @@ export function cohortBars(
 
     const repScores: number[] = [];
     const sessionScores: number[] = [];
-    const durations: number[] = [];
+    const holds: number[] = [];
     let repTotal = 0;
 
     for (const session of scopedSessions) {
@@ -229,8 +239,10 @@ export function cohortBars(
       for (const rep of session.reps ?? []) {
         const score = Number(rep.form_score ?? 0);
         if (Number.isFinite(score) && score > 0) repScores.push(score);
-        const duration = Number(rep.duration_sec ?? 0);
-        if (duration > 0) durations.push(duration);
+        // The hold, not the whole repetition: `duration_sec` includes the
+        // movement phases on either side of the target position.
+        const hold = Number(rep.avg_hold_duration_sec ?? 0);
+        if (Number.isFinite(hold) && hold > 0) holds.push(hold);
       }
     }
 
@@ -273,8 +285,8 @@ export function cohortBars(
     });
     holdPerRep.push({
       ...base,
-      value: mean(durations),
-      note: `${people} · ${plural(durations.length, "rep", "reps")}`,
+      value: mean(holds),
+      note: `${people} · ${plural(holds.length, "rep", "reps")}`,
     });
     sessions.push({
       ...base,

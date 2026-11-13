@@ -33,7 +33,7 @@ const AXES: { key: keyof FormScoreBreakdown; axis: string }[] = [
 ];
 
 /**
- * Radar breakdown of the composite form score into its four weighted
+ * Radar breakdown of the composite pose accuracy into its four weighted
  * components, optionally overlaid on a historical patient baseline.
  */
 export function FormScoreRadar({
@@ -82,7 +82,7 @@ export function FormScoreRadar({
           )}
 
           <Radar
-            name="form score"
+            name="pose accuracy"
             dataKey="value"
             stroke="#2dd4bf"
             fill="#2dd4bf"

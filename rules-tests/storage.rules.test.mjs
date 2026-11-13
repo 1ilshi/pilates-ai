@@ -2,7 +2,7 @@
  * Cloud Storage rules tests, run against the emulator.
  *
  * Same approach as the Firestore suite: the emulator decodes unsigned JWTs, so
- * the `clinic` claim can be exercised over the REST API with no test framework
+ * authentication can be exercised over the REST API with no test framework
  * beyond `node:test`.
  *
  * Run with:
@@ -21,10 +21,9 @@ const PROJECT = process.env.GCLOUD_PROJECT ?? "demo-pilates";
 const BUCKET = `${PROJECT}.appspot.com`;
 const BASE = `http://${HOST}/v0/b/${BUCKET}/o`;
 
-const CLINIC = "pilates-ai";
-
-const OUTSIDER = { sub: "outsider", email: "outsider@example.com" };
-const CLINICIAN = { sub: "clinician", email: "clinician@example.com", clinic: CLINIC };
+/** Ordinary signed-in accounts: no custom claim is required. */
+const MEMBER = { sub: "member", email: "member@example.com" };
+const CLINICIAN = { sub: "clinician", email: "clinician@example.com" };
 
 function base64url(value) {
   return Buffer.from(JSON.stringify(value)).toString("base64url");
@@ -81,9 +80,9 @@ describe("uploading an archive", () => {
     );
   });
 
-  test("an account without the clinic claim is refused", async () => {
-    const status = await upload(ARCHIVE, OUTSIDER);
-    assert.ok(status === 401 || status === 403, `expected a refusal, got ${status}`);
+  test("any signed-in account may upload", async () => {
+    const status = await upload(ARCHIVE, MEMBER);
+    assert.equal(status, 200);
   });
 
   test("a clinician may upload a Parquet archive", async () => {

@@ -145,6 +145,8 @@ fn main() {
             commands::open_portal,
             commands::open_external,
             commands::sync_check_remote,
+            commands::auth_sign_in,
+            commands::auth_sign_out,
             commands::pairing_status,
             commands::pairing_start,
             commands::pairing_poll,

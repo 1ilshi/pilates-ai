@@ -195,7 +195,7 @@ export function OverviewPage() {
           icon={<CalendarCheck className="h-5 w-5" aria-hidden="true" />}
         />
         <Hero
-          label="Mean form score"
+          label="Mean pose accuracy"
           value={meanScore ? formatPercent(meanScore, 1) : "—"}
           hint={`${scored.length} patient(s) scored`}
           icon={<Gauge className="h-5 w-5" aria-hidden="true" />}

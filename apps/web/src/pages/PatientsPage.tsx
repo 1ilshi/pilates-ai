@@ -164,7 +164,7 @@ export function PatientsPage() {
               <SortHeader label="Gender" column="gender" active={sortKey} descending={descending} onSort={onSort} />
               <SortHeader label="Age" column="age" active={sortKey} descending={descending} onSort={onSort} />
               <SortHeader label="Sessions" column="sessions" active={sortKey} descending={descending} onSort={onSort} />
-              <SortHeader label="Mean score" column="score" active={sortKey} descending={descending} onSort={onSort} />
+              <SortHeader label="Mean accuracy" column="score" active={sortKey} descending={descending} onSort={onSort} />
               <SortHeader label="Last active" column="lastActive" active={sortKey} descending={descending} onSort={onSort} />
               <TableHead>History</TableHead>
             </TableRow>

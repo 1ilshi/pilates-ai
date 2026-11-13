@@ -8,7 +8,7 @@
  * Three endpoints, all server-side:
  *
  *   pairStart   — unauthenticated, creates a code and a secret
- *   pairApprove — authenticated, requires the `clinic` claim, mints the token
+ *   pairApprove — authenticated, mints the token
  *   pairPoll    — unauthenticated, returns the token exactly once
  *
  * Security properties worth keeping if this is ever edited:
@@ -17,9 +17,10 @@
  *   useless without the secret the workstation holds in memory.
  * - The custom token is returned once and the record deleted, so a replayed
  *   poll gets nothing.
- * - `pairApprove` checks the `clinic` claim, not merely that the caller is
- *   authenticated: the legacy FlutterFlow integration account is a valid
- *   Firebase user with no claim and must not be able to mint a workstation.
+ * - `pairApprove` still requires a valid Firebase ID token, so an anonymous
+ *   caller cannot approve a workstation. Any account that exists in Firebase
+ *   Auth may approve; account creation is the administrator's job in the
+ *   console, and new-user sign-up is disabled.
  * - No secret, token or refresh token is ever logged.
  */
 
@@ -29,8 +30,6 @@ const crypto = require("crypto");
 
 const REGION = "asia-east2";
 const PAIRING_COLLECTION = "devicePairings";
-const CLINIC_CLAIM = "clinic";
-const CLINIC_VALUE = "pilates-ai";
 
 /** A code is useless after this long; the user can ask for another. */
 const CODE_TTL_MS = 10 * 60 * 1000;
@@ -229,8 +228,8 @@ exports.pairStart = onRequest(
 /**
  * Approve a pairing request.
  *
- * Requires a Firebase ID token whose `clinic` claim matches, and records who
- * approved so the workstation's access is attributable.
+ * Requires a valid Firebase ID token, and records who approved so the
+ * workstation's access is attributable.
  */
 exports.pairApprove = onRequest(
     {region: REGION, invoker: "public", cors: true},
@@ -252,13 +251,6 @@ exports.pairApprove = onRequest(
             decoded = await admin.auth().verifyIdToken(token);
         } catch {
             res.status(401).json({error: "unauthenticated"});
-            return;
-        }
-
-        // Authentication alone is not enough: the legacy integration account is
-        // a valid user without the claim.
-        if (decoded[CLINIC_CLAIM] !== CLINIC_VALUE) {
-            res.status(403).json({error: "not-a-clinician"});
             return;
         }
 

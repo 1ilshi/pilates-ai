@@ -3,6 +3,7 @@ import { Activity, BarChart3, LayoutDashboard, LogOut, Users } from "lucide-reac
 import { Badge, Button, cn } from "@pilates/ui";
 import { useAuth } from "./lib/auth";
 import { SignInPage } from "./pages/SignInPage";
+import { AuthBridgePage } from "./pages/AuthBridgePage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { PatientsPage } from "./pages/PatientsPage";
 import { PatientPage } from "./pages/PatientPage";
@@ -18,6 +19,13 @@ const NAV = [
 
 export function App() {
   const { user, loading, signOutUser } = useAuth();
+
+  // The desktop opens `/auth#code=…` to hand this browser its session. The
+  // bridge must render before the signed-out gate, and it navigates away when
+  // the exchange succeeds.
+  if (window.location.pathname.replace(/\/+$/, "") === "/auth") {
+    return <AuthBridgePage />;
+  }
 
   if (loading) {
     return (

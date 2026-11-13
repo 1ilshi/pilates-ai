@@ -41,7 +41,7 @@ export function PairingPage() {
     if (!user) return;
     setState({ kind: "approving" });
     try {
-      const token = await user.getIdToken();
+      const token = await user.getIdToken(true);
       const response = await fetch(PAIR_APPROVE_URL, {
         method: "POST",
         headers: {
@@ -62,7 +62,7 @@ export function PairingPage() {
           : response.status === 404
             ? "That code is not recognised. Check the workstation screen."
             : response.status === 403
-              ? "This account is not a clinic account, so it cannot authorise a workstation."
+              ? "This account cannot authorise a workstation. Sign in again and retry."
               : "The authorisation could not be completed. Try again.";
       setState({ kind: "error", message });
     } catch {

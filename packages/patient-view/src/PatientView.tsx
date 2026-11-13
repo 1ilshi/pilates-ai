@@ -118,7 +118,7 @@ function meanRepSeconds(session: SessionLike | undefined): number {
 }
 
 const METRICS: Array<{ metric: SessionMetric; label: string }> = [
-  { metric: "form_score", label: "Form score per session" },
+  { metric: "form_score", label: "Pose accuracy per session" },
   { metric: "avg_hold_seconds", label: "Hold time per rep, per session" },
   { metric: "reps", label: "Repetitions per session" },
 ];
@@ -536,7 +536,7 @@ export function PatientView({
       {/* Snapshot ----------------------------------------------------- */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Snapshot
-          label="Latest form score"
+          label="Latest pose accuracy"
           value={latestScore ? formatPercent(latestScore, 0) : "—"}
           hint={latest ? poseDisplayLabel(pose) : "no sessions"}
           delta={scoreDelta}
@@ -1039,7 +1039,7 @@ export function PatientView({
               Recorded by the previous application. Last sample{" "}
               {formatDate(legacy.last_sample_at)} — these figures are frozen and will
               not update. They measure classification <em>accuracy</em>, a different
-              metric from the form score above.
+              metric from the pose accuracy above.
             </p>
           </CardHeader>
           <CardContent className="space-y-4 pt-4">

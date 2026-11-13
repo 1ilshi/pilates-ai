@@ -19,7 +19,7 @@ import { formatDate, type LegacySummary } from "../lib/legacy";
  * Read-only view of the FlutterFlow-era statistics.
  *
  * Kept visually distinct from current sessions on purpose: legacy `accuracy` is
- * a classification score, not the biomechanical form score, so the two must
+ * a classification score, not the biomechanical pose accuracy, so the two must
  * never be plotted together or averaged.
  */
 export function LegacyPanel({ legacy }: { legacy: LegacySummary }) {
@@ -38,7 +38,7 @@ export function LegacyPanel({ legacy }: { legacy: LegacySummary }) {
         <p className="mt-1 text-xs text-slate-500">
           Recorded by the previous application. Last sample {formatDate(legacy.last_sample_at)} —
           these figures are frozen and will not update. They measure classification{" "}
-          <em>accuracy</em>, a different metric from the form score.
+          <em>accuracy</em>, a different metric from pose accuracy.
         </p>
       </CardHeader>
 

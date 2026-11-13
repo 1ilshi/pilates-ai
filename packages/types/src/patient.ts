@@ -27,7 +27,7 @@ export interface Patient extends PatientInput {
   updated_at: string;
   /** O(1) aggregate maintained by the Cloud Function (Step 7). */
   total_sessions?: number;
-  /** Lifetime mean form score, 0-100. */
+  /** Lifetime mean pose accuracy, 0-100. */
   lifetime_avg_score?: number;
   /** ISO-8601 UTC of the most recent completed session. */
   last_active?: string;

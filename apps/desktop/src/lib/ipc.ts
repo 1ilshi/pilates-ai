@@ -150,6 +150,11 @@ export interface SyncReport {
    * Parked rather than retried: the clinician must re-open the patient.
    */
   conflicts: number;
+  /**
+   * The stored sign-in was refused. Retrying cannot help; the workstation must
+   * sign in again, so the UI shows a persistent banner instead of a retry loop.
+   */
+  auth_rejected?: boolean;
 }
 
 export interface PullReport {

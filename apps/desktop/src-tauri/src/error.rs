@@ -24,6 +24,11 @@ pub enum EngineError {
     #[error("sync: {0}")]
     Sync(String),
 
+    /// The workstation's stored sign-in was refused. Unlike `Sync`, retrying
+    /// will not help: the user must sign in again.
+    #[error("auth: {0}")]
+    Auth(String),
+
     /// A concurrent edit landed first. The write was refused rather than
     /// silently overwriting it; the caller must re-read before retrying.
     #[error("conflict: {0}")]

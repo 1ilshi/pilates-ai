@@ -1372,6 +1372,15 @@ pub fn auth_sign_in(
         eprintln!("[pilates] signed in, but cloud sync did not start: {error}");
     }
 
+    // A previous account's ID token may still be cached. Drop it so the next
+    // sync reads the credential that was just written, instead of continuing as
+    // whoever was signed in before.
+    if let Ok(mut guard) = state.cloud.lock() {
+        if let Some(cloud) = guard.as_mut() {
+            cloud.forget_token();
+        }
+    }
+
     Ok(())
 }
 
@@ -1446,6 +1455,12 @@ pub fn pairing_poll(
             // built before `cloud.json` existed, so attach it now.
             if let Err(error) = initialise_cloud_sync(&state) {
                 eprintln!("[pilates] paired, but cloud sync did not start: {error}");
+            }
+            // The workstation may have had another account cached.
+            if let Ok(mut guard) = state.cloud.lock() {
+                if let Some(cloud) = guard.as_mut() {
+                    cloud.forget_token();
+                }
             }
             Ok(true)
         }

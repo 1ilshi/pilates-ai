@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.0.9 — 2026-11-13
+
+- **The "Firebase rejected the clinic credentials" banner is gone.** Sync now
+  uses only the stored sign-in; the legacy `cloud.json` password fallback was
+  removed. A refused sign-in produces one persistent *"Sign in to resume
+  syncing"* banner instead of a password error that appeared and vanished as
+  retries alternated between the two paths.
+- **Signing in drops the previous account's cached token** and starts a sync
+  immediately, so switching accounts takes effect at once.
+- **Sign out now asks for confirmation**, with the queued-session reassurance
+  spelled out; Escape or Cancel returns without signing out.
+- **The desktop patient list says "Mean accuracy"**, not "Mean score".
+- **Analysis still hands the portal a one-time code**; it now works as soon as
+  the workstation has a valid sign-in, which the fixed credential path
+  guarantees.
+
 ## 2.0.8 — 2026-11-13
 
 - **Sign out in the workstation.** A bordered **Sign out** button in the sidebar

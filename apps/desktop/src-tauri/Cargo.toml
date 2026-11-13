@@ -1,6 +1,6 @@
 [package]
 name = "pilates-desktop"
-version = "2.0.8"
+version = "2.0.9"
 description = "Pilates AI Clinical Workstation"
 authors = ["Pilates AI Team"]
 edition = "2021"

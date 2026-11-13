@@ -3,7 +3,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import { BarChart3, Camera, ExternalLink, LogOut, Users } from "lucide-react";
 import type { ClinicalSessionDocument } from "@pilates/types";
 import { poseDisplayLabel } from "@pilates/types";
-import { Badge, cn } from "@pilates/ui";
+import { Badge, Button, cn } from "@pilates/ui";
 import { PatientListPage } from "./pages/PatientListPage";
 import { PatientDetailPage } from "./pages/PatientDetailPage";
 import { ActiveCapturePage } from "./pages/ActiveCapturePage";
@@ -124,6 +124,17 @@ export function App() {
   // Without this the Analysis button would fail silently, so the reason is
   // surfaced in the footer next to the sync status instead of a new toast.
   const [portalError, setPortalError] = useState<string | null>(null);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
+
+  // Escape closes the confirmation, matching the portal's dialogs.
+  useEffect(() => {
+    if (!confirmSignOut) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setConfirmSignOut(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [confirmSignOut]);
 
   const openAnalysis = () => {
     // Clear first, so a successful retry does not leave a stale warning.
@@ -135,32 +146,41 @@ export function App() {
   // recording, where losing the credential would strand the session.
   const signOut = () => {
     authSignOut()
-      .then(() => setAccess("required"))
-      .catch((error) => setPortalError(String(error)));
+      .then(() => {
+        setConfirmSignOut(false);
+        setAccess("required");
+      })
+      .catch((error) => {
+        setConfirmSignOut(false);
+        setPortalError(String(error));
+      });
   };
 
-  // A `PERMISSION_DENIED` from Firestore almost always means the account is
-  // missing the `clinic` custom claim, which an administrator has to set with
-  // `pnpm claim:clinic`. "Sync failed" would leave the clinic guessing.
+  // A `PERMISSION_DENIED` from Firestore means this account cannot reach the
+  // clinic data — a disabled account or rules that still expect a claim.
+  // "Sync failed" would leave the clinic guessing.
   const notProvisioned =
     !!sync.lastError && /permission_denied|403|insufficient permissions/i.test(sync.lastError);
   const notConfigured =
     !!sync.lastError && /not configured/i.test(sync.lastError);
+  const syncError = sync.lastError?.replace(/^auth:\s*/i, "") ?? null;
 
   const syncLabel = sync.syncing
     ? "Syncing…"
     : sync.lastError === "offline"
       ? "Offline — queued locally"
-      : notProvisioned
-        ? "Account not provisioned for this clinic"
-        : notConfigured
-          ? // Retrying will not help: there is no cloud configuration to use.
-            "Cloud sync off — not configured"
-          : sync.lastError
-            ? "Sync failed — retrying"
-            : sync.lastSyncAt
-              ? `Synced ${relativeTime(sync.lastSyncAt)}`
-              : "Not synced yet";
+      : sync.authRejected
+        ? "Sign in to resume syncing"
+        : notProvisioned
+          ? "Account cannot access this clinic"
+          : notConfigured
+            ? // Retrying will not help: there is no cloud configuration to use.
+              "Cloud sync off — not configured"
+            : sync.lastError
+              ? "Sync failed — retrying"
+              : sync.lastSyncAt
+                ? `Synced ${relativeTime(sync.lastSyncAt)}`
+                : "Not synced yet";
 
   const heading =
     tab === "patient"
@@ -185,7 +205,16 @@ export function App() {
   }
 
   if (access === "required") {
-    return <AccessGate onSignedIn={() => setAccess("ready")} />;
+    return (
+      <AccessGate
+        onSignedIn={() => {
+          setAccess("ready");
+          // Clear the "sign in to resume syncing" banner as soon as the new
+          // credential is used, instead of waiting for the next sweep.
+          window.dispatchEvent(new Event("pilates:sync-now"));
+        }}
+      />
+    );
   }
 
   return (
@@ -250,21 +279,21 @@ export function App() {
 
         <div className="px-2 text-xs text-slate-500">
           <p
-            title={sync.lastError ?? undefined}
+            title={syncError ?? undefined}
             className={
-              sync.lastError && sync.lastError !== "offline"
+              syncError && syncError !== "offline"
                 ? "text-amber-400"
                 : "text-slate-400"
             }
           >
             {syncLabel}
           </p>
-          {sync.lastError && sync.lastError !== "offline" && (
+          {syncError && syncError !== "offline" && (
             <p
               className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-amber-500/80"
-              title={sync.lastError}
+              title={syncError}
             >
-              {sync.lastError}
+              {syncError}
             </p>
           )}
           {portalError && (
@@ -280,7 +309,7 @@ export function App() {
           </p>
           <button
             type="button"
-            onClick={signOut}
+            onClick={() => setConfirmSignOut(true)}
             disabled={tab === "capture"}
             title={
               tab === "capture"
@@ -306,10 +335,10 @@ export function App() {
         {/* Never prompt while a session could be recording. */}
         <UpdateBanner update={update} />
 
-        {sync.lastError && /token refresh rejected|credential|401/i.test(sync.lastError) && (
+        {sync.authRejected && (
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-500/30 bg-amber-500/10 px-6 py-2 text-xs text-amber-200">
             <span>
-              Sync is paused — the account on this workstation was rejected. You
+              Sync is paused — this workstation&apos;s sign-in was rejected. You
               can keep recording; sessions will upload once you sign in again.
             </span>
             <button
@@ -376,6 +405,39 @@ export function App() {
           )}
         </section>
       </main>
+
+      {confirmSignOut && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+            onClick={() => setConfirmSignOut(false)}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="signout-title"
+            className="relative w-full max-w-sm rounded-card border border-slate-700 bg-slate-900 p-5 shadow-xl"
+          >
+            <h2 id="signout-title" className="text-base font-semibold text-slate-100">
+              Sign out of this workstation?
+            </h2>
+            <p className="mt-2 text-sm text-slate-400">
+              You will need your email and password to sign in again. Sessions
+              already recorded stay on this machine and upload after you sign in.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setConfirmSignOut(false)}>
+                Cancel
+              </Button>
+              <Button onClick={signOut}>
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+                Sign out
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

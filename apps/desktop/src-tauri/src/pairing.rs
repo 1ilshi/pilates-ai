@@ -520,9 +520,17 @@ pub fn refresh_id_token(
     let status = response.status();
     let text = response.text().unwrap_or_default();
     if !status.is_success() {
-        return Err(EngineError::Sync(format!(
-            "token refresh rejected ({status})"
-        )));
+        // A 5xx or 429 is the service being unavailable; a 400/401/403 is the
+        // credential being refused. Only the latter needs the user to sign in.
+        if status.as_u16() >= 500 || status.as_u16() == 429 {
+            return Err(EngineError::Sync(format!(
+                "the sign-in service is unavailable ({status})"
+            )));
+        }
+        eprintln!("[pilates] token refresh rejected ({status})");
+        return Err(EngineError::Auth(
+            "This workstation's sign-in was rejected. Sign in again to resume syncing.".into(),
+        ));
     }
 
     let value: serde_json::Value = serde_json::from_str(&text)
@@ -534,7 +542,9 @@ pub fn refresh_id_token(
         .unwrap_or_default()
         .to_string();
     if id_token.is_empty() {
-        return Err(EngineError::Sync("token refresh returned no ID token".into()));
+        return Err(EngineError::Auth(
+            "The sign-in service returned no token. Sign in again.".into(),
+        ));
     }
 
     let expires_in = value

@@ -22,7 +22,6 @@ use serde_json::{json, Map, Value};
 use crate::error::{EngineError, EngineResult};
 use crate::outbox::{Outbox, PatientState, RemoteUpsert, StoredPatient, UploadState};
 
-const AUTH_ENDPOINT: &str = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword";
 const FIRESTORE_BASE: &str = "https://firestore.googleapis.com/v1";
 const STORAGE_BASE: &str = "https://firebasestorage.googleapis.com/v0/b";
 
@@ -99,23 +98,24 @@ impl CloudConfig {
     /// without it, so a clinic can pull its patient roster before Storage has
     /// been provisioned. Only the Parquet archive needs a bucket.
     ///
+    /// `PILATES_CLINIC_EMAIL` / `PILATES_CLINIC_PASSWORD` are accepted but no
+    /// longer used: the credential is the refresh token in `auth.json`.
+    ///
     /// Returns `None` when the deployment is intentionally offline-only.
     pub fn from_env() -> Option<Self> {
         let project_id = std::env::var("PILATES_FIREBASE_PROJECT_ID").ok()?;
         let api_key = std::env::var("PILATES_FIREBASE_API_KEY").ok()?;
-        let email = std::env::var("PILATES_CLINIC_EMAIL").ok()?;
-        let password = std::env::var("PILATES_CLINIC_PASSWORD").ok()?;
         let bucket = std::env::var("PILATES_FIREBASE_BUCKET").unwrap_or_default();
 
-        if project_id.is_empty() || api_key.is_empty() || email.is_empty() || password.is_empty() {
+        if project_id.is_empty() || api_key.is_empty() {
             return None;
         }
         Some(Self {
             project_id,
             api_key,
             bucket,
-            email,
-            password,
+            email: String::new(),
+            password: String::new(),
         })
     }
 }
@@ -134,6 +134,10 @@ pub struct SyncReport {
     /// Writes refused because another workstation edited the document first.
     /// These are parked, not retried, until the clinician re-saves.
     pub conflicts: usize,
+    /// True when the stored sign-in was refused. Retrying cannot fix this; the
+    /// UI shows a "sign in again" banner instead of a retry loop.
+    #[serde(default)]
+    pub auth_rejected: bool,
 }
 
 /// Outcome of pulling the patient roster from Firestore.
@@ -441,28 +445,11 @@ struct IdToken {
     expires_at: std::time::Instant,
 }
 
-#[derive(Debug, Deserialize)]
-struct SignInResponse {
-    #[serde(rename = "idToken")]
-    id_token: String,
-    #[serde(rename = "expiresIn")]
-    expires_in: String,
-}
-
 /// Firestore-ready document writer + Storage uploader.
 pub struct CloudSync {
     client: Client,
     config: CloudConfig,
     token: Option<IdToken>,
-    /// Consecutive failed sign-ins; drives the backoff below.
-    auth_failures: u32,
-    /// While set, sign-in is refused locally instead of hitting the endpoint.
-    ///
-    /// Firebase locks an account after a burst of failed password attempts
-    /// (`TOO_MANY_ATTEMPTS_TRY_LATER`), and the auto-sync loop retries every
-    /// minute — so an unattended bad password escalates into a lockout that
-    /// outlives the credential fix.
-    auth_retry_after: Option<std::time::Instant>,
     /// When the session subcollections were last swept.
     ///
     /// A patient's `total_sessions` is maintained by the Cloud Function and
@@ -472,8 +459,6 @@ pub struct CloudSync {
     last_session_sweep: Option<std::time::Instant>,
     /// Highest change-marker revision already accounted for.
     last_marker_revision: Option<i64>,
-    /// The message replayed while backing off.
-    auth_error: Option<String>,
 }
 
 impl CloudSync {
@@ -486,11 +471,8 @@ impl CloudSync {
             client,
             config,
             token: None,
-            auth_failures: 0,
-            auth_retry_after: None,
             last_session_sweep: None,
             last_marker_revision: None,
-            auth_error: None,
         })
     }
 
@@ -514,10 +496,11 @@ impl CloudSync {
         !self.config.bucket.is_empty()
     }
 
-    /// Sign in (once) and cache the ID token until shortly before it expires.
+    /// Refresh the ID token from the workstation's stored credential.
     ///
-    /// After a failure the next attempt is deferred (see `auth_retry_after`) so
-    /// that a wrong password cannot turn into an account lockout.
+    /// There is no password fallback: `cloud.json` is configuration, not a
+    /// credential. A rejected refresh token returns `Auth`, which the UI turns
+    /// into a persistent "sign in again" prompt instead of a retry loop.
     fn ensure_token(&mut self) -> EngineResult<String> {
         if let Some(token) = &self.token {
             if std::time::Instant::now() < token.expires_at {
@@ -525,86 +508,24 @@ impl CloudSync {
             }
         }
 
-        if let Some(retry_after) = self.auth_retry_after {
-            if std::time::Instant::now() < retry_after {
-                return Err(EngineError::Sync(
-                    self.auth_error
-                        .clone()
-                        .unwrap_or_else(|| "sign-in paused after repeated failures".into()),
-                ));
-            }
-        }
+        let Some(state) = crate::pairing::load_auth() else {
+            return Err(EngineError::Auth(
+                "This workstation is not signed in. Sign in to resume syncing.".into(),
+            ));
+        };
 
-        // A paired workstation authenticates with its refresh token. The
-        // password path stays for installations that predate pairing: they must
-        // keep working after the upgrade with no re-pairing.
-        if let Some(state) = crate::pairing::load_auth() {
-            match crate::pairing::refresh_id_token(
-                &self.client,
-                &self.config.api_key,
-                &state.refresh_token,
-            ) {
-                Ok((id_token, seconds)) => {
-                    let ttl = seconds.saturating_sub(60).max(30);
-                    self.token = Some(IdToken {
-                        value: id_token.clone(),
-                        expires_at: std::time::Instant::now() + Duration::from_secs(ttl),
-                    });
-                    self.auth_failures = 0;
-                    self.auth_retry_after = None;
-                    self.auth_error = None;
-                    return Ok(id_token);
-                }
-                Err(error) => {
-                    // A rejected token must not hide the patient list. Fall
-                    // through to the password when one is configured; otherwise
-                    // report degraded and let the caller keep working offline.
-                    if self.config.email.trim().is_empty()
-                        || self.config.password.trim().is_empty()
-                    {
-                        let message = error.to_string();
-                        self.record_auth_failure(message.clone());
-                        return Err(EngineError::Sync(message));
-                    }
-                }
-            }
-        }
+        let (id_token, seconds) = crate::pairing::refresh_id_token(
+            &self.client,
+            &self.config.api_key,
+            &state.refresh_token,
+        )?;
 
-        let response = self
-            .client
-            .post(format!("{AUTH_ENDPOINT}?key={}", self.config.api_key))
-            .json(&json!({
-                "email": self.config.email,
-                "password": self.config.password,
-                "returnSecureToken": true,
-            }))
-            .send()
-            .map_err(|e| EngineError::Sync(format!("sign-in request failed: {e}")))?;
-
-        if !response.status().is_success() {
-            let status = response.status();
-            let body = response.text().unwrap_or_default();
-            let message = sign_in_failure_message(status.as_u16(), &body, &self.config.email);
-            self.record_auth_failure(message.clone());
-            return Err(EngineError::Sync(message));
-        }
-
-        let parsed: SignInResponse = response
-            .json()
-            .map_err(|e| EngineError::Sync(format!("sign-in response: {e}")))?;
-
-        let seconds: u64 = parsed.expires_in.parse().unwrap_or(3600);
-        // Refresh a minute early to avoid racing an expiry mid-request.
         let ttl = seconds.saturating_sub(60).max(30);
-
         self.token = Some(IdToken {
-            value: parsed.id_token.clone(),
+            value: id_token.clone(),
             expires_at: std::time::Instant::now() + Duration::from_secs(ttl),
         });
-        self.auth_failures = 0;
-        self.auth_retry_after = None;
-        self.auth_error = None;
-        Ok(parsed.id_token)
+        Ok(id_token)
     }
 
     /// The current ID token, refreshed if needed.
@@ -622,27 +543,6 @@ impl CloudSync {
     /// out promises.
     pub fn forget_token(&mut self) {
         self.token = None;
-        self.auth_failures = 0;
-        self.auth_retry_after = None;
-        self.auth_error = None;
-    }
-
-    /// Remember a failed sign-in and hold off before the next attempt.
-    fn record_auth_failure(&mut self, message: String) {
-        self.auth_failures = self.auth_failures.saturating_add(1);
-        // 2, 4, 8, 16, then 30 minutes — long enough for Firebase's own
-        // throttle to clear, short enough to recover on its own.
-        let minutes = match self.auth_failures {
-            1 => 2,
-            2 => 4,
-            3 => 8,
-            4 => 16,
-            _ => 30,
-        };
-        self.auth_retry_after = Some(std::time::Instant::now() + Duration::from_secs(minutes * 60));
-        self.auth_error = Some(format!(
-            "{message} Next automatic attempt in about {minutes} min."
-        ));
     }
 
     /// Upload a Parquet payload to `telemetry/{patient_id}/{session_id}.parquet`.
@@ -1409,6 +1309,16 @@ impl CloudSync {
             ..Default::default()
         };
 
+        // One token check up front. Without it, every queued session would
+        // report the same auth failure and the sidebar would show a wall of
+        // noise instead of the one thing the user must do.
+        if let Err(error) = self.ensure_token() {
+            report.auth_rejected = matches!(error, EngineError::Auth(_));
+            report.failed = 1;
+            report.errors.push(error.to_string());
+            return report;
+        }
+
         // --- 1. Patient operations ---------------------------------------
         let entries = match outbox.queue_entries(limit.saturating_mul(4).max(50)) {
             Ok(entries) => entries,
@@ -1642,61 +1552,6 @@ fn truncate(text: &str, limit: usize) -> String {
         text.to_string()
     } else {
         format!("{}…", &text[..limit])
-    }
-}
-
-/// Where the clinic credentials come from, for error messages.
-///
-/// Without this the operator is told to "update cloud.json" with no idea which
-/// of the two supported locations is actually in use.
-fn credentials_source() -> String {
-    if std::env::var("PILATES_CLINIC_EMAIL").is_ok() {
-        return "the PILATES_CLINIC_EMAIL / PILATES_CLINIC_PASSWORD environment variables"
-            .to_string();
-    }
-    crate::paths::data_dir()
-        .join("cloud.json")
-        .display()
-        .to_string()
-}
-
-/// Turn an Identity Toolkit failure into something a clinician can act on.
-///
-/// The payload is `{"error":{"message":"TOO_MANY_ATTEMPTS_TRY_LATER",…}}`; the
-/// bare code is useless in the UI and hides the difference between "wrong
-/// password" and "Firebase is throttling you".
-fn sign_in_failure_message(status: u16, body: &str, email: &str) -> String {
-    let code = serde_json::from_str::<Value>(body)
-        .ok()
-        .and_then(|value| {
-            value
-                .get("error")
-                .and_then(|error| error.get("message"))
-                .and_then(Value::as_str)
-                .map(str::to_string)
-        })
-        .unwrap_or_default();
-
-    match code.as_str() {
-        "TOO_MANY_ATTEMPTS_TRY_LATER" => format!(
-            "Firebase is blocking sign-in for {email} after too many failed attempts. \
-             The block clears by itself in roughly 15–60 minutes; if the password has \
-             changed, update {source} first. Automatic retries are paused meanwhile.",
-            source = credentials_source()
-        ),
-        "EMAIL_NOT_FOUND" | "INVALID_PASSWORD" | "INVALID_LOGIN_CREDENTIALS" | "INVALID_EMAIL" => {
-            format!(
-                "Firebase rejected the clinic credentials for {email}. The stored password \
-                 does not match the account — update {source} (Firebase console → \
-                 Authentication → user) and restart the app.",
-                source = credentials_source()
-            )
-        }
-        "USER_DISABLED" => format!("The Firebase account {email} is disabled."),
-        "API_KEY_INVALID" | "PROJECT_NOT_FOUND" => {
-            "The Firebase api_key/project_id in cloud.json is not valid.".to_string()
-        }
-        _ => format!("sign-in rejected ({status}): {}", truncate(body, 300)),
     }
 }
 
@@ -2003,45 +1858,6 @@ mod tests {
         let report = SyncReport::default();
         assert!(!report.enabled);
         assert_eq!(report.attempted, 0);
-    }
-
-    /// The raw Identity Toolkit code is unusable in the UI: it neither names the
-    /// account nor says that waiting fixes it.
-    #[test]
-    fn rate_limited_sign_in_explains_the_lockout() {
-        let body = r#"{"error":{"code":400,"message":"TOO_MANY_ATTEMPTS_TRY_LATER","errors":[{"message":"TOO_MANY_ATTEMPTS_TRY_LATER","domain":"global","reason":"invalid"}]}}"#;
-        let message = sign_in_failure_message(400, body, "clinic@example.com");
-
-        assert!(message.contains("too many failed attempts"), "{message}");
-        assert!(message.contains("clinic@example.com"), "{message}");
-        assert!(
-            message.contains("15–60 minutes"),
-            "must say the block expires by itself: {message}"
-        );
-        assert!(
-            !message.contains("TOO_MANY_ATTEMPTS_TRY_LATER"),
-            "raw code must not leak into the UI: {message}"
-        );
-    }
-
-    #[test]
-    fn rejected_credentials_point_at_cloud_json() {
-        // The message names whichever source is in use, so pin the environment.
-        let _guard = ENV_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-        std::env::remove_var("PILATES_CLINIC_EMAIL");
-
-        let body = r#"{"error":{"code":400,"message":"INVALID_LOGIN_CREDENTIALS"}}"#;
-        let message = sign_in_failure_message(400, body, "clinic@example.com");
-        assert!(message.contains("cloud.json"), "{message}");
-        assert!(message.contains("clinic@example.com"), "{message}");
-    }
-
-    #[test]
-    fn unknown_sign_in_errors_keep_the_raw_payload() {
-        let body = r#"{"error":{"message":"SOMETHING_NEW"}}"#;
-        let message = sign_in_failure_message(400, body, "clinic@example.com");
-        assert!(message.contains("SOMETHING_NEW"), "{message}");
-        assert!(message.contains("400"), "{message}");
     }
 
     fn patient() -> StoredPatient {

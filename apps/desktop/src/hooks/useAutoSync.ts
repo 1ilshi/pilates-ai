@@ -14,6 +14,8 @@ export interface AutoSyncStatus {
   /** Last failure, or `null` when the previous run succeeded. */
   lastError: string | null;
   syncing: boolean;
+  /** True when the stored sign-in was refused; only signing in again fixes it. */
+  authRejected: boolean;
 }
 
 /**
@@ -31,6 +33,7 @@ export function useAutoSync(): AutoSyncStatus {
   const [lastSyncAt, setLastSyncAt] = useState<number | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [authRejected, setAuthRejected] = useState(false);
   const running = useRef(false);
   const debounce = useRef<number | null>(null);
 
@@ -50,6 +53,7 @@ export function useAutoSync(): AutoSyncStatus {
       if (!stopped) setSyncing(true);
 
       let failure: string | null = null;
+      let rejected = false;
       // Upload and download are attempted independently: a failed upload must
       // not prevent new sessions from arriving.
       try {
@@ -57,7 +61,14 @@ export function useAutoSync(): AutoSyncStatus {
         // and still resolves. Treating a resolved promise as success made the
         // sidebar say "Synced just now" while every upload was failing.
         const report = await syncNow();
-        if (!report.enabled) {
+        if (report.auth_rejected) {
+          // The credential itself was refused. There is nothing to retry until
+          // the user signs in, and the banner must not flicker between runs.
+          rejected = true;
+          failure =
+            report.errors[0] ??
+            "This workstation's sign-in was rejected. Sign in again to resume syncing.";
+        } else if (!report.enabled) {
           failure = "cloud sync is not configured";
         } else if (report.failed > 0) {
           failure =
@@ -70,8 +81,9 @@ export function useAutoSync(): AutoSyncStatus {
         }
       } catch (error) {
         failure = String(error);
+        rejected = failure.startsWith("auth:");
       }
-      if (pull) {
+      if (pull && !rejected) {
         try {
           const pulled = await syncPullPatients();
           if (!failure && pulled && !pulled.enabled) {
@@ -80,6 +92,7 @@ export function useAutoSync(): AutoSyncStatus {
             // Sessions recorded on another workstation never arrived. Saying
             // "synced" here would hide a real gap in the patient's history.
             failure = pulled.error;
+            rejected = failure.startsWith("auth:");
           }
         } catch (error) {
           failure = failure ?? String(error);
@@ -90,6 +103,7 @@ export function useAutoSync(): AutoSyncStatus {
       if (stopped) return;
       setSyncing(false);
       setLastError(failure);
+      setAuthRejected(rejected);
       if (!failure) {
         setLastSyncAt(Date.now());
         // The pages have no manual refresh any more, so tell them to reload.
@@ -135,5 +149,5 @@ export function useAutoSync(): AutoSyncStatus {
     };
   }, []);
 
-  return { lastSyncAt, lastError, syncing };
+  return { lastSyncAt, lastError, syncing, authRejected };
 }

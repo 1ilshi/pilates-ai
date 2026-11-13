@@ -222,33 +222,24 @@ The app is designed to degrade rather than crash:
 
 ---
 
-## 7. Optional: enable cloud sync
+## 7. Cloud sync
 
-Sync is off unless credentials are present in the app's environment. For this
-project they are already configured at user scope; the shape is:
+Sync is configured by **signing in** (section "Signing in"), which writes a
+refresh token to `auth.json` in the app data directory. That is the credential:
+`cloud.json` only carries project, API key and bucket, and its password field is
+left empty.
 
-```powershell
-$env:PILATES_FIREBASE_PROJECT_ID = "pilates-ai"
-$env:PILATES_FIREBASE_API_KEY    = "AIzaSyA_FsX3RBj7bxjO9dMx5QOh2X_JnvBVToo"
-$env:PILATES_CLINIC_EMAIL        = "6531503067@lamduan.mfu.ac.th"
-$env:PILATES_CLINIC_PASSWORD     = "<clinic account password>"
-# Optional — only needed for Parquet archival:
-$env:PILATES_FIREBASE_BUCKET     = "<storage bucket>"
-```
+A `cloud.json` missing `project_id` or `api_key` still disables sync, and the
+sidebar says **"Cloud sync off — not configured"** rather than pretending.
+Environment variables (`PILATES_FIREBASE_PROJECT_ID`, `PILATES_FIREBASE_API_KEY`,
+`PILATES_FIREBASE_BUCKET`) are the fallback **only when no `cloud.json` exists**;
+the file deliberately wins, because a value set after logon is never seen by an
+app launched from Explorer.
 
-`PILATES_FIREBASE_BUCKET` is **optional**: Firestore reads and writes work
-without it, so the patient roster can be pulled before Cloud Storage has been
-provisioned. Only the cold Parquet archive is skipped.
-
-Without the four required variables, **Sync** returns `enabled: false` and the
-outbox simply accumulates — this is expected, not a bug.
-
-To confirm the credentials work, the app prints one of these at startup:
-
-```
-[pilates] cloud sync enabled
-[pilates] cloud sync disabled (no credentials configured)
-```
+`PILATES_FIREBASE_BUCKET` (or `bucket` in `cloud.json`) is **optional but
+needed for archival**: without it the session document still reaches Firestore,
+but `research_telemetry.storage_path` is absent and there is no Parquet. The
+capture page shows an amber banner when it is unset.
 
 A live end-to-end check of the pull path (skipped in normal CI runs):
 
@@ -263,12 +254,12 @@ Expected: `pulled: fetched=18 imported=18 updated=0` and
 ### Pulling the existing patient roster
 
 Your Firestore already holds patients created by the earlier app. The desktop
-app has no live read path, so use **Pull from Firestore** on the Patients page
-to import them:
+pulls them automatically once signed in — there is **no button to press**.
+The first sync after sign-in imports the roster; later changes arrive on the
+60-second sweep or when the change marker moves.
 
-1. Set the credentials above and restart the app.
-2. Patients → **Pull from Firestore**.
-3. You should see `Pulled N patient(s) — X new, Y updated`.
+Restart the app to force the first pull, or wait for the sidebar to read
+`Synced just now`. The Patients page then shows the imported roster.
 
 Notes on that data:
 
@@ -309,9 +300,11 @@ firebase deploy --only functions:onSessionCreated --project pilates-ai
 ```
 
 > Deploy **only the named function**. A bare `firebase deploy --only functions`
-> would delete every function not present in this repository, including
-> `downloadPatientData`, `getPoseAccuracySummary` and
-> `updateGraphsOnPatientDeletion`, which exist only in production.
+> deletes every function not present in this repository. That is now the safe
+> direction — the legacy functions are gone — but it will also remove
+> `pairStart`, `pairApprove`, `pairPoll` and the portal-login function if they
+> are not in the checkout you deploy from, which breaks pairing and the portal
+> sign-in link.
 
 ---
 
@@ -324,14 +317,14 @@ pnpm turbo run build                     # the portal imports the workspace pack
 pnpm --filter @pilates/web dev           # http://localhost:3000
 ```
 
-Sign in with the clinic account from section 7. You should see:
+Sign in with a clinic account. You should see:
 
 | Page | Expected |
 | :--- | :--- |
-| Overview | 18 patients, session/score totals, recently active table |
+| Overview | patient count, session/score totals, recently active table |
 | Patients | Directory with **Current / Legacy / None** badges |
 | Patient | Current programme trend + read-only legacy panel |
-| Session | Rep table, angle trajectory, telemetry + `.parquet` download |
+| Session | Rep table, angle trajectory, telemetry + `.parquet` download (only when the archive exists) |
 
 Notes:
 
@@ -352,18 +345,20 @@ firebase deploy --only hosting --project pilates-ai
 
 ---
 
-## 9. Known limitations (as of Steps 1–9)
+## 9. Known limitations
 
 | Area | Status |
 | :--- | :--- |
-| DirectML GPU acceleration | **Not active.** Microsoft stopped shipping DirectML prebuilts after ONNX Runtime 1.24; `ort` needs the 1.31 API. The engine prefers DirectML automatically if you drop a matching `DirectML.dll` next to `onnxruntime.dll`. Runs on CPU today. |
-| Cloud upload | Compiles and is unit-tested, but **never exercised against a live Firebase project**. |
-| Cloud Functions | `onSessionCreated` is **deployed and verified end-to-end in production**, and is now the **only** deployed function — all 8 legacy ones were deleted. |
+| GPU acceleration | **None on Windows.** Microsoft stopped publishing DirectML builds for ONNX Runtime 1.24+, and `ort` binds the 1.31 API, so the Windows path is CPU SIMD (20–35 ms per frame). macOS Apple Silicon uses **CoreML**. There is no DirectML code path left to enable. |
+| Cloud upload | **Exercised end-to-end against production.** A recorded session produces a Firestore document and a Parquet object in `gs://pilates-ai.firebasestorage.app/telemetry/`. |
+| Cloud Functions | `onSessionCreated` (aggregation), `pairStart` / `pairApprove` / `pairPoll` (pairing) and the portal-login function are deployed in `asia-east2`. |
 | Video preview | Downscaled to 320×240 raw RGB over IPC at ~15 FPS. |
-| Keypoint labels | **Provisional** — the models never stored keypoint names. Repetitions therefore count from **detection duration**, not angles; angles remain a secondary metric. |
+| Keypoint labels | **Provisional** — the models never stored keypoint names. Repetitions count from **detection duration**, not angles; angles remain a secondary metric. |
 | Session replay | Available in the web portal: angle trajectory and rep table from Firestore. **Skeleton replay needs the Parquet archive**, which holds keypoints. |
-| Web portal | **Live** at https://pilates-ai.web.app (Step 8). |
-| Firebase Storage bucket | **None provisioned**, so sessions carry no `research_telemetry` and the `.parquet` download is unavailable. |
+| Web portal | **Live** at https://pilates-ai.web.app |
+| Firebase Storage | **Provisioned** (`pilates-ai.firebasestorage.app`). Sessions recorded before it was configured carry a `storage_path` with no object; the portal detects that and hides the download rather than offering a 404. |
+| Installers | **Unsigned** on every platform. Windows shows SmartScreen, macOS needs right-click → Open. Debug builds are never signable this way. |
+| macOS / Linux hardware | Compiled and bundled in CI on every release, but **never launched on real hardware**. Treat the first clinic install as the acceptance test. |
 
 ---
 

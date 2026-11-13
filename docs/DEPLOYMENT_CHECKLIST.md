@@ -140,5 +140,5 @@ node tools/set-version.mjs --check                                      # all fo
 | Intel Macs unsupported | macOS | build ONNX Runtime from source, or document Apple Silicon only |
 | MSI cannot self-update | Windows | re-deploy the MSI, or install from NSIS |
 | glibc floor | Linux | document Ubuntu 22.04+ |
-| `cloud.json` is per-machine | all | provisioning runbook: bucket, claim, then rules |
+| `cloud.json` is per-machine | all | Provisioning runbook: sign in on the machine (writes the refresh token), then set `bucket` in `cloud.json` if archival is wanted |
 | Portal deploys on every `master` push | server | gate with the Firebase service-account secret only when ready |

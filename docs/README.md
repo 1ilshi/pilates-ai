@@ -31,8 +31,29 @@ pnpm turbo run build
 pnpm --filter @pilates/desktop tauri dev
 ```
 
+On Windows the build needs the **MSVC toolchain and a Windows SDK** — see
+[TESTING.md](TESTING.md#1-prerequisites). The GNU toolchain has no `windres`.
+
 See [TESTING.md](TESTING.md) for how to verify each layer, including checks that
 run without a webcam.
+
+## Installing
+
+Download the installer for your platform from the
+[latest release](https://github.com/1ilshi/pilates-ai/releases/latest):
+
+| Platform | File | Notes |
+| :--- | :--- | :--- |
+| Windows | `Pilates.AI_<version>_x64-setup.exe` | Self-updates. UAC prompts either way. |
+| Windows (managed) | `…_x64_en-US.msi` | For Intune/GPO. **Cannot self-update.** |
+| macOS (Apple Silicon) | `…_aarch64.dmg` | Intel Macs are unsupported. |
+| Linux | `…_amd64.AppImage` | Self-updates. Needs glibc ≥ 2.35. |
+| Linux (managed) | `…_amd64.deb` | For apt. **Cannot self-update.** |
+
+The `.json` and `.sig` files in a release belong to the updater, not to people.
+Every build is **unsigned**, so Windows shows SmartScreen and macOS needs
+right-click → Open. Full detail in
+[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md).
 
 ## Setting up a workstation (students and colleagues)
 

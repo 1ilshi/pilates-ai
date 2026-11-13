@@ -2,15 +2,14 @@ name: Desktop Release
 
 on:
   push:
-    # `master` is this repository's default branch; `main` is accepted so the
-    # workflow keeps working if the default is renamed.
-    branches: [main, master]
+    # No branch filter on purpose: this repository's branches have been
+    # renamed more than once (`master` → `v2`, with `v1` kept), and a hardcoded
+    # list meant CI silently stopped running the moment the name changed.
+    # Every branch is built; `paths-ignore` keeps docs-only commits cheap.
     tags: ["v*"]
-    # Documentation-only changes should not burn a 38-minute build matrix.
     paths-ignore:
       - "**/*.md"
   pull_request:
-    branches: [main, master]
   workflow_dispatch:
 
 jobs:

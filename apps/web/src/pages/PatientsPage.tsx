@@ -276,7 +276,7 @@ export function PatientsPage() {
                 <dd className="text-slate-300">{patient.totalSessions}</dd>
               </div>
               <div className="flex justify-between gap-2">
-                <dt className="text-slate-500">Score</dt>
+                <dt className="text-slate-500">Accuracy</dt>
                 <dd className="text-slate-300">
                   {patient.lifetimeAvgScore != null
                     ? formatPercent(patient.lifetimeAvgScore)

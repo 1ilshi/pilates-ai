@@ -50,7 +50,7 @@ export function Modal({ open, title, onClose, children, footer }: ModalProps) {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative w-full max-w-md rounded-card border border-slate-700 bg-slate-900 shadow-xl"
+        className="relative max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-card border border-slate-700 bg-slate-900 shadow-xl"
       >
         <div className="border-b border-slate-800 px-5 py-3">
           <h3 className="text-sm font-semibold text-slate-100">{title}</h3>

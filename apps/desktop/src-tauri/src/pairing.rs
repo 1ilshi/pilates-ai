@@ -48,6 +48,15 @@ pub const DEFAULT_PROJECT_ID: &str = "pilates-ai";
 /// File holding the workstation's credential, beside `cloud.json`.
 const AUTH_FILENAME: &str = "auth.json";
 
+/// Credential format written by this version.
+///
+/// Version 1 is the pairing-era file. It is deliberately treated as stale: a
+/// credential created before the sign-in model must be confirmed once, so an
+/// upgraded machine cannot keep syncing as an account nobody chose in this
+/// version. The password is never involved — the user signs in again and the
+/// new refresh token replaces the old one.
+pub const CREDENTIAL_SCHEMA_VERSION: u32 = 2;
+
 /// What `pairStart` returns and the user is shown.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PairingStart {
@@ -84,14 +93,17 @@ pub fn auth_path() -> PathBuf {
     crate::paths::data_dir().join(AUTH_FILENAME)
 }
 
-/// Read the stored credential, or `None` when the workstation is unpaired.
+/// Read the stored credential, or `None` when this workstation must sign in.
 ///
-/// A corrupt or half-written file is treated as unpaired rather than an error:
-/// the user can re-pair, and the app must still open.
+/// A corrupt, half-written or older-format file is treated as no credential:
+/// the user signs in again, and the app still opens to the sign-in screen.
 pub fn load_auth_from(path: &Path) -> Option<AuthState> {
     let text = crate::pose_config::read_config_text(path).ok()?;
     let state: AuthState = serde_json::from_str(&text).ok()?;
     if state.refresh_token.trim().is_empty() {
+        return None;
+    }
+    if state.schema_version < CREDENTIAL_SCHEMA_VERSION {
         return None;
     }
     Some(state)
@@ -117,7 +129,7 @@ pub fn save_auth(state: &AuthState) -> EngineResult<()> {
     save_auth_to(&auth_path(), state)
 }
 
-/// Remove the credential. The next launch shows the pairing screen.
+/// Remove the credential. The next launch shows the sign-in screen.
 pub fn clear_auth() -> EngineResult<()> {
     let path = auth_path();
     if path.exists() {
@@ -129,16 +141,16 @@ pub fn clear_auth() -> EngineResult<()> {
 
 /// What the credential file looks like on disk.
 ///
-/// Three states, not two: a file that exists but cannot be read is **not** the
-/// same as no file at all. Treating them alike would show the pairing gate to a
-/// workstation that is already paired, hiding its local patient list behind a
-/// screen that needs the network — the failure this whole design exists to
-/// prevent.
+/// Only `Present` with a current schema version counts as signed in. A missing,
+/// unreadable or older-format file all show the sign-in screen: a credential
+/// nobody confirmed in this version must not silently keep syncing.
 pub enum AuthFile {
-    /// No credential: a first run, and the only case that gates.
+    /// No credential: a first run.
     Missing,
-    /// A file is there but unreadable or malformed. Fail open.
+    /// A file is there but unreadable or malformed.
     Unreadable,
+    /// A pairing-era credential that must be confirmed once by signing in.
+    Stale,
     Present(AuthState),
 }
 
@@ -149,38 +161,25 @@ pub fn auth_file_state() -> AuthFile {
     }
     match crate::pose_config::read_config_text(&path) {
         Ok(text) => match serde_json::from_str::<AuthState>(&text) {
-            Ok(state) if !state.refresh_token.trim().is_empty() => AuthFile::Present(state),
+            Ok(state) if !state.refresh_token.trim().is_empty() => {
+                if state.schema_version < CREDENTIAL_SCHEMA_VERSION {
+                    AuthFile::Stale
+                } else {
+                    AuthFile::Present(state)
+                }
+            }
             _ => AuthFile::Unreadable,
         },
         Err(_) => AuthFile::Unreadable,
     }
 }
 
-/// True when the workstation has a credential at all.
+/// True only when the workstation has a credential created by this version.
 ///
-/// Note this says nothing about whether the credential still works — a rejected
-/// token must never hide the patient list.
-///
-/// A `cloud.json` with an email and password is a credential too. Installations
-/// that predate pairing have one and no `auth.json`; gating them would force
-/// every existing clinic workstation to re-pair after an update, and would lock
-/// them out of the patient list entirely if the pairing service is unreachable.
+/// A rejected token still never hides the patient list: this reports whether a
+/// credential exists, not whether the server accepts it.
 pub fn is_paired() -> bool {
-    match auth_file_state() {
-        AuthFile::Present(_) => true,
-        // Fail open. Sync will report the problem; the patient list stays.
-        AuthFile::Unreadable => true,
-        AuthFile::Missing => legacy_credential_present(crate::cloud_sync::CloudConfig::load().as_ref()),
-    }
-}
-
-/// Whether a `cloud.json` credential is complete enough to authenticate.
-fn legacy_credential_present(config: Option<&crate::cloud_sync::CloudConfig>) -> bool {
-    config
-        .map(|config| {
-            !config.email.trim().is_empty() && !config.password.trim().is_empty()
-        })
-        .unwrap_or(false)
+    matches!(auth_file_state(), AuthFile::Present(_))
 }
 
 /// Accept what a human types: lowercase, spaces, or the displayed dash.
@@ -293,7 +292,7 @@ pub fn exchange_custom_token(
         .to_string();
 
     let state = AuthState {
-        schema_version: 1,
+        schema_version: CREDENTIAL_SCHEMA_VERSION,
         refresh_token,
         paired_at: chrono::Utc::now().to_rfc3339(),
         instance_id: instance_id.to_string(),
@@ -376,7 +375,7 @@ pub fn sign_in(
     }
 
     let state = AuthState {
-        schema_version: 1,
+        schema_version: CREDENTIAL_SCHEMA_VERSION,
         refresh_token: parsed.refresh_token,
         paired_at: chrono::Utc::now().to_rfc3339(),
         instance_id: instance_id.to_string(),
@@ -431,8 +430,9 @@ fn sign_in_failure(body: &str, status: u16) -> String {
 /// forgiving state.
 ///
 /// The email is kept: it is not a secret and makes the workstation identifiable
-/// in `cloud.json`. With the password empty, `is_paired` no longer counts this
-/// file as a credential, so deleting `auth.json` really does re-trigger pairing.
+/// in `cloud.json`. The password is removed because it has no remaining use:
+/// `cloud.json` is never a credential, and deleting `auth.json` always returns
+/// the workstation to the sign-in screen.
 pub fn clear_legacy_password() {
     let path = crate::paths::data_dir().join("cloud.json");
     let Ok(text) = crate::pose_config::read_config_text(&path) else {
@@ -567,7 +567,7 @@ mod tests {
     fn a_saved_credential_is_read_back() {
         let path = temp_path(AUTH_FILENAME);
         let state = AuthState {
-            schema_version: 1,
+            schema_version: CREDENTIAL_SCHEMA_VERSION,
             refresh_token: "token-value".into(),
             paired_at: "2026-01-01T00:00:00Z".into(),
             instance_id: "instance-1".into(),
@@ -597,7 +597,7 @@ mod tests {
     fn a_file_without_a_token_reads_as_unpaired() {
         let path = temp_path(AUTH_FILENAME);
         std::fs::create_dir_all(path.parent().unwrap()).expect("dir");
-        std::fs::write(&path, r#"{"schema_version":1,"refresh_token":"  "}"#).expect("write");
+        std::fs::write(&path, r#"{"schema_version":2,"refresh_token":"  "}"#).expect("write");
 
         assert!(load_auth_from(&path).is_none());
 
@@ -610,33 +610,57 @@ mod tests {
     }
 
     #[test]
-    fn an_installation_from_before_pairing_is_not_gated() {
-        // The upgrade path: a workstation with a working cloud.json credential
-        // and no auth.json must go straight to the patient list. Gating it would
-        // force every existing clinic machine to re-pair, and lock it out
-        // entirely if the pairing service were unreachable.
-        let config = crate::cloud_sync::CloudConfig {
-            project_id: "pilates-ai".into(),
-            api_key: "key".into(),
-            bucket: String::new(),
-            email: "desktopaccess@pilatesai.com".into(),
-            password: "secret".into(),
-        };
-        assert!(legacy_credential_present(Some(&config)));
+    fn an_installation_from_before_pairing_is_gated() {
+        // A cloud.json email and password is no longer a credential: a machine
+        // that predates pairing must show the sign-in screen rather than sync
+        // silently as whatever shared account the file happens to hold.
+        let _guard = DATA_DIR_ENV.lock().unwrap_or_else(|error| error.into_inner());
+        let dir = std::env::temp_dir().join(format!("pilates-legacy-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).expect("dir");
+        let _env = DataDir::set(&dir);
+        std::fs::write(
+            dir.join("cloud.json"),
+            r#"{"project_id":"pilates-ai","api_key":"k","bucket":"","email":"clinician@example.com","password":"secret"}"#,
+        )
+        .expect("write");
 
-        let no_password = crate::cloud_sync::CloudConfig {
-            password: String::new(),
-            ..config.clone()
-        };
-        assert!(!legacy_credential_present(Some(&no_password)));
+        assert!(matches!(auth_file_state(), AuthFile::Missing));
+        assert!(!is_paired(), "a cloud.json password must not bypass sign-in");
+        assert!(load_auth().is_none());
 
-        let blank_email = crate::cloud_sync::CloudConfig {
-            email: "   ".into(),
-            ..config
-        };
-        assert!(!legacy_credential_present(Some(&blank_email)));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
-        assert!(!legacy_credential_present(None));
+    #[test]
+    fn a_pairing_era_credential_requires_a_fresh_sign_in() {
+        // Strict upgrade: the pairing-era file is stale, so the app gates once
+        // and the user confirms the account. The new credential then persists.
+        let _guard = DATA_DIR_ENV.lock().unwrap_or_else(|error| error.into_inner());
+        let dir = std::env::temp_dir().join(format!("pilates-stale-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).expect("dir");
+        let _env = DataDir::set(&dir);
+        std::fs::write(
+            dir.join(AUTH_FILENAME),
+            r#"{"schema_version":1,"refresh_token":"old-token"}"#,
+        )
+        .expect("write");
+
+        assert!(matches!(auth_file_state(), AuthFile::Stale));
+        assert!(!is_paired(), "a pairing-era credential must not open the app");
+        assert!(load_auth().is_none());
+
+        save_auth(&AuthState {
+            schema_version: CREDENTIAL_SCHEMA_VERSION,
+            refresh_token: "new-token".into(),
+            paired_at: String::new(),
+            instance_id: String::new(),
+        })
+        .expect("save");
+
+        assert!(is_paired());
+        assert_eq!(load_auth().expect("load").refresh_token, "new-token");
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -645,7 +669,7 @@ mod tests {
         std::fs::create_dir_all(path.parent().unwrap()).expect("dir");
         std::fs::write(
             &path,
-            "\u{feff}{\"schema_version\":1,\"refresh_token\":\"bom-token\"}",
+            "\u{feff}{\"schema_version\":2,\"refresh_token\":\"bom-token\"}",
         )
         .expect("write");
 
@@ -701,10 +725,10 @@ mod tests {
     }
 
     #[test]
-    fn an_unreadable_credential_does_not_gate() {
-        // A file that exists but cannot be parsed must not be mistaken for a
-        // first run: that would hide the local patient list behind a screen
-        // that needs the network.
+    fn an_unreadable_credential_gates() {
+        // A file that exists but cannot be parsed is not a credential. Opening
+        // the patient list from it would mean a machine nobody can prove is
+        // signed in still shows clinical data.
         let _guard = DATA_DIR_ENV.lock().unwrap_or_else(|error| error.into_inner());
         let dir = std::env::temp_dir().join(format!("pilates-bad-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&dir).expect("dir");
@@ -712,7 +736,8 @@ mod tests {
         std::fs::write(dir.join(AUTH_FILENAME), "not json at all").expect("write");
 
         assert!(matches!(auth_file_state(), AuthFile::Unreadable));
-        assert!(is_paired(), "an unreadable credential must fail open");
+        assert!(!is_paired(), "an unreadable credential must not fail open");
+        assert!(load_auth().is_none());
 
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -737,11 +762,6 @@ mod tests {
         assert_eq!(value["password"], "");
         // The email is not a secret and stays, for identification.
         assert_eq!(value["email"], "e@x");
-        // With no password this file is no longer a credential, so deleting
-        // auth.json re-triggers pairing instead of silently continuing.
-        let config: crate::cloud_sync::CloudConfig =
-            serde_json::from_str(&text).expect("valid config");
-        assert!(!legacy_credential_present(Some(&config)));
 
         let _ = std::fs::remove_dir_all(&dir);
     }

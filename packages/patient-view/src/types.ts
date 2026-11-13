@@ -57,6 +57,8 @@ export interface SessionSummaryLike {
 export interface RepLike {
   rep_index: number;
   duration_sec: number;
+  /** Time held in the target position; absent on records written before it. */
+  avg_hold_duration_sec?: number;
   peak_rom_angle: number;
   form_score: number;
   stability_variance?: number;

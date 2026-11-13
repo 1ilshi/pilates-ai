@@ -898,7 +898,7 @@ export function PatientView({
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <div>
                 <p className="mb-2 text-xs font-medium text-slate-400">
-                  Hold duration vs form
+                  Hold duration vs pose accuracy
                 </p>
                 <HoldQualityScatter points={holdQuality} />
               </div>
@@ -954,7 +954,7 @@ export function PatientView({
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">Score</p>
+                        <p className="text-xs text-slate-500">Accuracy</p>
                         <p className="text-sm text-slate-200">
                           {scoreOf(session) ? formatPercent(scoreOf(session), 0) : "—"}
                         </p>

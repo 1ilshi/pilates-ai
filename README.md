@@ -62,6 +62,10 @@ The internet is needed once, to sign in. Recording, the patient list and the
 local queue all work offline afterwards; sessions upload when the connection
 returns.
 
+**Upgrading from 2.0.6 or earlier** — the app asks you to sign in once, then
+remembers the account as usual. A `cloud.json` email and password is no longer a
+credential, so an old install cannot skip the sign-in screen.
+
 **Analysis** opens the clinical portal in the browser already signed in as the
 same account: the workstation hands the browser a one-time code (60 seconds,
 single use) and the portal exchanges it for a session. If the handoff service is

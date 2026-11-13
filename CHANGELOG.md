@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.0.7 — 2026-11-13
+
+- **A credential written by 2.0.6 or earlier must be confirmed once.** Upgrading
+  shows the sign-in screen, so no machine keeps syncing as an account nobody
+  chose in this version. After that, sign-in persists as before.
+- **`cloud.json` is no longer a credential.** A pre-pairing install cannot skip
+  sign-in with a stored email and password; only `auth.json` counts.
+- **A missing, stale or unreadable `auth.json` now shows the sign-in screen**
+  instead of opening the patient list.
+- **Portal fits phones and tablets:** the repetition accuracy distribution spans
+  the full row, the cohort controls wrap, patient and session views use their
+  mobile layouts, and dialogs scroll instead of overflowing.
+- **Hold time uses `avg_hold_duration_sec`** in the session header, rep table
+  and mobile rep card, not the whole repetition duration.
+- **Remaining "Score" / "Form" labels** in the patient and session views now
+  read "Accuracy".
+
 ## 2.0.6 — 2026-11-13
 
 - **Sign-in replaces pairing for personal laptops.** Install, enter the clinic

@@ -71,7 +71,10 @@ export function SessionView({
   const telemetry = session.research_telemetry ?? null;
 
   const meanHold = reps.length
-    ? reps.reduce((sum, rep) => sum + Number(rep.duration_sec ?? 0), 0) / reps.length
+    ? reps.reduce(
+        (sum, rep) => sum + Number(rep.avg_hold_duration_sec ?? 0),
+        0,
+      ) / reps.length
     : 0;
 
   return (
@@ -103,7 +106,7 @@ export function SessionView({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {onDownloadTelemetry && telemetry?.storage_path && (
             <Button variant="secondary" onClick={() => void onDownloadTelemetry()}>
               <Download className="h-4 w-4" aria-hidden="true" />
@@ -196,11 +199,17 @@ export function SessionView({
                       {formatPercent(Number(rep.form_score ?? 0), 0)}
                     </span>
                   </div>
-                  <dl className="mt-1.5 grid grid-cols-3 gap-2 text-[11px]">
+                  <dl className="mt-1.5 grid grid-cols-2 gap-2 text-[11px]">
                     <div>
                       <dt className="text-slate-500">Duration</dt>
                       <dd className="text-slate-300">
                         {Number(rep.duration_sec ?? 0).toFixed(1)}s
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Hold</dt>
+                      <dd className="text-slate-300">
+                        {Number(rep.avg_hold_duration_sec ?? 0).toFixed(1)}s
                       </dd>
                     </div>
                     <div>
@@ -230,7 +239,7 @@ export function SessionView({
                   <TableHead>Duration</TableHead>
                   <TableHead>Peak ROM</TableHead>
                   <TableHead>Hold</TableHead>
-                  <TableHead>Form</TableHead>
+                  <TableHead>Accuracy</TableHead>
                   <TableHead>Stability</TableHead>
                 </TableRow>
               </TableHeader>
@@ -245,7 +254,7 @@ export function SessionView({
                       {Number(rep.peak_rom_angle ?? 0).toFixed(1)}°
                     </TableCell>
                     <TableCell className="text-slate-400">
-                      {Number(rep.duration_sec ?? 0).toFixed(1)}s
+                      {Number(rep.avg_hold_duration_sec ?? 0).toFixed(1)}s
                     </TableCell>
                     <TableCell>{formatPercent(Number(rep.form_score ?? 0), 0)}</TableCell>
                     <TableCell className="text-slate-400">

@@ -461,7 +461,7 @@ export function AnalysisPage() {
               Saved in this browser.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <PoseSelect
               poses={poses}
               value={cohortPose}
@@ -669,6 +669,7 @@ export function AnalysisPage() {
             title="Repetition accuracy distribution"
             description="Every repetition from each cohort in ten-point buckets, one colour per cohort. A mean hides whether performance is consistent or split between strong and weak."
             onExpand={() => expand("histogram")}
+            className="lg:col-span-2"
           >
             <CohortHistogram
               series={histogramSeries}

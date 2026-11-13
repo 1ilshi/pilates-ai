@@ -388,8 +388,12 @@ exists in Firebase Auth is accepted.
 4. Reopening the app does not ask again. **Switch account** in the sidebar
    footer removes the credential and returns to the sign-in screen.
 
+A credential written by **2.0.6 or earlier** is treated as stale: the app asks
+for sign-in once after the upgrade, then keeps the new credential. The password
+is never involved in that check — only the refresh token's schema version.
+
 Check `%LOCALAPPDATA%\PilatesAI\auth.json` exists and contains a
-`refresh_token`, never a password.
+`refresh_token` (and `"schema_version": 2`), never a password.
 
 ### Pairing instead (shared or unattended machines)
 
@@ -412,9 +416,11 @@ workstation changes hands.
    account on this workstation was rejected."*
 2. Press **Sign in** and repeat the first-run steps.
 
-**The app never refuses to open because a credential was rejected.** Recording
-and the local outbox keep working; only upload is paused. Sessions queued during
-that time drain once sign-in succeeds.
+**A rejected token still never hides the patient list.** Recording and the local
+outbox keep working; only upload is paused, and sessions queued during that time
+drain once sign-in succeeds. A *missing, stale or unreadable* credential is
+different: it shows the sign-in screen, because nobody can prove which account
+that machine belongs to.
 
 ### What to check after signing in
 

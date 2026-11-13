@@ -43,16 +43,16 @@ export function LegacyPanel({ legacy }: { legacy: LegacySummary }) {
       </CardHeader>
 
       <CardContent className="space-y-4 pt-4">
-        <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-card border border-slate-800 bg-slate-900/40 p-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="rounded-card border border-slate-800 bg-slate-900/40 p-2 sm:p-3">
             <p className="text-xs text-slate-500">Samples</p>
             <p className="text-xl font-bold text-slate-100">{legacy.total_samples}</p>
           </div>
-          <div className="rounded-card border border-slate-800 bg-slate-900/40 p-3">
+          <div className="rounded-card border border-slate-800 bg-slate-900/40 p-2 sm:p-3">
             <p className="text-xs text-slate-500">Poses</p>
             <p className="text-xl font-bold text-slate-100">{rows.length}</p>
           </div>
-          <div className="rounded-card border border-slate-800 bg-slate-900/40 p-3">
+          <div className="rounded-card border border-slate-800 bg-slate-900/40 p-2 sm:p-3">
             <p className="text-xs text-slate-500">Comments</p>
             <p className="text-xl font-bold text-slate-100">{legacy.comments_count}</p>
           </div>

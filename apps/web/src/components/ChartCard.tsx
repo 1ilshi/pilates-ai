@@ -71,18 +71,18 @@ export function ChartOverlay({ title, onClose, actions, children }: ChartOverlay
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-slate-950 p-6">
+    <div className="fixed inset-0 z-50 flex flex-col bg-slate-950 p-4 sm:p-6">
       <div className="mb-4 flex items-center justify-between gap-3">
         <Button variant="ghost" onClick={onClose}>
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back
         </Button>
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           {actions}
-          <h3 className="text-sm font-semibold text-slate-200">{title}</h3>
+          <h3 className="truncate text-sm font-semibold text-slate-200">{title}</h3>
         </div>
       </div>
-      <div className="flex-1 overflow-auto rounded-card border border-slate-800 bg-slate-900/40 p-6">
+      <div className="flex-1 overflow-auto rounded-card border border-slate-800 bg-slate-900/40 p-3 sm:p-6">
         {children}
       </div>
     </div>

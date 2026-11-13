@@ -15,7 +15,7 @@ on-device computer vision.
 | `packages/viz` | Clinical visualisation (skeleton canvas, gauges, charts) |
 | `functions` | Firebase Cloud Functions (O(1) session aggregation) |
 | `tools` | Python tooling: ONNX export/verification, ONNX Runtime fetcher, pose-definition generator |
-| `assets/models` | Source PyTorch weights (`best.pt`) — the input to ONNX export |
+| `assets/models` | **Not in this repository.** Trained PyTorch weights (`poseN/best.pt`), needed only to re-export the ONNX models. Place them here before running `tools/export_onnx.py`. |
 | `config` | Pose definitions, model manifest, ONNX models, Firebase config |
 
 Data is dual-tier: **Firestore** holds session summaries and a 2 Hz kinematic

@@ -120,3 +120,9 @@ apps/desktop/src-tauri/resources/.cache/
 .pnpm-store/
 .tmp-build/
 .cargo-target-*/
+
+# Trained PyTorch weights. config/models/*.onnx is what ships; the .pt files
+# are only needed to re-export, and they were 31 MB of the repository.
+# Regenerate with tools/export_onnx.py, which expects assets/models/poseN/best.pt.
+/assets/models/
+*.pt

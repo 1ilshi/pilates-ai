@@ -13,7 +13,7 @@
     {
       "pose": "pose1",
       "pose_index": 1,
-      "source": "assets\\models\\pose1\\best.pt",
+      "source": "pose1/best.pt (not in this repository; keep the training weights outside git)",
       "num_classes": 2,
       "num_keypoints": 3,
       "class_names": {
@@ -38,7 +38,7 @@
     {
       "pose": "pose2",
       "pose_index": 2,
-      "source": "assets\\models\\pose2\\best.pt",
+      "source": "pose2/best.pt (not in this repository; keep the training weights outside git)",
       "num_classes": 2,
       "num_keypoints": 3,
       "class_names": {
@@ -63,7 +63,7 @@
     {
       "pose": "pose3",
       "pose_index": 3,
-      "source": "assets\\models\\pose3\\best.pt",
+      "source": "pose3/best.pt (not in this repository; keep the training weights outside git)",
       "num_classes": 2,
       "num_keypoints": 5,
       "class_names": {
@@ -88,7 +88,7 @@
     {
       "pose": "pose4",
       "pose_index": 4,
-      "source": "assets\\models\\pose4\\best.pt",
+      "source": "pose4/best.pt (not in this repository; keep the training weights outside git)",
       "num_classes": 3,
       "num_keypoints": 7,
       "class_names": {
@@ -114,7 +114,7 @@
     {
       "pose": "pose5",
       "pose_index": 5,
-      "source": "assets\\models\\pose5\\best.pt",
+      "source": "pose5/best.pt (not in this repository; keep the training weights outside git)",
       "num_classes": 2,
       "num_keypoints": 15,
       "class_names": {

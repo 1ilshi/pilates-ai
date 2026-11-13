@@ -23,7 +23,11 @@ pub struct AppState {
     pub session: Mutex<Option<CaptureSession>>,
     pub active_pose: Mutex<Option<String>>,
     pub cloud: Mutex<Option<CloudSync>>,
-    pub gcs_bucket: String,
+    /// Cloud Storage bucket for session archives, or empty when none is set.
+    ///
+    /// Behind a lock because sign-in can create `cloud.json` after launch: the
+    /// value read at startup is not the value the first session should use.
+    pub gcs_bucket: Mutex<String>,
     /// Signals the preview loop to stop.
     pub preview_running: Arc<AtomicBool>,
     /// Pose used by the preview loop (mirrors `active_pose` for lock-free read).
@@ -40,9 +44,24 @@ impl AppState {
             session: Mutex::new(None),
             active_pose: Mutex::new(None),
             cloud: Mutex::new(None),
-            gcs_bucket,
+            gcs_bucket: Mutex::new(gcs_bucket),
             preview_running: Arc::new(AtomicBool::new(false)),
             preview_pose: Arc::new(Mutex::new(None)),
+        }
+    }
+
+    /// The archive bucket, or an empty string when none is configured.
+    pub fn bucket(&self) -> String {
+        self.gcs_bucket
+            .lock()
+            .map(|guard| guard.clone())
+            .unwrap_or_default()
+    }
+
+    /// Replace the archive bucket after the configuration changes.
+    pub fn set_bucket(&self, bucket: String) {
+        if let Ok(mut guard) = self.gcs_bucket.lock() {
+            *guard = bucket;
         }
     }
 

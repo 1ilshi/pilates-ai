@@ -86,6 +86,38 @@ function walk(dir) {
   return out;
 }
 
+/**
+ * Release notes for the update banner.
+ *
+ * `RELEASE_NOTES` wins when the workflow supplies one; otherwise the matching
+ * `CHANGELOG.md` section is used, so the in-app banner says what actually
+ * changed instead of only repeating the version number. Markdown emphasis is
+ * stripped because the banner renders plain text.
+ */
+function releaseNotes(version) {
+  if (process.env.RELEASE_NOTES) return process.env.RELEASE_NOTES;
+  try {
+    const changelog = readFileSync(join(ROOT, "CHANGELOG.md"), "utf8");
+    // Split on level-2 headings; the first line of each part is the heading.
+    const section = changelog
+      .split(/^## /m)
+      .slice(1)
+      .find(
+        (part) =>
+          part.startsWith(`${version} —`) ||
+          part.startsWith(`${version} `) ||
+          part.startsWith(`${version}\n`),
+      );
+    if (section) {
+      const body = section.split("\n").slice(1).join("\n").trim();
+      if (body) return body.replace(/\*\*/g, "");
+    }
+  } catch {
+    // A missing changelog is not a release failure.
+  }
+  return `Pilates AI ${version}`;
+}
+
 function main() {
   const args = process.argv.slice(2);
   const distIndex = args.findIndex((arg) => !arg.startsWith("--"));
@@ -166,7 +198,7 @@ function main() {
 
   const manifest = {
     version,
-    notes: process.env.RELEASE_NOTES ?? `Pilates AI ${version}`,
+    notes: releaseNotes(version),
     pub_date: new Date().toISOString(),
     platforms,
   };

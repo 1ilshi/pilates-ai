@@ -242,8 +242,19 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
         <Card className="border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-300">
           Archive upload is disabled — no telemetry bucket is configured. Sessions are
           recorded and queued on this computer, but the portal will show no charts for
-          them until <code>bucket</code> is set in <code>cloud.json</code> (or
-          <code>PILATES_FIREBASE_BUCKET</code> is set for this installation).
+          them until{" "}
+          <code className="rounded bg-slate-950/60 px-1 py-0.5 font-mono text-[11px]">
+            bucket
+          </code>{" "}
+          is set in{" "}
+          <code className="rounded bg-slate-950/60 px-1 py-0.5 font-mono text-[11px]">
+            cloud.json
+          </code>{" "}
+          (or{" "}
+          <code className="rounded bg-slate-950/60 px-1 py-0.5 font-mono text-[11px]">
+            PILATES_FIREBASE_BUCKET
+          </code>{" "}
+          is set for this installation).
         </Card>
       )}
 

@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.0.10 — 2026-11-13
+
+- **Signing in now enables archive upload immediately.** The telemetry bucket is
+  refreshed whenever the cloud configuration changes, so the "no telemetry
+  bucket" banner clears without a restart and the next session records its
+  Parquet archive. Previously the bucket was read once at launch, before
+  sign-in, and stayed empty for the rest of that run.
+- **A clearer update banner.** It shows the version transition, the release
+  notes, download progress and a manual **Check for updates** control in the
+  sidebar. Installing is still a click, and never happens during a recording.
+- **Update notes now come from this changelog**, so the banner says what
+  actually changed instead of repeating the version number.
+
 ## 2.0.9 — 2026-11-13
 
 - **The "Firebase rejected the clinic credentials" banner is gone.** Sync now

@@ -309,6 +309,19 @@ export function App() {
           </p>
           <button
             type="button"
+            onClick={() => void update.checkNow()}
+            disabled={update.checking || tab === "capture"}
+            title={update.error ?? "Check the release channel for a newer build"}
+            className="mt-1 text-[10px] text-slate-500 hover:text-slate-300 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {update.checking
+              ? "Checking for updates…"
+              : update.upToDate
+                ? "Up to date"
+                : "Check for updates"}
+          </button>
+          <button
+            type="button"
             onClick={() => setConfirmSignOut(true)}
             disabled={tab === "capture"}
             title={

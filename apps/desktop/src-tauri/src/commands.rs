@@ -452,7 +452,7 @@ pub fn engine_status(state: State<'_, AppState>) -> EngineStatus {
             .lock()
             .map(|guard| guard.is_some())
             .unwrap_or(false),
-        bucket_configured: !state.gcs_bucket.is_empty(),
+        bucket_configured: !state.bucket().is_empty(),
     }
 }
 
@@ -858,7 +858,8 @@ pub fn stop_session(state: State<'_, AppState>) -> EngineResult<ClinicalSessionD
         .and_then(|guard| guard.as_ref().map(|camera| camera.frames_captured()))
         .unwrap_or(0);
 
-    let result = session.finish(&state.gcs_bucket, camera_frames)?;
+    let bucket = state.bucket();
+    let result = session.finish(&bucket, camera_frames)?;
     let document_json = serde_json::to_string(&result.document)?;
 
     {
@@ -1472,8 +1473,18 @@ pub fn sync_status(state: State<'_, AppState>) -> EngineResult<OutboxStats> {
     outbox_stats(state)
 }
 
-/// Initialise cloud sync from the environment (called once at startup).
+/// Initialise cloud sync from the environment or `cloud.json`.
+///
+/// Also refreshes the archive bucket, even when the sync client already exists:
+/// sign-in can write `cloud.json` after launch, and the bucket read at startup
+/// would otherwise stay empty for the rest of the run — the banner would never
+/// clear and the next session would be recorded without an archive.
 pub fn initialise_cloud_sync(state: &AppState) -> EngineResult<bool> {
+    let config = CloudConfig::load();
+    if let Some(config) = &config {
+        state.set_bucket(config.bucket.clone());
+    }
+
     let mut guard = state
         .cloud
         .lock()
@@ -1483,9 +1494,9 @@ pub fn initialise_cloud_sync(state: &AppState) -> EngineResult<bool> {
         return Ok(true);
     }
 
-    match CloudSync::load()? {
-        Some(cloud) => {
-            *guard = Some(cloud);
+    match config {
+        Some(config) => {
+            *guard = Some(CloudSync::new(config)?);
             Ok(true)
         }
         None => Ok(false),

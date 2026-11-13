@@ -1,8 +1,7 @@
 # Testing Pilates AI yourself
 
-This guide covers everything currently implemented: Steps 1–7 of
-`MASTER_EXECUTION_PLAN.md`. You can verify a lot of it **without a webcam**,
-and the rest needs a camera.
+This guide covers everything currently implemented. You can verify a lot of it
+**without a webcam**, and the rest needs a camera.
 
 ---
 
@@ -10,17 +9,24 @@ and the rest needs a camera.
 
 | Tool | Check with | Notes |
 | :--- | :--- | :--- |
-| Node.js 20/22 | `node --version` | |
+| Node.js 22 | `node --version` | What CI runs |
 | pnpm | `pnpm --version` | `corepack enable pnpm` if missing |
-| Rust (GNU toolchain) | `cargo --version` | `rustup default stable-x86_64-pc-windows-gnu` |
-| MinGW (`windres`, `gcc`) | `windres --version` | Required to link the Tauri app |
-| Python 3.11/3.12 | `.venv\Scripts\python.exe --version` | Only for the tooling scripts |
+| Rust (MSVC toolchain) | `cargo --version` | `rustup default stable-x86_64-pc-windows-msvc` |
+| Visual Studio Build Tools | `cl.exe` in a Developer prompt | "Desktop development with C++" + a Windows 10/11 SDK |
+| Python 3.12 | `.venv\Scripts\python.exe --version` | Only for the tooling scripts |
 
-> **PATH matters.** Cargo lives in `%USERPROFILE%\.cargo\bin` and MinGW in
-> `scoop\apps\mingw\current\bin`. If `cargo` isn't found, prepend both:
+> **Why MSVC and not MinGW.** The Tauri bundler needs `windres`/`rc.exe` to embed
+> the application icon and manifest. That step works with MSVC and the Windows
+> SDK; the GNU toolchain has no `windres` on this machine. CI builds with
+> `x86_64-pc-windows-msvc`, so building the same way locally is what keeps
+> "works on my machine" honest.
+>
+> **PATH matters.** Cargo lives in `%USERPROFILE%\.cargo\bin`:
 > ```powershell
-> $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\Users\<you>\scoop\apps\mingw\current\bin;$env:PATH"
+> $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
 > ```
+> The MSVC linker and SDK are only on PATH inside a Developer PowerShell, or
+> after calling `vcvars64.bat`.
 
 ---
 
@@ -118,7 +124,8 @@ First launch compiles Rust and takes a few minutes. A 1280×850 window opens.
 
 | Symptom | Fix |
 | :--- | :--- |
-| `windres` not found | Add MinGW to PATH (section 1) |
+| `rc.exe not found` / `LINK : fatal error LNK1181` | Build from a Developer PowerShell, or call `vcvars64.bat` (section 1) |
+| `cannot open input file 'kernel32.lib'` | The Windows SDK is missing — install it via the VS Build Tools installer |
 | `pose-definitions.json not found` | Run from the repo root, or set `PILATES_POSE_DEFINITIONS` |
 | Blank window | Run `pnpm turbo run build` first so `dist/` exists |
 

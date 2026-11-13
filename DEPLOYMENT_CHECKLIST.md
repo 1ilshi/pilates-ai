@@ -1,8 +1,8 @@
 # Deployment Checklist — Three-OS Comparison
 
-**Version:** 2.0.5 · **Status date:** 2026-11-07
+**Version:** 2.0.10 · **Status date:** 2026-11-14
 **Verdict:** every platform builds, installs, syncs and updates. **The only gate left is code signing.**
-**Companion documents:** [readiness report](DESKTOP_DEPLOYMENT_READINESS.md) · [implementation plan](DESKTOP_DEPLOYMENT_PLAN.md)
+**Companion documents:** [deployment history](docs/history/DESKTOP_DEPLOYMENT_READINESS.md) — the point-in-time audit that explains *why* the packaging looks the way it does. Historical; the live state is this page.
 
 Legend: ✅ working · ⚪ not applicable · ❌ blocking · 🟡 works, with a caveat
 
@@ -14,7 +14,7 @@ Windows ships **two** formats. They are not interchangeable: only one of them ca
 
 | | **Windows — NSIS `.exe`** | **Windows — MSI** | **macOS 12+ (arm64)** | **Linux x64** |
 |---|---|---|---|---|
-| **Artifact** | `Pilates.AI_2.0.5_x64-setup.exe` | `Pilates.AI_2.0.5_x64_en-US.msi` | `…_aarch64.dmg` (71.1 MiB) + `Pilates.AI.app.tar.gz` (72.3 MiB) | `…_amd64.AppImage` (124 MiB) + `…_amd64.deb` (71.4 MiB) |
+| **Artifact** | `Pilates.AI_2.0.10_x64-setup.exe` | `Pilates.AI_2.0.10_x64_en-US.msi` | `…_aarch64.dmg` (71.1 MiB) + `Pilates.AI.app.tar.gz` (72.4 MiB) | `…_amd64.AppImage` (124 MiB) + `…_amd64.deb` (71.4 MiB) |
 | **Size** | 39.7 MiB | 45.2 MiB | 71.1 / 72.3 MiB | 124 / 71.4 MiB |
 | **Install scope** | asks at install time: *all users* (`Program Files`) or *just me* (`%LOCALAPPDATA%`) — but the installer itself elevates, so **UAC fires either way** | per-machine only, no choice, **admin required** | drag to `/Applications` | deb: system-wide · AppImage: anywhere |
 | **Updates itself** | ✅ **yes** | ❌ **no** — re-deploy the MSI | ✅ yes | ✅ AppImage · ❌ deb |
@@ -102,7 +102,7 @@ Do this once per platform before a clinic sees it.
 |---|---|---|---|
 | Install | run the `.exe` (not the MSI) | mount DMG, drag to Applications | `dpkg -i` or run the AppImage |
 | Launch | Start menu | double-click | menu entry / AppImage |
-| Version | sidebar reads **v2.0.5** | same | same |
+| Version | sidebar reads **v2.0.10** | same | same |
 | Pair | code + approve in portal | same | same |
 | Camera | preview opens | permission prompt appears | device list populated |
 | Record | one session | one session | one session |

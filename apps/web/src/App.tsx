@@ -1,6 +1,6 @@
 import { NavLink, Route, Routes } from "react-router-dom";
-import { Activity, BarChart3, LayoutDashboard, LogOut, Users } from "lucide-react";
-import { Badge, Button, cn } from "@pilates/ui";
+import { BarChart3, LayoutDashboard, LogOut, Users } from "lucide-react";
+import { Badge, Button, Logo, cn } from "@pilates/ui";
 import { useAuth } from "./lib/auth";
 import { SignInPage } from "./pages/SignInPage";
 import { AuthBridgePage } from "./pages/AuthBridgePage";
@@ -43,7 +43,7 @@ export function App() {
       <header className="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/70 px-4 py-2.5 backdrop-blur sm:px-6 sm:py-3">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <Activity className="h-6 w-6 shrink-0 text-brand-400" aria-hidden="true" />
+            <Logo className="h-7 w-7 shrink-0" />
             {/* The wordmark and badge cost ~250px; the mark alone carries the
                 identity on a phone. */}
             <span className="hidden truncate text-lg font-bold tracking-tight text-white sm:inline">

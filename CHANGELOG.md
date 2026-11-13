@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.8 — 2026-11-13
+
+- **Sign out in the workstation.** A bordered **Sign out** button in the sidebar
+  footer removes the credential and returns to the sign-in screen. It is
+  disabled while a recording is open, so a session is never stranded.
+- **One logo everywhere.** The product mark now lives in the shared design
+  system, so the portal header, sign-in screen, analysis handoff and the
+  desktop workstation render the same asset.
+
 ## 2.0.7 — 2026-11-13
 
 - **A credential written by 2.0.6 or earlier must be confirmed once.** Upgrading

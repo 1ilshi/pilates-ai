@@ -4,3 +4,4 @@ export * from "./components/Card";
 export * from "./components/Badge";
 export * from "./components/Dialog";
 export * from "./components/Table";
+export * from "./components/Logo";

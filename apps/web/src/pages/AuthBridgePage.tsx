@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Activity, Loader2, XCircle } from "lucide-react";
+import { Loader2, XCircle } from "lucide-react";
 import { signInWithCustomToken } from "firebase/auth";
-import { Card } from "@pilates/ui";
+import { Card, Logo } from "@pilates/ui";
 import { auth } from "../lib/firebase";
 
 const EXCHANGE_URL =
@@ -85,7 +85,7 @@ export function AuthBridgePage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-slate-100">
       <Card className="w-full max-w-sm p-6 text-center">
         <div className="mb-4 flex items-center justify-center gap-2">
-          <Activity className="h-6 w-6 text-brand-400" aria-hidden="true" />
+          <Logo className="h-7 w-7" />
           <span className="text-lg font-bold text-white">Pilates AI Portal</span>
         </div>
 

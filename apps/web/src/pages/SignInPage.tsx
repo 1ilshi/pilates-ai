@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { Activity, Lock } from "lucide-react";
-import { Button, Card } from "@pilates/ui";
+import { Lock } from "lucide-react";
+import { Button, Card, Logo } from "@pilates/ui";
 import { useAuth } from "../lib/auth";
 
 export function SignInPage() {
@@ -25,7 +25,7 @@ export function SignInPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-slate-100">
       <Card className="w-full max-w-sm p-6">
         <div className="mb-6 flex items-center gap-2">
-          <Activity className="h-6 w-6 text-brand-400" aria-hidden="true" />
+          <Logo className="h-8 w-8" />
           <div>
             <h1 className="text-lg font-bold text-white">Pilates AI Portal</h1>
             <p className="text-xs text-slate-500">Clinical cloud access</p>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getVersion } from "@tauri-apps/api/app";
-import { BarChart3, Camera, ExternalLink, Users } from "lucide-react";
+import { BarChart3, Camera, ExternalLink, LogOut, Users } from "lucide-react";
 import type { ClinicalSessionDocument } from "@pilates/types";
 import { poseDisplayLabel } from "@pilates/types";
 import { Badge, cn } from "@pilates/ui";
@@ -133,7 +133,7 @@ export function App() {
 
   // Shared laptop: hand the workstation to the next person. Blocked during a
   // recording, where losing the credential would strand the session.
-  const switchAccount = () => {
+  const signOut = () => {
     authSignOut()
       .then(() => setAccess("required"))
       .catch((error) => setPortalError(String(error)));
@@ -280,16 +280,17 @@ export function App() {
           </p>
           <button
             type="button"
-            onClick={switchAccount}
+            onClick={signOut}
             disabled={tab === "capture"}
             title={
               tab === "capture"
-                ? "Finish the recording before switching account"
-                : "Remove this workstation's credential"
+                ? "Finish the recording before signing out"
+                : "Sign out and return to the sign-in screen"
             }
-            className="mt-1 text-[10px] text-slate-500 hover:text-slate-300 disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-control border border-slate-700 px-2 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-500 hover:bg-slate-800 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Switch account
+            <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
+            Sign out
           </button>
         </div>
       </aside>

@@ -2,7 +2,7 @@
 
 **Version:** 2.0.10 · **Status date:** 2026-11-14
 **Verdict:** every platform builds, installs, syncs and updates. **The only gate left is code signing.**
-**Companion documents:** [deployment history](docs/history/DESKTOP_DEPLOYMENT_READINESS.md) — the point-in-time audit that explains *why* the packaging looks the way it does. Historical; the live state is this page.
+**Companion documents:** [deployment history](history/DESKTOP_DEPLOYMENT_READINESS.md) — the point-in-time audit that explains *why* the packaging looks the way it does. Historical; the live state is this page.
 
 Legend: ✅ working · ⚪ not applicable · ❌ blocking · 🟡 works, with a caveat
 

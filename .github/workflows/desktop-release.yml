@@ -178,8 +178,13 @@ jobs:
           path: apps/desktop/src-tauri/target/parquet-fixture.parquet
           if-no-files-found: error
 
+      # --- Bundle: only for a tagged release ---------------------------------
+      # A three-OS install is ~38 minutes. Every push still runs the full test
+      # suite above; only a tag pays for packaging.
+
       # Fail with one clear line instead of a cryptic bundler error.
       - name: Check updater signing key
+        if: startsWith(github.ref, 'refs/tags/v')
         shell: bash
         run: |
           if [ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
@@ -194,6 +199,7 @@ jobs:
       # "npm run tauri build failed", and its Node 20 runtime is deprecated.
       # Running the CLI directly also lets the real error reach an annotation.
       - name: Build and bundle desktop app
+        if: startsWith(github.ref, 'refs/tags/v')
         shell: bash
         # No APPLE_* variables here on purpose: the release is unsigned, and an
         # empty APPLE_CERTIFICATE makes the macOS bundler attempt a PKCS#12
@@ -208,6 +214,7 @@ jobs:
           fi
 
       - name: Upload installers
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: desktop-installers-${{ matrix.name }}

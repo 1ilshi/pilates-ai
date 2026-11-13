@@ -14,7 +14,7 @@
  *   node tools/build-update-manifest.mjs <dist-dir> [--base-url <url>]
  */
 
-import { copyFileSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -97,7 +97,12 @@ function walk(dir) {
 function releaseNotes(version) {
   if (process.env.RELEASE_NOTES) return process.env.RELEASE_NOTES;
   try {
-    const changelog = readFileSync(join(ROOT, "CHANGELOG.md"), "utf8");
+    // The changelog moved under `docs/`; fall back to the old root location so
+    // a checkout from before the move still produces notes.
+    const candidates = [join(ROOT, "docs", "CHANGELOG.md"), join(ROOT, "CHANGELOG.md")];
+    const path = candidates.find((candidate) => existsSync(candidate));
+    if (!path) return `Pilates AI ${version}`;
+    const changelog = readFileSync(path, "utf8");
     // Split on level-2 headings; the first line of each part is the heading.
     const section = changelog
       .split(/^## /m)

@@ -91,9 +91,11 @@ data directory has the same effect. Other workstations are unaffected.
 
 ## Documentation
 
-- [MASTER_EXECUTION_PLAN.md](MASTER_EXECUTION_PLAN.md) — architecture blueprint
+- [history/MASTER_EXECUTION_PLAN.md](history/MASTER_EXECUTION_PLAN.md) — architecture blueprint
   and the step-by-step build record.
 - [TESTING.md](TESTING.md) — how to run and test the application.
+- [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) — what ships on each OS, and what is left before release.
+- [CHANGELOG.md](CHANGELOG.md) — what changed in each version.
 
 ## Credits
 

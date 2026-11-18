@@ -27,6 +27,9 @@ import {
   TableHead,
   TableCell,
   Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
 } from "../../ui/src/index";
 import type {
   DownsampledPoint,
@@ -154,25 +157,43 @@ const missing = computePrimaryAngle([kneeKpts[0]], pose1, 640, 480);
 check("missing keypoints -> null", missing === null);
 
 console.log("\n[6] UI primitives render");
-const uiCases: [string, React.ReactElement][] = [
-  ["Button", <Button variant="primary">Start session</Button>],
-  ["Button loading", <Button loading>Loading</Button>],
-  ["Card", <Card><CardHeader><CardTitle>Title</CardTitle></CardHeader><CardContent>Body</CardContent></Card>],
-  ["Badge", <Badge variant="success" dot>Synced</Badge>],
+// Radix portals do not render server-side, so the Dialog fixtures assert on
+// their trigger markup (and that the compound API mounts without throwing)
+// instead of accepting any string — an empty SSR result must not count as a pass.
+const uiCases: [string, React.ReactElement, string][] = [
+  ["Button", <Button variant="default">Start session</Button>, "Start session"],
+  ["Button loading", <Button loading>Loading</Button>, 'aria-busy="true"'],
+  ["Card", <Card><CardHeader><CardTitle>Title</CardTitle></CardHeader><CardContent>Body</CardContent></Card>, "Title"],
+  ["Badge", <Badge variant="success" dot>Synced</Badge>, "Synced"],
   [
     "Table",
     <Table>
       <TableHeader><TableRow><TableHead>Rep</TableHead></TableRow></TableHeader>
       <TableBody><TableRow><TableCell>1</TableCell></TableRow></TableBody>
     </Table>,
+    'scope="col"',
   ],
-  ["Dialog closed", <Dialog open={false} onClose={() => {}} title="Closed" />],
-  ["Dialog open (SSR -> null)", <Dialog open onClose={() => {}} title="Open" />],
+  [
+    "Dialog closed",
+    <Dialog open={false}>
+      <DialogTrigger>Open dialog</DialogTrigger>
+      <DialogContent><DialogTitle>Closed</DialogTitle></DialogContent>
+    </Dialog>,
+    "Open dialog",
+  ],
+  [
+    "Dialog open (portal omitted by SSR)",
+    <Dialog defaultOpen>
+      <DialogTrigger>Open dialog</DialogTrigger>
+      <DialogContent><DialogTitle>Open</DialogTitle></DialogContent>
+    </Dialog>,
+    "Open dialog",
+  ],
 ];
-for (const [name, element] of uiCases) {
+for (const [name, element, marker] of uiCases) {
   try {
     const html = renderToStaticMarkup(element);
-    check(`${name} renders`, typeof html === "string", `type ${typeof html}`);
+    check(`${name} renders`, html.includes(marker), `missing ${marker} in ${html.slice(0, 120)}`);
   } catch (error) {
     check(`${name} renders`, false, (error as Error).message);
   }

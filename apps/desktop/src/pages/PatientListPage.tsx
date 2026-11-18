@@ -344,13 +344,7 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
               Clinical demographics are stored locally and synced to Firestore.
             </DialogDescription>
           </DialogHeader>
-          <form
-            className="grid gap-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void submit();
-            }}
-          >
+          <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="new-patient-name">Full name</Label>
               <Input
@@ -431,11 +425,11 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
               <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" loading={saving}>
+              <Button type="button" onClick={() => void submit()} loading={saving}>
                 Save patient
               </Button>
             </DialogFooter>
-          </form>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

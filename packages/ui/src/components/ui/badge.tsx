@@ -33,26 +33,38 @@ const badgeVariants = cva(
   }
 )
 
-function Badge({
-  className,
-  variant = "default",
-  dot = false,
-  asChild = false,
-  children,
-  ...props
-}: React.ComponentProps<"span"> &
-  VariantProps<typeof badgeVariants> & {
-    asChild?: boolean
-    /** Renders a leading status dot in the variant's text color. */
-    dot?: boolean
-  }) {
-  const Comp = asChild ? Slot.Root : "span"
+type BadgeVariant =
+  | NonNullable<VariantProps<typeof badgeVariants>["variant"]>
+  /** v2.0.12 aliases. */
+  | "neutral"
+  | "brand"
+
+export interface BadgeProps extends React.ComponentProps<"span"> {
+  variant?: BadgeVariant
+  asChild?: boolean
+  /** Renders a leading status dot in the variant's text color. */
+  dot?: boolean
+}
+
+function resolveVariant(variant: BadgeVariant) {
+  if (variant === "neutral") return "secondary"
+  if (variant === "brand") return "default"
+  return variant
+}
+
+const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(function Badge(
+  { className, variant = "default", dot = false, asChild = false, children, ...props },
+  ref,
+) {
+  const Comp: React.ElementType = asChild ? Slot.Root : "span"
+  const resolvedVariant = resolveVariant(variant)
 
   return (
     <Comp
+      ref={ref}
       data-slot="badge"
-      data-variant={variant}
-      className={cn(badgeVariants({ variant }), className)}
+      data-variant={resolvedVariant}
+      className={cn(badgeVariants({ variant: resolvedVariant }), className)}
       {...props}
     >
       {dot && (
@@ -64,6 +76,6 @@ function Badge({
       {children}
     </Comp>
   )
-}
+})
 
 export { Badge, badgeVariants }

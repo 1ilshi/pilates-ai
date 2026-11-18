@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download } from "lucide-react";
 import { Button, cn } from "@pilates/ui";
 import { Modal } from "./Modal";
 import {
+  ExportCancelledError,
   exportAnalysisToExcel,
   type ExportChart,
   type ExportContent,
@@ -76,9 +77,23 @@ export function AnalysisExportDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      abortRef.current?.abort();
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) {
+      // Closing the dialog stops an in-flight export: no late download, no
+      // setState on an unmounted/hidden dialog.
+      abortRef.current?.abort();
+      abortRef.current = null;
       setBusy(false);
       setError(null);
       setStatus(null);
@@ -86,6 +101,8 @@ export function AnalysisExportDialog({
   }, [open]);
 
   const download = async () => {
+    const controller = new AbortController();
+    abortRef.current = controller;
     setBusy(true);
     setError(null);
     setStatus(null);
@@ -93,23 +110,36 @@ export function AnalysisExportDialog({
       const charts = getCharts().filter(
         (chart) => scope === "all" || chart.section === "cohort",
       );
-      const result = await exportAnalysisToExcel(charts, {
-        scope,
-        includeTables: content === "tables",
-        cohorts,
-        poseFilters,
-        patients,
-        sessions,
-      });
+      const result = await exportAnalysisToExcel(
+        charts,
+        {
+          scope,
+          includeTables: content === "tables",
+          cohorts,
+          poseFilters,
+          patients,
+          sessions,
+        },
+        controller.signal,
+      );
+      if (!mountedRef.current || controller.signal.aborted) return;
       setStatus(
         result.failedCharts.length === 0
           ? `Downloaded ${result.charts} native Excel chart(s) as ${result.fileName}.`
           : `Downloaded ${result.fileName}. ${result.failedCharts.length} chart(s) could not be written; their sheets and data are still included.`,
       );
     } catch (caught) {
+      if (
+        caught instanceof ExportCancelledError ||
+        controller.signal.aborted ||
+        !mountedRef.current
+      ) {
+        return;
+      }
       setError((caught as Error).message || "The workbook could not be built.");
     } finally {
-      setBusy(false);
+      if (abortRef.current === controller) abortRef.current = null;
+      if (mountedRef.current && !controller.signal.aborted) setBusy(false);
     }
   };
 

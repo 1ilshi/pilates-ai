@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.1.0 — 2026-11-18
+
+- **A warm studio redesign across the workstation and the portal.** The
+  captures, charts, patient pages and navigation use the same semantic design
+  tokens and typography now. This release is otherwise behaviour-for-behaviour
+  identical to 2.0.12: camera, inference, recording, offline sync, pairing,
+  sign-in and update handling are unchanged.
+- **The portal can download native Excel workbooks** from Analysis. Each chart
+  is an editable Excel chart with its source data in the workbook, either on
+  the chart sheet or on a hidden sheet. The export covers the displayed cohort
+  filters and offers cohort-only or all-chart scope.
+- **Sign-out is reachable again on phone-sized portal viewports**, and the
+  workstation's New patient dialog no longer saves when Enter is pressed in a
+  field.
+- **Export is safer on large clinics.** All charts are written in one workbook
+  pass instead of re-zipping once per chart, closing the dialog cancels an
+  in-flight download, and the workbook writer now has automated package and
+  cancellation tests.
+
 ## 2.0.12 — 2026-11-18
 
 - **The five poses are renamed** in every place they are shown — the desktop

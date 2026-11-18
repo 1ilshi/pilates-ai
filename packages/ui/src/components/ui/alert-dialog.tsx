@@ -45,13 +45,19 @@ function AlertDialogOverlay({
 function AlertDialogContent({
   className,
   size = "default",
+  onOutsideDismiss,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
   size?: "default" | "sm"
+  /**
+   * Radix AlertDialog deliberately blocks outside dismissal. Pass this when a
+   * call site needs the v2.0.12 behaviour of cancelling on a backdrop click.
+   */
+  onOutsideDismiss?: () => void
 }) {
   return (
     <AlertDialogPortal>
-      <AlertDialogOverlay />
+      <AlertDialogOverlay onClick={onOutsideDismiss} />
       <AlertDialogPrimitive.Content
         data-slot="alert-dialog-content"
         data-size={size}

@@ -53,3 +53,15 @@ declare module "chartsheet" {
     specs: ChartSpec[],
   ): Promise<Uint8Array>;
 }
+
+// Internal modules used by lib/exportChartsBatch.ts for a single ZIP pass.
+// They are not part of chartsheet's typed public API, hence the loose shapes.
+declare module "chartsheet/src/package.js" {
+  const values: Record<string, any>;
+  export = values;
+}
+
+declare module "chartsheet/src/chart-xml.js" {
+  const values: Record<string, any>;
+  export = values;
+}

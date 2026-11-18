@@ -1,4 +1,11 @@
 import type { Worksheet } from "exceljs";
+import {
+  addChartsInOnePass,
+  ExportCancelledError,
+  type BatchChartSpec,
+} from "./exportChartsBatch";
+
+export { ExportCancelledError };
 
 /** Which charts the workbook contains. */
 export type ExportScope = "cohort" | "all";
@@ -76,27 +83,7 @@ export interface AnalysisExportResult {
   failedCharts: string[];
 }
 
-type ChartsheetSpec = {
-  type: ExportChartSpec["type"];
-  title?: string;
-  series: Array<{
-    ref: string;
-    xRef?: string;
-    name?: string;
-    colour?: string;
-  }>;
-  categories?: string;
-  sheet: string;
-  anchor: { col: number; row: number };
-  width: number;
-  height: number;
-  dataLabels?: boolean;
-  legend?: boolean;
-  numberFormat?: string;
-  xTitle?: string;
-  yTitle?: string;
-  horizontal?: boolean;
-};
+type ChartsheetSpec = BatchChartSpec;
 
 type AddChart = (
   workbook: Uint8Array | ArrayBuffer,
@@ -465,7 +452,13 @@ async function useMarkerOnlyScatter(
 export async function exportAnalysisToExcel(
   charts: ExportChart[],
   meta: AnalysisExportMeta,
+  signal?: AbortSignal,
 ): Promise<AnalysisExportResult> {
+  const check = () => {
+    if (signal?.aborted) throw new ExportCancelledError();
+  };
+  check();
+
   const [{ Workbook }, addChart] = await Promise.all([
     import("exceljs"),
     loadAddChart(),
@@ -535,24 +528,44 @@ export async function exportAnalysisToExcel(
     specs.push({ title: plan.chart.title, spec });
   }
 
+  check();
   const buffer = await workbook.xlsx.writeBuffer();
-  let withCharts: Uint8Array | ArrayBuffer = buffer;
-  let added = 0;
-  for (const { title, spec } of specs) {
-    try {
-      withCharts = await addChart(withCharts, spec);
-      added += 1;
-    } catch {
-      failures.push(title);
+  check();
+
+  let withCharts: Uint8Array | ArrayBuffer;
+  let added: number;
+  try {
+    // One ZIP load + one ZIP write for every chart, scatter-marker fix
+    // included. The public addChart() API re-zips the workbook per chart.
+    withCharts = await addChartsInOnePass(
+      buffer,
+      specs.map(({ spec }) => spec),
+      signal,
+    );
+    added = specs.length;
+  } catch (error) {
+    if (error instanceof ExportCancelledError) throw error;
+    // If chartsheet's internals drift, keep working via its public API.
+    withCharts = buffer;
+    added = 0;
+    for (const { title, spec } of specs) {
+      check();
+      try {
+        withCharts = await addChart(withCharts, spec);
+        added += 1;
+      } catch {
+        failures.push(title);
+      }
+    }
+    if (added > 0 && specs.some(({ spec }) => spec.type === "scatter")) {
+      try {
+        withCharts = await useMarkerOnlyScatter(withCharts);
+      } catch {
+        // Marker-only points are cosmetic; keep the valid workbook.
+      }
     }
   }
-  if (added > 0 && specs.some(({ spec }) => spec.type === "scatter")) {
-    try {
-      withCharts = await useMarkerOnlyScatter(withCharts);
-    } catch {
-      // Marker-only points are cosmetic; keep the valid workbook.
-    }
-  }
+  check();
 
   const blob = new Blob([withCharts as ArrayBuffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

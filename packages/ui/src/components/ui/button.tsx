@@ -38,30 +38,68 @@ const buttonVariants = cva(
   }
 )
 
-function Button({
-  className,
-  variant = "default",
-  size = "default",
-  asChild = false,
-  ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-    /** Shows a spinner and blocks interaction while the action runs. */
-    loading?: boolean
-  }) {
-  const Comp = asChild ? Slot.Root : "button"
-  const { loading, disabled, children, ...rest } = props
+type ButtonVariant =
+  | NonNullable<VariantProps<typeof buttonVariants>["variant"]>
+  /** v2.0.12 alias, kept so older call sites stay styled and typed. */
+  | "primary"
+type ButtonSize =
+  | NonNullable<VariantProps<typeof buttonVariants>["size"]>
+  /** v2.0.12 alias. */
+  | "md"
+
+export interface ButtonProps extends React.ComponentProps<"button"> {
+  variant?: ButtonVariant
+  size?: ButtonSize
+  asChild?: boolean
+  /** Shows a spinner and blocks interaction while the action runs. */
+  loading?: boolean
+  /** v2.0.12 prop; preserved for call sites that still pass it. */
+  fullWidth?: boolean
+}
+
+/** Resolves legacy variant/size names onto the current design tokens. */
+function resolveVariant(variant: ButtonVariant) {
+  return variant === "primary" ? "default" : variant
+}
+
+function resolveSize(size: ButtonSize) {
+  return size === "md" ? "default" : size
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    className,
+    variant = "default",
+    size = "default",
+    asChild = false,
+    loading = false,
+    fullWidth = false,
+    type = "button",
+    disabled,
+    children,
+    ...props
+  },
+  ref,
+) {
+  const Comp: React.ElementType = asChild ? Slot.Root : "button"
+  const resolvedVariant = resolveVariant(variant)
+  const resolvedSize = resolveSize(size)
 
   return (
     <Comp
+      ref={ref}
       data-slot="button"
-      data-variant={variant}
-      data-size={size}
+      data-variant={resolvedVariant}
+      data-size={resolvedSize}
+      type={type}
       aria-busy={loading || undefined}
       disabled={disabled || loading}
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...rest}
+      className={cn(
+        buttonVariants({ variant: resolvedVariant, size: resolvedSize }),
+        fullWidth && "w-full",
+        className,
+      )}
+      {...props}
     >
       {loading ? (
         <>
@@ -76,6 +114,6 @@ function Button({
       )}
     </Comp>
   )
-}
+})
 
 export { Button, buttonVariants }

@@ -91,6 +91,9 @@ export function App() {
             <Logo className="h-7 w-7 shrink-0" />
             <span className="truncate font-display text-lg font-semibold tracking-tight">Pilates AI</span>
             <Badge variant="secondary" className="ml-auto">Clinical Cloud</Badge>
+            <Button variant="ghost" size="icon" onClick={() => void signOutUser()} aria-label="Sign out">
+              <LogOut className="size-4" aria-hidden="true" />
+            </Button>
           </header>
 
           <main className="mx-auto w-full min-w-0 max-w-6xl p-4 pb-24 sm:p-8 sm:pb-10">

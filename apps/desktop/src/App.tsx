@@ -432,7 +432,7 @@ export function App() {
 
       {confirmSignOut && (
         <AlertDialog open onOpenChange={(next) => !next && setConfirmSignOut(false)}>
-          <AlertDialogContent>
+          <AlertDialogContent onOutsideDismiss={() => setConfirmSignOut(false)}>
             <AlertDialogHeader>
               <AlertDialogTitle>
                 Sign out of this workstation?

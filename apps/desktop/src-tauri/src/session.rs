@@ -533,7 +533,7 @@ mod tests {
         // pose1: hip(0) - knee(1) - ankle(2)
         PoseDefinition {
             pose_id: "pose1".into(),
-            display_name: "The Hundred".into(),
+            display_name: "Supine marching".into(),
             keypoint_count: 3,
             keypoint_labels: vec!["hip".into(), "knee".into(), "ankle".into()],
             bones: vec![vec![0, 1], vec![1, 2]],

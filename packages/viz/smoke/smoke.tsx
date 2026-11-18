@@ -109,7 +109,7 @@ for (const [id, def] of Object.entries(POSE_DEFINITIONS.poses)) {
 }
 check(
   "resolvePoseDefinition(pose4) works",
-  resolvePoseDefinition("pose4")?.display_name === "Side Leg Lift",
+  resolvePoseDefinition("pose4")?.display_name === "Supine twist",
 );
 check("resolvePoseDefinition(unknown) is undefined", resolvePoseDefinition("pose9") === undefined);
 

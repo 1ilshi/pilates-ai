@@ -8,7 +8,7 @@
 import type { PoseDefinitionMap } from "./pose-definitions";
 
 export const POSE_DEFINITIONS_SOURCE_SHA256: string =
-  "dd5fd66f34a32c5b70acb7c8e85c265367afc218b7fd97fd61a047c22c5fb8fb";
+  "e3d448350d5b21eafec683eb048592adcade15b3a669bdb49e3293977bf303e8";
 
 export const POSE_DEFINITIONS: PoseDefinitionMap = {
   "schema_version": "1.0.0",
@@ -23,7 +23,7 @@ export const POSE_DEFINITIONS: PoseDefinitionMap = {
   "poses": {
     "pose1": {
       "pose_id": "pose1",
-      "display_name": "The Hundred",
+      "display_name": "Supine marching",
       "keypoint_count": 3,
       "keypoint_labels": [
         "hip",
@@ -66,7 +66,7 @@ export const POSE_DEFINITIONS: PoseDefinitionMap = {
     },
     "pose2": {
       "pose_id": "pose2",
-      "display_name": "Roll Up",
+      "display_name": "Clamshell",
       "keypoint_count": 3,
       "keypoint_labels": [
         "shoulder",
@@ -109,7 +109,7 @@ export const POSE_DEFINITIONS: PoseDefinitionMap = {
     },
     "pose3": {
       "pose_id": "pose3",
-      "display_name": "Single Leg Stretch",
+      "display_name": "Supine stretch forward",
       "keypoint_count": 5,
       "keypoint_labels": [
         "shoulder",
@@ -168,7 +168,7 @@ export const POSE_DEFINITIONS: PoseDefinitionMap = {
     },
     "pose4": {
       "pose_id": "pose4",
-      "display_name": "Side Leg Lift",
+      "display_name": "Supine twist",
       "keypoint_count": 7,
       "keypoint_labels": [
         "shoulder_l",
@@ -237,7 +237,7 @@ export const POSE_DEFINITIONS: PoseDefinitionMap = {
     },
     "pose5": {
       "pose_id": "pose5",
-      "display_name": "Swimming",
+      "display_name": "Lunges",
       "keypoint_count": 15,
       "keypoint_labels": [
         "head",

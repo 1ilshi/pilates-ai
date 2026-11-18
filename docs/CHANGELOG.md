@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.0.12 — 2026-11-18
+
+- **The five poses are renamed** in every place they are shown — the desktop
+  pose picker, session records and the patient portal:
+  - The Hundred → Supine marching
+  - Roll Up → Clamshell
+  - Single Leg Stretch → Supine stretch forward
+  - Side Leg Lift → Supine twist
+  - Swimming → Lunges
+
+  Only the display names change: the pose identities (`pose1`…`pose5`), the
+  models, the joint-angle configuration and the stored session data are
+  untouched, so existing records, rep counts and analytics remain valid.
+
 ## 2.0.11 — 2026-11-18
 
 - **Cameras without exactly MJPEG 640x480@30 now open instead of failing with

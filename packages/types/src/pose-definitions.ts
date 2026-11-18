@@ -93,7 +93,7 @@ export type PoseDefinitionMap = PoseDefinitionDocument;
 
 /**
  * Human-readable label combining the exercise name with its model number,
- * e.g. `"The Hundred (Pose 1)"`.
+ * e.g. `"Supine marching (Pose 1)"`.
  *
  * Clinicians refer to the models by number (`pose1`…`pose5`) while the
  * exercise names are more meaningful in a session record, so both are shown.

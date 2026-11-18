@@ -136,7 +136,7 @@ First launch compiles Rust and takes a few minutes. A 1280×850 window opens.
 1. **Patients** tab → **New patient** → enter a name → **Save**.
    The patient appears in the table and in the sidebar as the active patient.
 2. Click the patient name → jumps to **Pose Capture**.
-3. Pick a pose from the dropdown (The Hundred, Roll Up, …).
+3. Pick a pose from the dropdown (Supine marching, Clamshell, …).
 4. Click **Preview** — you should see live video with a teal skeleton overlay.
 5. Click **Start** → perform the movement → the gauge, rep counter and form
    score update live. A chime plays when a rep completes.

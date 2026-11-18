@@ -34,15 +34,31 @@ against the matching API is enough to enable GPU acceleration -- no code change.
 
 Platform artifacts
 ------------------
-Each platform id in `ARTIFACTS` points at the official ONNX Runtime release
-archive and declares the library files that must end up in `resources/`. All
-three are pinned to a SHA-256; a mismatch deletes the archive and fails.
+Each platform id in `ARTIFACTS` points at an official ONNX Runtime wheel on
+PyPI and declares the library files that must end up in `resources/`. All
+three are pinned to a SHA-256 (the digest PyPI itself publishes); a mismatch
+deletes the archive and fails.
 
-Note that Microsoft publishes **no** macOS x86_64 and no universal2 artifact
-for 1.31.1 -- the release contains `osx-arm64` only. Apple Silicon is therefore
-the only supported macOS target; an Intel Mac would need ONNX Runtime built
-from source. `detect_platform` returns None there rather than silently
-installing the arm64 build.
+Wheels are zips, so every artifact uses `format: "zip"` regardless of host.
+The Python version in the wheel name is irrelevant here: the native libraries
+inside every `cp*` wheel of a release are the same, and only those are
+extracted.
+
+Why PyPI and not GitHub
+-----------------------
+Historically these URLs pointed at the `microsoft/onnxruntime` GitHub release
+assets. On 2026-11-18 that repository and every release asset went dark
+without warning, and each URL began returning 404 — which failed every
+Desktop Release job at "Fetch ONNX Runtime". PyPI is Microsoft's package
+index for the same release, is hosted independently of the repository, and
+is where `pip install onnxruntime` has always come from, so the wheels are
+the canonical binaries for a version.
+
+Note that Microsoft publishes **no** macOS x86_64 wheel for 1.31.1 — the
+macOS wheels are arm64 only. Apple Silicon is therefore the only supported
+macOS target; an Intel Mac would need ONNX Runtime built from source.
+`detect_platform` returns None there rather than silently installing the
+arm64 build.
 
 Usage:
     python tools/fetch_onnxruntime.py                       # detect platform, download if missing
@@ -79,33 +95,33 @@ CACHE_DIR = RESOURCES_DIR / ".cache"
 ARTIFACTS = {
     "windows-x64": {
         "label": "ONNX Runtime 1.31.1 (Windows x64, CPU)",
-        "url": "https://github.com/microsoft/onnxruntime/releases/download/v1.31.1/onnxruntime-win-x64-1.31.1.zip",
-        "filename": "onnxruntime-win-x64-1.31.1.zip",
+        "url": "https://files.pythonhosted.org/packages/69/82/2e2bf967ade9567d77c307533566ef56a19c32e2114fc062a405703def88/onnxruntime-1.31.1-cp311-cp311-win_amd64.whl",
+        "filename": "onnxruntime-1.31.1-cp311-cp311-win_amd64.whl",
         "format": "zip",
-        "sha256": "5869e26bb25314375f2d5ef1877e3ea06b1543d6c710e6e4a1ec2f7177ab4b2c",
+        "sha256": "c3d91b5de31e2fc82d71bd65b2b22bddee8b49057a3a36338e9a868e0ea90c05",
         "libraries": ("onnxruntime.dll", "onnxruntime_providers_shared.dll"),
         "required": ("onnxruntime.dll", "onnxruntime_providers_shared.dll"),
         "aliases": {},
     },
     "macos-arm64": {
         "label": "ONNX Runtime 1.31.1 (macOS arm64, CPU)",
-        # Microsoft publishes **no** osx-x86_64 and no osx-universal2 artifact
-        # for 1.31.1 — the release contains osx-arm64 only. An Intel Mac would
-        # need ONNX Runtime built from source; see DESKTOP_DEPLOYMENT_READINESS.md.
-        "url": "https://github.com/microsoft/onnxruntime/releases/download/v1.31.1/onnxruntime-osx-arm64-1.31.1.tgz",
-        "filename": "onnxruntime-osx-arm64-1.31.1.tgz",
-        "format": "tgz",
-        "sha256": "2e1344a1926ee50eb25b38153cb6992c3567515aef0e677a1a520a1798896d6f",
+        # Microsoft publishes **no** osx-x86_64 wheel for 1.31.1 — the macOS
+        # wheels are arm64 only. An Intel Mac would need ONNX Runtime built
+        # from source; see DESKTOP_DEPLOYMENT_READINESS.md.
+        "url": "https://files.pythonhosted.org/packages/fa/44/e9e04a60f726d16ba3abe30ab267e1569e061f7f6f0e175ee103661e1780/onnxruntime-1.31.1-cp311-cp311-macosx_14_0_arm64.whl",
+        "filename": "onnxruntime-1.31.1-cp311-cp311-macosx_14_0_arm64.whl",
+        "format": "zip",
+        "sha256": "60b6b69bfe580eab576cacc5d132a0e9cf2a37fcfd18d46dd191042b1d1ed0d7",
         "libraries": ("libonnxruntime.dylib", "libonnxruntime.*.dylib"),
         "required": ("libonnxruntime.dylib",),
         "aliases": {"libonnxruntime.dylib": "libonnxruntime.*.dylib"},
     },
     "linux-x64": {
         "label": "ONNX Runtime 1.31.1 (Linux x64, CPU)",
-        "url": "https://github.com/microsoft/onnxruntime/releases/download/v1.31.1/onnxruntime-linux-x64-1.31.1.tgz",
-        "filename": "onnxruntime-linux-x64-1.31.1.tgz",
-        "format": "tgz",
-        "sha256": "c849e36a1ef3e22d4ff217b9d1ce4a3cf5b9467b975610913ae959ad5b16bdc9",
+        "url": "https://files.pythonhosted.org/packages/b4/1d/0f85ee31a3d93f2243a5cc29252becf858f53ac5cfa6c9c15d9ffe107eea/onnxruntime-1.31.1-cp311-cp311-manylinux_2_28_x86_64.whl",
+        "filename": "onnxruntime-1.31.1-cp311-cp311-manylinux_2_28_x86_64.whl",
+        "format": "zip",
+        "sha256": "5752bd508126ae7c49894d3b9d2e83f0c3d487319246d04c444b393308d7ad7f",
         "libraries": ("libonnxruntime.so", "libonnxruntime.so.*"),
         "required": ("libonnxruntime.so",),
         "aliases": {"libonnxruntime.so": "libonnxruntime.so.*"},

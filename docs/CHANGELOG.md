@@ -12,6 +12,11 @@
 - **A failed camera open says what was tried** and points at the two usual
   environmental causes: another app holding the camera and camera privacy
   settings.
+- **The bundled ONNX Runtime now comes from PyPI.** The `microsoft/onnxruntime`
+  GitHub repository and all of its release assets went dark on 18 November
+  2026, which failed every release build at "Fetch ONNX Runtime". PyPI still
+  hosts the same official Microsoft 1.31.1 builds, so installers are
+  unchanged in content — this only repairs the build pipeline.
 
 ## 2.0.10 — 2026-11-13
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { signalSync } from "../lib/syncSignal";
-import { Search, UserPlus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, UserPlus, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,6 +58,36 @@ function formatDate(iso: string): string {
   });
 }
 
+/** Inline form-score meter — the numeric column reads at a glance. */
+function AccuracyMeter({ value }: { value: number | null | undefined }) {
+  if (value == null) return <span className="text-muted-foreground">—</span>;
+  const percent = Math.max(0, Math.min(100, value));
+  return (
+    <div className="flex items-center gap-2.5" aria-label={`Mean accuracy ${percent.toFixed(1)} percent`}>
+      <div className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-secondary sm:w-20">
+        <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
+      </div>
+      <span className="font-mono text-xs tabular-nums text-foreground/85">
+        {percent.toFixed(1)}%
+      </span>
+    </div>
+  );
+}
+
+/** Page buttons with ellipses for large rosters. */
+function pageList(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1);
+  const visible = [1, total, current - 1, current, current + 1]
+    .filter((page) => page >= 1 && page <= total)
+    .sort((a, b) => a - b);
+  const result: (number | "…")[] = [];
+  visible.forEach((page, index) => {
+    if (index > 0 && page - visible[index - 1] > 1) result.push("…");
+    result.push(page);
+  });
+  return result;
+}
+
 const EMPTY_FORM: PatientInput = {
   name: "",
   age: "",
@@ -67,6 +97,8 @@ const EMPTY_FORM: PatientInput = {
 };
 
 const GENDERS = ["Female", "Male"] as const;
+
+type PageSize = "10" | "25" | "50" | "all";
 
 /** Digits only — age is a whole number of years. */
 function sanitizeInteger(value: string): string {
@@ -112,7 +144,7 @@ function SortHeader({
         }
       >
         {label}
-        <span className="text-[9px]">
+        <span className={`text-[9px] ${isActive ? "opacity-100" : "opacity-50"}`}>
           {isActive ? (descending ? "\u25bc" : "\u25b2") : "\u2195"}
         </span>
       </button>
@@ -135,6 +167,8 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
   const [saving, setSaving] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [descending, setDescending] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<PageSize>("10");
   const native = isTauri();
 
   const refresh = useCallback(async () => {
@@ -169,6 +203,11 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [patientToDelete]);
+
+  // A new search or sort starts from the first page; the result set changed.
+  useEffect(() => {
+    setPage(1);
+  }, [query, sortKey, descending, pageSize]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -217,6 +256,13 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
     return descending ? rows.reverse() : rows;
   }, [filtered, sortKey, descending]);
 
+  const rowsPerPage = pageSize === "all" ? Math.max(sorted.length, 1) : Number(pageSize);
+  const pageCount = Math.max(1, Math.ceil(sorted.length / rowsPerPage));
+  const currentPage = Math.min(page, pageCount);
+  const start = sorted.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+  const end = Math.min(sorted.length, currentPage * rowsPerPage);
+  const visible = sorted.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+
   const submit = async () => {
     if (!form.name.trim()) {
       setError("A patient name is required.");
@@ -264,52 +310,61 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
         </Card>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[220px]">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search patients by name…"
-            aria-label="Search patients"
-            className="h-10 pl-9"
-          />
-        </div>
-
-        <Button onClick={() => setDialogOpen(true)} disabled={!native}>
-          <UserPlus className="h-4 w-4" aria-hidden="true" />
-          New patient
-        </Button>
-      </div>
-
-
-
       {error && (
         <Card className="border-red-500/30 bg-red-500/5 p-3 text-sm text-red-300">
           {error}
         </Card>
       )}
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <SortHeader label="Name" column="name" active={sortKey} descending={descending} onSort={onSort} />
+      <Card className="gap-0 overflow-hidden py-0">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3.5 sm:px-5">
+          <div className="min-w-0">
+            <h2 className="font-display text-base font-semibold tracking-tight text-foreground">
+              Patient roster
+            </h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {patients.length} patient{patients.length === 1 ? "" : "s"}
+              {query && ` · ${filtered.length} matching “${query}”`}
+            </p>
+          </div>
+          <Button onClick={() => setDialogOpen(true)} disabled={!native} size="sm">
+            <UserPlus className="size-4" aria-hidden="true" />
+            New patient
+          </Button>
+        </div>
+
+        <div className="border-b border-border/60 bg-background/25 px-4 py-3 sm:px-5">
+          <div className="relative w-full max-w-sm">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search patients by name…"
+              aria-label="Search patients"
+              className="h-9 bg-card/70 pl-9"
+            />
+          </div>
+        </div>
+
+        <Table containerClassName="warm-scrollbar" className="min-w-[780px]">
+          <TableHeader className="bg-muted/20 [&_tr]:border-border/50">
+            <TableRow className="hover:bg-transparent">
+              <SortHeader label="Name" column="name" active={sortKey} descending={descending} onSort={onSort} className="w-[26%] pl-4 sm:pl-5" />
               <SortHeader label="Gender" column="gender" active={sortKey} descending={descending} onSort={onSort} />
               <SortHeader label="Age" column="age" active={sortKey} descending={descending} onSort={onSort} />
               <SortHeader label="Sessions" column="sessions" active={sortKey} descending={descending} onSort={onSort} />
               <SortHeader label="Mean accuracy" column="score" active={sortKey} descending={descending} onSort={onSort} />
               <SortHeader label="Last active" column="lastActive" active={sortKey} descending={descending} onSort={onSort} />
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="w-16 pr-4 text-right sm:pr-5">Actions</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
-            {sorted.map((patient) => (
-              <TableRow key={patient.id}>
-                <TableCell>
+          <TableBody className="[&_tr:last-child]:border-0">
+            {visible.map((patient) => (
+              <TableRow key={patient.id} className="border-border/40 hover:bg-primary/[0.05]">
+                <TableCell className="py-2.5 pl-4 sm:pl-5">
                   <button
                     type="button"
                     onClick={() => onSelectPatient(patient)}
@@ -319,34 +374,30 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
                   </button>
                 </TableCell>
                 <TableCell className="text-muted-foreground">{patient.gender || "—"}</TableCell>
-                <TableCell className="text-muted-foreground">{patient.age || "—"}</TableCell>
-                <TableCell className="text-muted-foreground">{patient.total_sessions ?? 0}</TableCell>
-                <TableCell className="text-muted-foreground">
-                  {patient.lifetime_avg_score != null
-                    ? `${patient.lifetime_avg_score.toFixed(1)}%`
-                    : "—"}
-                </TableCell>
+                <TableCell className="font-mono text-[13px] text-muted-foreground">{patient.age || "—"}</TableCell>
+                <TableCell className="font-mono text-[13px] text-muted-foreground">{patient.total_sessions ?? 0}</TableCell>
+                <TableCell><AccuracyMeter value={patient.lifetime_avg_score} /></TableCell>
                 <TableCell className="text-muted-foreground">
                   {patient.last_active ? formatDate(patient.last_active) : "—"}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="pr-4 text-right sm:pr-5">
                   <button
                     type="button"
                     onClick={() => setPatientToDelete(patient)}
                     aria-label={`Delete ${patient.name}`}
-                    className="rounded-control p-1.5 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-400"
+                    className="inline-flex size-8 items-center justify-center rounded-full border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-red-500/10 hover:text-red-400"
                   >
-                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    <Trash2 className="size-4" aria-hidden="true" />
                   </button>
                 </TableCell>
               </TableRow>
             ))}
 
             {loading && (
-              <TableRow>
+              <TableRow className="hover:bg-transparent">
                 <TableCell colSpan={7} className="py-10 text-center">
                   <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-border border-t-primary" />
+                    <span className="size-3.5 animate-spin rounded-full border-2 border-border border-t-primary" />
                     Loading patients…
                   </span>
                 </TableCell>
@@ -354,7 +405,7 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
             )}
 
             {!loading && sorted.length === 0 && (
-              <TableRow>
+              <TableRow className="hover:bg-transparent">
                 <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
                   {patients.length === 0
                     ? "No patients yet. Create the first record to begin a session."
@@ -364,6 +415,67 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
             )}
           </TableBody>
         </Table>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 bg-background/25 px-4 py-3 sm:px-5">
+          <p className="text-xs text-muted-foreground">
+            Showing <span className="font-mono text-foreground/85">{start}</span>–
+            <span className="font-mono text-foreground/85">{end}</span> of{" "}
+            <span className="font-mono text-foreground/85">{sorted.length}</span>
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={currentPage === 1}
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="size-4" aria-hidden="true" />
+              </Button>
+              {pageList(currentPage, pageCount).map((item, index) =>
+                item === "…" ? (
+                  <span key={`gap-${index}`} className="px-1 text-xs text-muted-foreground">…</span>
+                ) : (
+                  <Button
+                    key={item}
+                    variant={item === currentPage ? "secondary" : "ghost"}
+                    size="icon-sm"
+                    className="text-xs"
+                    onClick={() => setPage(item)}
+                    aria-label={`Page ${item}`}
+                    aria-current={item === currentPage ? "page" : undefined}
+                  >
+                    {item}
+                  </Button>
+                ),
+              )}
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
+                disabled={currentPage === pageCount}
+                aria-label="Next page"
+              >
+                <ChevronRight className="size-4" aria-hidden="true" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="hidden text-xs text-muted-foreground sm:inline">Rows per page</span>
+              <Select value={pageSize} onValueChange={(value) => setPageSize(value as PageSize)}>
+                <SelectTrigger className="h-8 w-[68px] text-xs" aria-label="Rows per page">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

@@ -1,6 +1,25 @@
+import { useState } from "react";
 import { NavLink, Route, Routes, useLocation } from "react-router-dom";
-import { BarChart3, LayoutDashboard, LogOut, Users } from "lucide-react";
-import { Badge, Button, Logo, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, cn, Toaster } from "@pilates/ui";
+import { BarChart3, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, Users } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Badge,
+  Button,
+  Logo,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+  cn,
+  Toaster,
+} from "@pilates/ui";
 import { useAuth } from "./lib/auth";
 import { SignInPage } from "./pages/SignInPage";
 import { AuthBridgePage } from "./pages/AuthBridgePage";
@@ -20,6 +39,8 @@ const NAV = [
 export function App() {
   const { user, loading, signOutUser } = useAuth();
   const { pathname } = useLocation();
+  const [railExpanded, setRailExpanded] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
 
   // The desktop opens `/auth#code=…` to hand this browser its session. The
   // bridge must render before the signed-out gate, and it navigates away when
@@ -44,10 +65,32 @@ export function App() {
       <div className="flex min-h-screen bg-background font-sans text-foreground">
         {/* Studio rail — circular icon buttons, the active route as a solid
             teal disc. Desktop affordance only; phones keep the bottom bar. */}
-        <aside className="sticky top-0 hidden h-screen shrink-0 flex-col items-center gap-1.5 border-r border-sidebar-border bg-sidebar px-3 py-5 sm:flex">
-          <Logo className="mb-4 h-9 w-9 shrink-0" />
+        <aside
+          className={cn(
+            "sticky top-0 hidden h-screen shrink-0 flex-col gap-1.5 border-r border-sidebar-border bg-sidebar px-3 py-5 transition-[width] duration-200 sm:flex",
+            railExpanded ? "w-56 items-stretch" : "w-[68px] items-center",
+          )}
+        >
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setRailExpanded((current) => !current)}
+                aria-label={railExpanded ? "Collapse sidebar" : "Expand sidebar"}
+                className="group mb-4 flex size-9 shrink-0 self-center items-center justify-center rounded-full outline-none transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                <Logo className="size-9 group-hover:hidden group-focus-visible:hidden" />
+                {railExpanded ? (
+                  <PanelLeftClose className="hidden size-5 text-muted-foreground group-hover:block group-focus-visible:block" aria-hidden="true" />
+                ) : (
+                  <PanelLeftOpen className="hidden size-5 text-muted-foreground group-hover:block group-focus-visible:block" aria-hidden="true" />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{railExpanded ? "Collapse sidebar" : "Expand sidebar"}</TooltipContent>
+          </Tooltip>
 
-          <nav className="flex flex-col items-center gap-1.5" aria-label="Main navigation">
+          <nav className="flex flex-col gap-1.5" aria-label="Main navigation">
             {NAV.map(({ to, label, icon: Icon, end }) => (
               <Tooltip key={to}>
                 <TooltipTrigger asChild>
@@ -56,31 +99,51 @@ export function App() {
                     end={end}
                     aria-label={label}
                     className={cn(
-                      "flex size-11 items-center justify-center rounded-full transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                      "flex items-center rounded-full transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                      railExpanded ? "h-11 gap-3 px-3" : "size-11 justify-center",
                       (end ? pathname === to : pathname.startsWith(to))
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:bg-accent hover:text-foreground",
                     )}
                   >
-                    <Icon className="size-5" aria-hidden="true" />
+                    <Icon className="size-5 shrink-0" aria-hidden="true" />
+                    {railExpanded && <span className="truncate text-sm font-medium">{label}</span>}
                   </NavLink>
                 </TooltipTrigger>
-                <TooltipContent side="right">{label}</TooltipContent>
+                {!railExpanded && <TooltipContent side="right">{label}</TooltipContent>}
               </Tooltip>
             ))}
           </nav>
 
-          <div className="mt-auto flex flex-col items-center gap-3">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="max-w-12 cursor-default truncate text-[10px] text-muted-foreground" title={user.email ?? ""}>
-                  {user.email}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="right">{user.email}</TooltipContent>
-            </Tooltip>
-            <Button variant="ghost" size="icon" onClick={() => void signOutUser()} aria-label="Sign out">
-              <LogOut className="size-4" aria-hidden="true" />
+          <div className="mt-auto flex flex-col gap-3">
+            {railExpanded ? (
+              <span
+                className="truncate rounded-full bg-accent/40 px-3 py-1.5 text-xs text-muted-foreground"
+                title={user.email ?? ""}
+              >
+                {user.email}
+              </span>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="max-w-12 cursor-default truncate text-[10px] text-muted-foreground" title={user.email ?? ""}>
+                    {user.email}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="right">{user.email}</TooltipContent>
+              </Tooltip>
+            )}
+            <Button
+              variant="ghost"
+              size={railExpanded ? "default" : "icon"}
+              onClick={() => setConfirmSignOut(true)}
+              aria-label="Sign out"
+              className={cn(
+                railExpanded && "justify-start gap-2 px-3 text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <LogOut className="size-4 shrink-0" aria-hidden="true" />
+              {railExpanded && <span>Sign out</span>}
             </Button>
           </div>
         </aside>
@@ -91,7 +154,7 @@ export function App() {
             <Logo className="h-7 w-7 shrink-0" />
             <span className="truncate font-display text-lg font-semibold tracking-tight">Pilates AI</span>
             <Badge variant="secondary" className="ml-auto">Clinical Cloud</Badge>
-            <Button variant="ghost" size="icon" onClick={() => void signOutUser()} aria-label="Sign out">
+            <Button variant="ghost" size="icon" onClick={() => setConfirmSignOut(true)} aria-label="Sign out">
               <LogOut className="size-4" aria-hidden="true" />
             </Button>
           </header>
@@ -133,6 +196,31 @@ export function App() {
             ))}
           </div>
         </nav>
+        {confirmSignOut && (
+          <AlertDialog open onOpenChange={(next) => !next && setConfirmSignOut(false)}>
+            <AlertDialogContent onOutsideDismiss={() => setConfirmSignOut(false)}>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Sign out of the portal?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  You will need your email and password to sign in again. Patient
+                  records stay in the clinic cloud and are safe.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    setConfirmSignOut(false);
+                    void signOutUser();
+                  }}
+                  className="bg-destructive text-white hover:bg-destructive/90"
+                >
+                  Sign out
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
         <Toaster position="bottom-right" />
       </div>
     </TooltipProvider>

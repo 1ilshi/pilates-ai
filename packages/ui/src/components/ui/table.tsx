@@ -3,23 +3,24 @@
 import * as React from "react"
 import { cn } from "cn"
 
-const Table = React.forwardRef<HTMLTableElement, React.ComponentProps<"table">>(
-  function Table({ className, ...props }, ref) {
-    return (
-      <div
-        data-slot="table-container"
-        className="relative w-full overflow-x-auto"
-      >
-        <table
-          ref={ref}
-          data-slot="table"
-          className={cn("w-full caption-bottom border-collapse text-sm", className)}
-          {...props}
-        />
-      </div>
-    )
-  }
-)
+const Table = React.forwardRef<
+  HTMLTableElement,
+  React.ComponentProps<"table"> & { containerClassName?: string }
+>(function Table({ className, containerClassName, ...props }, ref) {
+  return (
+    <div
+      data-slot="table-container"
+      className={cn("relative w-full overflow-x-auto", containerClassName)}
+    >
+      <table
+        ref={ref}
+        data-slot="table"
+        className={cn("w-full caption-bottom border-collapse text-sm", className)}
+        {...props}
+      />
+    </div>
+  )
+})
 
 const TableHeader = React.forwardRef<
   HTMLTableSectionElement,

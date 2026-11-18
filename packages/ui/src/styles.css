@@ -193,3 +193,33 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Slim, theme-matched scrollbar for overflow containers. The native/webview
+   bar renders bright white on our dark surfaces and reads as a foreign object;
+   this keeps the thumb on-theme and the track invisible. Apply with the
+   `warm-scrollbar` utility on any `overflow-auto` element. */
+@utility warm-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: var(--border);
+    background-clip: content-box;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+    background-clip: content-box;
+  }
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}

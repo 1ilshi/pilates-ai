@@ -22,6 +22,7 @@ import {
 import { LivePreview } from "../components/LivePreview";
 import { useTauriCapture } from "../hooks/useTauriCapture";
 import { signalSync } from "../lib/syncSignal";
+import { getSelectedCamera } from "../lib/cameraPreference";
 import {
   captureStatus,
   engineStatus,
@@ -187,7 +188,7 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
       const id = await startSession(patient.id, poseId);
       setSessionId(id);
       lastRepRef.current = 0;
-      await start(undefined, poseId);
+      await start(getSelectedCamera() ?? undefined, poseId);
     } catch (error) {
       setSessionError(String(error));
     }
@@ -466,7 +467,7 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
             {!sessionId && (
               <Button
                 variant="outline"
-                onClick={() => void (running ? stop() : start(undefined, poseId))}
+                onClick={() => void (running ? stop() : start(getSelectedCamera() ?? undefined, poseId))}
                 disabled={!native || busy}
                 className="w-full"
               >
@@ -490,7 +491,11 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
 
           {cameras.length > 1 && (
             <p className="text-xs text-muted-foreground">
-              {cameras.length} cameras detected — device {cameras[0].index} is in use.
+              {cameras.length} cameras detected — using{" "}
+              {status?.device?.human_name ??
+                cameras.find((camera) => camera.index === (getSelectedCamera() ?? 0))?.human_name ??
+                `device ${getSelectedCamera() ?? 0}`}
+              .
             </p>
           )}
         </CardContent>

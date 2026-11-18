@@ -1,8 +1,6 @@
-import { useEffect, useState } from "react";
-import { getVersion } from "@tauri-apps/api/app";
-import { BarChart3, Camera, ExternalLink, LogOut, Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { BarChart3, Camera, Check, ExternalLink, LogOut, RefreshCw, Settings, Users, X } from "lucide-react";
 import type { ClinicalSessionDocument } from "@pilates/types";
-import { poseDisplayLabel } from "@pilates/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,19 +10,30 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  Badge,
   Button,
   cn,
   Toaster,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@pilates/ui";
 import { PatientListPage } from "./pages/PatientListPage";
 import { PatientDetailPage } from "./pages/PatientDetailPage";
 import { ActiveCapturePage } from "./pages/ActiveCapturePage";
 import { SessionDetailPage } from "./pages/SessionDetailPage";
+import { SettingsPage } from "./pages/SettingsPage";
 import { Logo } from "./components/Logo";
-import { UpdateBanner } from "./components/UpdateBanner";
 import { AccessGate } from "./components/AccessGate";
-import { authSignOut, isTauri, openPortal, pairingStatus, type PatientRecord } from "./lib/ipc";
+import {
+  authSignOut,
+  engineStatus,
+  isTauri,
+  openPortal,
+  pairingStatus,
+  type EngineStatus,
+  type PatientRecord,
+} from "./lib/ipc";
 import { useAutoSync } from "./hooks/useAutoSync";
 import { useUpdate } from "./hooks/useUpdate";
 
@@ -32,7 +41,7 @@ import { useUpdate } from "./hooks/useUpdate";
  * `session` is deliberately not in the navigation: a session is opened from a
  * patient's history, not browsed as a top-level destination.
  */
-type Tab = "capture" | "patients" | "patient" | "session";
+type Tab = "capture" | "patients" | "patient" | "session" | "settings";
 
 /** Short "2m ago" style label for the sync indicator. */
 function relativeTime(from: number): string {
@@ -60,6 +69,7 @@ const TAB_LABELS: Record<Tab, string> = {
   patients: "Patients",
   patient: "Patient",
   session: "Session",
+  settings: "Settings",
 };
 
 export function App() {
@@ -91,18 +101,6 @@ export function App() {
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  // The version comes from the bundle, not from a literal: a hardcoded string
-  // kept reporting 2.0.0 after an update, which made a successful update look
-  // like it had not happened.
-  const [appVersion, setAppVersion] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isTauri()) return;
-    getVersion()
-      .then(setAppVersion)
-      .catch(() => setAppVersion(null));
   }, []);
 
   // Analysis opens in the portal, so it cannot be derived from `tab`. Keep it
@@ -139,11 +137,44 @@ export function App() {
   // restart can never interrupt a recording.
   const update = useUpdate(isTauri() && tab !== "capture");
 
+  // Live engine health for the top-bar dot. The browser build has no engine at
+  // all; a native build can still lose it (missing runtime/model), so poll the
+  // real status instead of assuming "Tauri == ready".
+  const [engine, setEngine] = useState<EngineStatus | null>(null);
+  useEffect(() => {
+    if (!isTauri()) return;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const status = await engineStatus();
+        if (!cancelled) setEngine(status);
+      } catch {
+        if (!cancelled) setEngine(null);
+      }
+    };
+    void poll();
+    const timer = window.setInterval(() => void poll(), 10000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
+
   // Opening the portal is best-effort: the browser may be missing or blocked.
   // Without this the Analysis button would fail silently, so the reason is
   // surfaced in the footer next to the sync status instead of a new toast.
   const [portalError, setPortalError] = useState<string | null>(null);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
+  // The auto-check offers the update once per detected version. Installing and
+  // dismissing both mark it handled so the prompt cannot immediately reopen.
+  const [updatePromptOpen, setUpdatePromptOpen] = useState(false);
+  const promptedVersion = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!update.version || tab === "capture") return;
+    if (promptedVersion.current === update.version) return;
+    setUpdatePromptOpen(true);
+  }, [update.version, tab]);
 
   // Escape closes the confirmation, matching the portal's dialogs.
   useEffect(() => {
@@ -177,6 +208,21 @@ export function App() {
       });
   };
 
+  const acceptUpdate = () => {
+    if (update.version) promptedVersion.current = update.version;
+    setUpdatePromptOpen(false);
+    // Install progress and any failure are shown in Settings → Updates, never
+    // over a recording screen.
+    navigate({ tab: "settings" });
+    void update.install();
+  };
+
+  const deferUpdate = () => {
+    if (update.version) promptedVersion.current = update.version;
+    setUpdatePromptOpen(false);
+    update.dismiss();
+  };
+
   // A `PERMISSION_DENIED` from Firestore means this account cannot reach the
   // clinic data — a disabled account or rules that still expect a claim.
   // "Sync failed" would leave the clinic guessing.
@@ -203,12 +249,29 @@ export function App() {
                 ? `Synced ${relativeTime(sync.lastSyncAt)}`
                 : "Not synced yet";
 
-  const heading =
-    tab === "patient"
-      ? (patient?.name ?? "Patient")
-      : tab === "session"
-        ? poseDisplayLabel(session?.pose_id)
-        : NAV.find((entry) => entry.id === tab)?.label;
+  const engineReady = !!engine?.runtime_found && !!engine?.inference_available;
+  const syncFailed =
+    sync.authRejected || notProvisioned || notConfigured || !!sync.lastError;
+  const syncSucceeded = !syncFailed && !sync.syncing && !!sync.lastSyncAt;
+  const engineDetail = !isTauri()
+    ? "Browser mode — the native engine is unavailable."
+    : !engine
+      ? "Engine status is unavailable."
+      : [
+          `Engine ${engineReady ? "ready" : "not ready"}`,
+          `Provider: ${engine.provider}`,
+          `Runtime: ${engine.runtime_found ? "found" : "missing"}`,
+          `Inference: ${engine.inference_available ? "available" : "unavailable"}`,
+          engine.detail,
+        ]
+          .filter(Boolean)
+          .join("\n");
+  const syncDetail = [
+    syncLabel,
+    syncError && `Detail: ${syncError}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const navItem =
     "inline-flex items-center gap-2 rounded-full border border-transparent px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50";
@@ -240,9 +303,10 @@ export function App() {
   }
 
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="flex h-screen w-screen flex-col bg-background font-sans text-foreground">
-      {/* Top bar — brand and destinations on one line. */}
-      <header className="flex h-14 shrink-0 items-center gap-4 border-b border-sidebar-border bg-sidebar px-4">
+      {/* Top bar — brand, destinations and compact status indicators. */}
+      <header className="flex h-16 shrink-0 items-center gap-4 border-b border-sidebar-border bg-sidebar px-4">
         <div className="flex flex-1 items-center gap-2.5">
           <Logo className="h-8 w-8 shrink-0" />
           <div className="hidden leading-tight lg:block">
@@ -298,15 +362,64 @@ export function App() {
               {patient.name}
             </span>
           )}
-          <span
-            className="hidden text-[11px] text-muted-foreground 2xl:inline"
-            title={syncError ?? undefined}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                tabIndex={0}
+                aria-label={engineReady ? "Engine ready" : "Engine not ready"}
+                className="inline-flex size-8 items-center justify-center rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "size-2.5 rounded-full ring-2 ring-sidebar",
+                    engineReady ? "bg-emerald-500" : "bg-red-500",
+                  )}
+                />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs whitespace-pre-line">
+              {engineDetail}
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                tabIndex={0}
+                aria-label={syncLabel}
+                className="relative inline-flex size-8 items-center justify-center rounded-full text-muted-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                <RefreshCw
+                  className={cn("size-5", sync.syncing && "animate-spin")}
+                  aria-hidden="true"
+                />
+                {syncFailed && (
+                  <span className="absolute left-1/2 top-1/2 flex size-3.5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-sidebar">
+                    <X className="size-2.5 text-red-400" aria-hidden="true" />
+                  </span>
+                )}
+                {syncSucceeded && (
+                  <span className="absolute left-1/2 top-1/2 flex size-3.5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-sidebar">
+                    <Check className="size-2.5 text-emerald-400" aria-hidden="true" />
+                  </span>
+                )}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs whitespace-pre-line">
+              {syncDetail}
+            </TooltipContent>
+          </Tooltip>
+
+          <button
+            type="button"
+            onClick={() => navigate({ tab: "settings" })}
+            aria-label="Settings"
+            title="Settings"
+            className={cn(navItem, "px-2.5", tab === "settings" ? navActive : navIdle)}
           >
-            {syncLabel}
-          </span>
-          <Badge variant={isTauri() ? "success" : "warning"} dot>
-            {isTauri() ? "Engine Ready" : "Browser Mode"}
-          </Badge>
+            <Settings className="h-4 w-4" aria-hidden="true" />
+          </button>
           <Button
             variant="ghost"
             size="icon"
@@ -324,31 +437,6 @@ export function App() {
         </div>
       </header>
 
-      {/* Context strip: the current destination or record, plus sync details. */}
-      <div className="flex h-11 shrink-0 items-center justify-between gap-3 border-b border-border px-6">
-        <h2 className="truncate font-display text-base font-semibold tracking-tight text-foreground">
-          {heading}
-        </h2>
-        <div className="flex shrink-0 items-center gap-3 text-[11px] text-muted-foreground">
-          <span className="hidden md:inline">
-            Tauri 2.0 · Rust Engine v{appVersion ?? "…"}
-          </span>
-          <button
-            type="button"
-            onClick={() => void update.checkNow()}
-            disabled={update.checking || tab === "capture"}
-            title={update.error ?? "Check the release channel for a newer build"}
-            className="text-[11px] text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {update.checking
-              ? "Checking for updates…"
-              : update.upToDate
-                ? "Up to date"
-                : "Check for updates"}
-          </button>
-        </div>
-      </div>
-
       {(syncError || portalError) && (
         <div className="flex shrink-0 flex-wrap gap-x-4 gap-y-1 border-b border-amber-500/30 bg-amber-500/10 px-6 py-1.5 text-[11px] text-amber-300">
           {syncError && syncError !== "offline" && (
@@ -361,9 +449,6 @@ export function App() {
       )}
 
       <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        {/* Never prompt while a session could be recording. */}
-        {tab !== "capture" && <UpdateBanner update={update} />}
-
         {sync.authRejected && (
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-500/30 bg-amber-500/10 px-6 py-2 text-xs text-amber-200">
             <span>
@@ -382,7 +467,7 @@ export function App() {
 
         <section
           className={cn(
-            "min-h-0 flex-1 overflow-y-auto p-6",
+            "warm-scrollbar min-h-0 flex-1 overflow-y-auto p-6",
             tab === "capture" && "overflow-hidden p-3",
           )}
         >
@@ -437,8 +522,37 @@ export function App() {
               onNewSession={() => navigate({ tab: "capture" })}
             />
           )}
+
+          {tab === "settings" && (
+            <SettingsPage update={update} />
+          )}
         </section>
       </main>
+
+      {updatePromptOpen && update.version && (
+        <AlertDialog open onOpenChange={(next) => !next && deferUpdate()}>
+          <AlertDialogContent onOutsideDismiss={deferUpdate}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Update available</AlertDialogTitle>
+              <AlertDialogDescription>
+                Version {update.version}
+                {update.currentVersion ? ` (current ${update.currentVersion})` : ""}{" "}
+                is ready to install. You can also check for updates later in
+                Settings → Updates.
+                {update.notes && (
+                  <span className="mt-2 block max-h-24 overflow-y-auto whitespace-pre-line text-xs text-muted-foreground">
+                    {update.notes}
+                  </span>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Later</AlertDialogCancel>
+              <AlertDialogAction onClick={acceptUpdate}>Update now</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
       {confirmSignOut && (
         <AlertDialog open onOpenChange={(next) => !next && setConfirmSignOut(false)}>
@@ -467,6 +581,7 @@ export function App() {
       )}
       <Toaster position="bottom-right" />
     </div>
+    </TooltipProvider>
   );
 }
 

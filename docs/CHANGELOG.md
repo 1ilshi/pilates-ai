@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.2.0 — 2026-11-18
+
+- **The patient roster has a new table layout in both the workstation and the
+  portal.** Rows are framed in a single panel with a header, search and paging
+  footer; names, scores and status read at a glance with an inline accuracy
+  meter, and the workstation scrollbar now matches the dark theme.
+- **The workstation top bar is thicker and quieter.** The version strip beneath
+  it is gone; engine health is a small green/red dot and sync is a single icon
+  with a centre tick or cross, both with the full detail on hover.
+- **A Settings screen is reachable from the gear beside Sign out.** It lists and
+  checks cameras, remembers the chosen input device for every later capture,
+  and shows the current version with a manual update check.
+- **Updates now prompt once per detected version.** "Update now" opens Settings
+  and installs there; "Later" dismisses, and the prompt points to
+  Settings → Updates for a later check.
+- **The portal sidebar expands from its logo** to show full destination names,
+  email and Sign out; sign-out asks for confirmation as it does on the
+  workstation.
+
 ## 2.1.1 — 2026-11-18
 
 - **Pose Capture, Patients and Analysis now sit together in the centre of the

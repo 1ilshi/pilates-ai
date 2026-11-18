@@ -190,15 +190,15 @@ export function App() {
         : NAV.find((entry) => entry.id === tab)?.label;
 
   const navItem =
-    "flex w-full items-center gap-3 rounded-control border px-3 py-2 text-sm font-medium transition-colors";
-  const navActive = "border-brand-500/20 bg-brand-500/10 text-brand-400";
+    "flex w-full items-center gap-3 rounded-control border px-3 py-2 text-sm font-mono font-medium transition-colors";
+  const navActive = "border-primary/25 bg-primary/10 text-primary";
   const navIdle =
-    "border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200";
+    "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground";
 
   if (access === "checking") {
     return (
-      <div className="flex h-screen w-screen items-center justify-center gap-2 bg-slate-950 text-sm text-slate-500">
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-700 border-t-brand-400" />
+      <div className="flex h-screen w-screen items-center justify-center gap-2 bg-background text-sm text-muted-foreground">
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary" />
         Starting…
       </div>
     );
@@ -218,16 +218,16 @@ export function App() {
   }
 
   return (
-    <div className="flex h-screen w-screen bg-slate-950 font-sans text-slate-100">
-      <aside className="flex w-60 shrink-0 flex-col justify-between border-r border-slate-800 bg-slate-900/50 p-4">
+    <div className="flex h-screen w-screen bg-background font-sans text-foreground">
+      <aside className="flex w-60 shrink-0 flex-col justify-between border-r border-sidebar-border bg-sidebar p-4">
         <div>
           <div className="mb-8 flex items-center gap-2.5 px-2">
             <Logo className="h-9 w-9 shrink-0" />
             <div className="min-w-0">
-              <h1 className="truncate text-base font-bold leading-tight tracking-tight text-white">
+              <h1 className="truncate font-mono text-base font-bold leading-tight tracking-tight text-foreground">
                 Pilates AI
               </h1>
-              <p className="text-[10px] uppercase tracking-wider text-slate-500">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
                 Clinical workstation
               </p>
             </div>
@@ -260,30 +260,30 @@ export function App() {
               <BarChart3 className="h-4 w-4" aria-hidden="true" />
               Analysis
               <ExternalLink
-                className="ml-auto h-3 w-3 text-slate-600"
+                className="ml-auto h-3 w-3 text-muted-foreground/60"
                 aria-hidden="true"
               />
             </button>
           </nav>
 
           {patient && (
-            <div className="mt-6 rounded-control border border-slate-800 bg-slate-900/60 p-3">
-              <p className="text-xs text-slate-500">Active patient</p>
-              <p className="truncate text-sm font-medium text-slate-200">{patient.name}</p>
-              <p className="mt-0.5 text-xs text-slate-500">
+            <div className="mt-6 rounded-control border border-sidebar-border bg-sidebar-accent p-3">
+              <p className="text-xs text-muted-foreground">Active patient</p>
+              <p className="truncate text-sm font-medium text-foreground">{patient.name}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {patient.gender || "—"} · {patient.age || "—"}
               </p>
             </div>
           )}
         </div>
 
-        <div className="px-2 text-xs text-slate-500">
+        <div className="px-2 text-xs text-muted-foreground">
           <p
             title={syncError ?? undefined}
             className={
               syncError && syncError !== "offline"
                 ? "text-amber-400"
-                : "text-slate-400"
+                : "text-muted-foreground"
             }
           >
             {syncLabel}
@@ -312,7 +312,7 @@ export function App() {
             onClick={() => void update.checkNow()}
             disabled={update.checking || tab === "capture"}
             title={update.error ?? "Check the release channel for a newer build"}
-            className="mt-1 text-[10px] text-slate-500 hover:text-slate-300 disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-1 text-[10px] text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
           >
             {update.checking
               ? "Checking for updates…"
@@ -329,7 +329,7 @@ export function App() {
                 ? "Finish the recording before signing out"
                 : "Sign out and return to the sign-in screen"
             }
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-control border border-slate-700 px-2 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-500 hover:bg-slate-800 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-control border border-border px-2 py-1.5 text-xs font-mono font-medium text-foreground transition-colors hover:border-muted-foreground/40 hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-40"
           >
             <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
             Sign out
@@ -338,8 +338,8 @@ export function App() {
       </aside>
 
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800 px-6">
-          <h2 className="text-base font-semibold text-slate-200">{heading}</h2>
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-border px-6">
+          <h2 className="font-mono text-base font-semibold text-foreground">{heading}</h2>
           <Badge variant={isTauri() ? "success" : "warning"} dot>
             {isTauri() ? "Engine Ready" : "Browser Mode"}
           </Badge>
@@ -422,7 +422,7 @@ export function App() {
       {confirmSignOut && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             onClick={() => setConfirmSignOut(false)}
             aria-hidden="true"
           />
@@ -430,12 +430,12 @@ export function App() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="signout-title"
-            className="relative w-full max-w-sm rounded-card border border-slate-700 bg-slate-900 p-5 shadow-xl"
+            className="relative w-full max-w-sm rounded-card border border-border bg-card p-5 text-card-foreground shadow-xl"
           >
-            <h2 id="signout-title" className="text-base font-semibold text-slate-100">
+            <h2 id="signout-title" className="font-mono text-base font-semibold text-card-foreground">
               Sign out of this workstation?
             </h2>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-muted-foreground">
               You will need your email and password to sign in again. Sessions
               already recorded stay on this machine and upload after you sign in.
             </p>

@@ -12,8 +12,10 @@
       body {
         margin: 0;
         height: 100%;
-        background: #020617;
-        color: #e2e8f0;
+        /* shadcn preset b3vDoo9h44 dark tokens (zinc base, cyan accent),
+           inlined because this renders before any stylesheet is loaded. */
+        background: oklch(0.141 0.005 285.823);
+        color: oklch(0.985 0 0);
         font-family:
           ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
       }
@@ -33,13 +35,13 @@
       #splash .label {
         font-size: 13px;
         letter-spacing: 0.02em;
-        color: #94a3b8;
+        color: oklch(0.705 0.015 286.067);
       }
       #splash .bar {
         width: 160px;
         height: 3px;
         border-radius: 999px;
-        background: #1e293b;
+        background: oklch(0.274 0.006 286.033);
         overflow: hidden;
       }
       #splash .bar span {
@@ -47,7 +49,11 @@
         width: 40%;
         height: 100%;
         border-radius: 999px;
-        background: linear-gradient(90deg, #2dd4bf, #2dc8de);
+        background: linear-gradient(
+          90deg,
+          oklch(0.715 0.143 215.221),
+          oklch(0.52 0.105 223.128)
+        );
         animation: slide 1.1s ease-in-out infinite;
       }
       @keyframes slide {
@@ -60,7 +66,7 @@
       }
     </style>
   </head>
-  <body class="bg-slate-950 text-slate-50 antialiased selection:bg-teal-500 selection:text-white">
+  <body class="bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground">
     <div id="root">
       <div id="splash">
         <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">

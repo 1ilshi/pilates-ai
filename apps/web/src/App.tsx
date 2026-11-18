@@ -29,8 +29,8 @@ export function App() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center gap-2 bg-slate-950 text-sm text-slate-400">
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-700 border-t-brand-400" />
+      <div className="flex min-h-screen items-center justify-center gap-2 bg-background text-sm text-muted-foreground">
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary" />
         Loading…
       </div>
     );
@@ -39,17 +39,17 @@ export function App() {
   if (!user) return <SignInPage />;
 
   return (
-    <div className="flex min-h-screen flex-col overflow-x-clip bg-slate-950 font-sans text-slate-100">
-      <header className="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/70 px-4 py-2.5 backdrop-blur sm:px-6 sm:py-3">
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-background font-sans text-foreground">
+      <header className="sticky top-0 z-10 border-b border-sidebar-border bg-sidebar/70 px-4 py-2.5 backdrop-blur sm:px-6 sm:py-3">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <Logo className="h-7 w-7 shrink-0" />
             {/* The wordmark and badge cost ~250px; the mark alone carries the
                 identity on a phone. */}
-            <span className="hidden truncate text-lg font-bold tracking-tight text-white sm:inline">
+            <span className="hidden truncate font-mono text-lg font-bold tracking-tight text-foreground sm:inline">
               Pilates AI Portal
             </span>
-            <span className="truncate text-base font-bold tracking-tight text-white sm:hidden">
+            <span className="truncate font-mono text-base font-bold tracking-tight text-foreground sm:hidden">
               Pilates AI
             </span>
             <Badge variant="brand" className="hidden sm:inline-flex">
@@ -68,8 +68,8 @@ export function App() {
                   cn(
                     "inline-flex items-center gap-2 rounded-control px-3 py-1.5 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-brand-500/10 text-brand-400"
-                      : "text-slate-400 hover:bg-slate-800 hover:text-slate-200",
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
                   )
                 }
               >
@@ -80,7 +80,7 @@ export function App() {
           </nav>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <span className="hidden text-xs text-slate-500 lg:inline">{user.email}</span>
+            <span className="hidden text-xs text-muted-foreground lg:inline">{user.email}</span>
             <Button variant="ghost" size="sm" onClick={() => void signOutUser()}>
               <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
               <span className="hidden sm:inline">Sign out</span>
@@ -104,7 +104,7 @@ export function App() {
 
       {/* Thumb-reachable navigation, phones only. */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-800 bg-slate-900/95 backdrop-blur sm:hidden"
+        className="fixed inset-x-0 bottom-0 z-20 border-t border-sidebar-border bg-sidebar/95 backdrop-blur sm:hidden"
         aria-label="Main navigation"
       >
         <div className="grid grid-cols-3">
@@ -116,7 +116,7 @@ export function App() {
               className={({ isActive }) =>
                 cn(
                   "flex min-h-[56px] flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",
-                  isActive ? "text-brand-400" : "text-slate-500 active:bg-slate-800/60",
+                  isActive ? "text-primary" : "text-muted-foreground active:bg-accent/60",
                 )
               }
             >

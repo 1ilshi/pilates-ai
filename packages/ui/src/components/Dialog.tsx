@@ -84,7 +84,7 @@ export function Dialog({
       role="presentation"
     >
       <div
-        className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -96,18 +96,18 @@ export function Dialog({
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
         className={cn(
-          "relative w-full rounded-card border border-slate-800 bg-slate-900 p-6 shadow-2xl",
+          "relative w-full rounded-card border border-border bg-card p-6 text-card-foreground shadow-2xl",
           "focus:outline-none",
           sizeClassName,
           className,
         )}
       >
         <div className="mb-4 pr-8">
-          <h2 id={titleId} className="text-lg font-semibold text-slate-100">
+          <h2 id={titleId} className="font-mono text-lg font-semibold text-card-foreground">
             {title}
           </h2>
           {description && (
-            <p id={descriptionId} className="mt-1 text-sm text-slate-400">
+            <p id={descriptionId} className="mt-1 text-sm text-muted-foreground">
               {description}
             </p>
           )}
@@ -117,7 +117,7 @@ export function Dialog({
           type="button"
           onClick={onClose}
           aria-label="Close dialog"
-          className="absolute right-4 top-4 rounded-control p-1 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+          className="absolute right-4 top-4 rounded-control p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           <svg
             aria-hidden="true"
@@ -132,7 +132,7 @@ export function Dialog({
           </svg>
         </button>
 
-        <div className="text-sm text-slate-300">{children}</div>
+        <div className="text-foreground">{children}</div>
 
         {footer && (
           <div className="mt-6 flex items-center justify-end gap-2">

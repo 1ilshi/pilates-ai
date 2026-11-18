@@ -1,3 +1,6 @@
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/geist-mono";
+
 /**
  * @pilates/ui — shared design tokens for Tailwind CSS v4.
  *
@@ -99,11 +102,13 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Preset radius scale — DEFERRED to Phase B. Defining --radius-sm..xl here
-     would immediately change the two `rounded-lg` usages in LivePreview.tsx
-     (0.5rem → 0.625rem), breaking this phase's zero-visual-change guarantee.
-     --radius is defined above and ready; Phase B activates the scale and
-     migrates those usages in the same commit. */
+  /* Preset radius scale — activated in Phase B. The existing semantic radius
+     tokens are retargeted onto it so rounded-card / rounded-control consumers
+     move to the preset scale in the same change. */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 /* Vega typography (Geist Mono headings + Inter body). Families are bundled
@@ -138,8 +143,8 @@
   --color-phase-concentric: #f59e0b;
   --color-phase-idle: #94a3b8;
 
-  --radius-card: 0.75rem;
-  --radius-control: 0.5rem;
+  --radius-card: var(--radius);
+  --radius-control: calc(var(--radius) - 2px);
 }
 
 /* Phase colours are also exposed as plain classes so chart/legend markup can

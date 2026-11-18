@@ -21,15 +21,15 @@ export interface ButtonProps
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
-    "bg-brand-500 text-white hover:bg-brand-600 focus-visible:outline-brand-500 shadow-sm",
+    "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:outline-primary shadow-sm",
   secondary:
-    "bg-slate-800 text-slate-100 hover:bg-slate-700 focus-visible:outline-slate-500",
+    "bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:outline-ring",
   outline:
-    "border border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800 focus-visible:outline-slate-500",
+    "border border-border bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring",
   ghost:
-    "bg-transparent text-slate-300 hover:bg-slate-800 hover:text-slate-100 focus-visible:outline-slate-500",
+    "bg-transparent text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring",
   destructive:
-    "bg-red-600 text-white hover:bg-red-700 focus-visible:outline-red-500 shadow-sm",
+    "bg-destructive text-white hover:bg-destructive/90 focus-visible:outline-destructive shadow-sm",
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {

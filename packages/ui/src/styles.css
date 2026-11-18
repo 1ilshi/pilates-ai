@@ -1,5 +1,10 @@
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/geist-mono";
+@import "tw-animate-css";
+
+/* Dark-only product: the dark theme lives in :root below, and this variant
+   makes shadcn components' `dark:` utilities always apply via <html class="dark">. */
+@custom-variant dark (&:is(.dark *));
 
 /**
  * @pilates/ui — shared design tokens for Tailwind CSS v4.

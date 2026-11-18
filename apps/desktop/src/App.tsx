@@ -3,7 +3,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import { BarChart3, Camera, ExternalLink, LogOut, Users } from "lucide-react";
 import type { ClinicalSessionDocument } from "@pilates/types";
 import { poseDisplayLabel } from "@pilates/types";
-import { Badge, Button, cn } from "@pilates/ui";
+import { Badge, Button, cn, Toaster } from "@pilates/ui";
 import { PatientListPage } from "./pages/PatientListPage";
 import { PatientDetailPage } from "./pages/PatientDetailPage";
 import { ActiveCapturePage } from "./pages/ActiveCapturePage";
@@ -451,6 +451,7 @@ export function App() {
           </div>
         </div>
       )}
+      <Toaster position="bottom-right" />
     </div>
   );
 }

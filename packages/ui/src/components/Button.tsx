@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Button as ShadcnButton } from "./ui/button";
 import { cn } from "../lib/utils";
 
 export type ButtonVariant =
@@ -19,23 +20,22 @@ export interface ButtonProps
   fullWidth?: boolean;
 }
 
-const VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  primary:
-    "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:outline-primary shadow-sm",
-  secondary:
-    "bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:outline-ring",
-  outline:
-    "border border-border bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring",
-  ghost:
-    "bg-transparent text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring",
-  destructive:
-    "bg-destructive text-white hover:bg-destructive/90 focus-visible:outline-destructive shadow-sm",
+/** Our historical variant names, mapped onto the shadcn variants. */
+const VARIANT_MAP: Record<
+  ButtonVariant,
+  "default" | "secondary" | "outline" | "ghost" | "destructive"
+> = {
+  primary: "default",
+  secondary: "secondary",
+  outline: "outline",
+  ghost: "ghost",
+  destructive: "destructive",
 };
 
-const SIZE_CLASSES: Record<ButtonSize, string> = {
-  sm: "h-8 px-3 text-xs gap-1.5",
-  md: "h-10 px-4 text-sm gap-2",
-  lg: "h-12 px-6 text-base gap-2.5",
+const SIZE_MAP: Record<ButtonSize, "sm" | "default" | "lg"> = {
+  sm: "sm",
+  md: "default",
+  lg: "lg",
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -54,20 +54,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) {
     return (
-      <button
+      <ShadcnButton
         ref={ref}
         type={type}
+        data-variant={variant}
         disabled={disabled || loading}
         aria-busy={loading || undefined}
-        className={cn(
-          "inline-flex items-center justify-center rounded-control font-medium transition-colors",
-          "focus-visible:outline-2 focus-visible:outline-offset-2",
-          "disabled:pointer-events-none disabled:opacity-50",
-          VARIANT_CLASSES[variant],
-          SIZE_CLASSES[size],
-          fullWidth && "w-full",
-          className,
-        )}
+        className={cn(fullWidth && "w-full", className)}
+        variant={VARIANT_MAP[variant]}
+        size={SIZE_MAP[size]}
         {...props}
       >
         {loading && (
@@ -77,7 +72,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           />
         )}
         {children}
-      </button>
+      </ShadcnButton>
     );
   },
 );

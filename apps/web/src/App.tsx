@@ -1,6 +1,6 @@
 import { NavLink, Route, Routes } from "react-router-dom";
 import { BarChart3, LayoutDashboard, LogOut, Users } from "lucide-react";
-import { Badge, Button, Logo, cn } from "@pilates/ui";
+import { Badge, Button, Logo, cn, Toaster } from "@pilates/ui";
 import { useAuth } from "./lib/auth";
 import { SignInPage } from "./pages/SignInPage";
 import { AuthBridgePage } from "./pages/AuthBridgePage";
@@ -126,6 +126,7 @@ export function App() {
           ))}
         </div>
       </nav>
+      <Toaster position="bottom-right" />
     </div>
   );
 }

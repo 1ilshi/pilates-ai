@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Badge as ShadcnBadge } from "./ui/badge";
 import { cn } from "../lib/utils";
 
 export type BadgeVariant =
@@ -15,13 +16,16 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   dot?: boolean;
 }
 
+/** Our historical variant names, mapped onto the shadcn badge. Status colors
+ * (success/warning/danger) keep their tinted treatment — they carry clinical
+ * meaning, not decoration. */
 const VARIANT_CLASSES: Record<BadgeVariant, string> = {
-  neutral: "bg-secondary text-secondary-foreground border-border",
+  neutral: "bg-secondary text-secondary-foreground",
   brand: "bg-primary/15 text-primary border-primary/25",
   success: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   warning: "bg-amber-500/10 text-amber-400 border-amber-500/20",
   danger: "bg-red-500/10 text-red-400 border-red-500/20",
-  outline: "bg-transparent text-muted-foreground border-border",
+  outline: "bg-transparent text-muted-foreground",
 };
 
 const DOT_CLASSES: Record<BadgeVariant, string> = {
@@ -39,13 +43,10 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
     ref,
   ) {
     return (
-      <span
+      <ShadcnBadge
         ref={ref}
-        className={cn(
-          "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-0.5 text-xs font-mono uppercase tracking-wider",
-          VARIANT_CLASSES[variant],
-          className,
-        )}
+        data-variant={variant}
+        className={cn(VARIANT_CLASSES[variant], className)}
         {...props}
       >
         {dot && (
@@ -55,7 +56,7 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
           />
         )}
         {children}
-      </span>
+      </ShadcnBadge>
     );
   },
 );

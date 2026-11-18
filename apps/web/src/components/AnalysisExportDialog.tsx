@@ -131,11 +131,11 @@ export function AnalysisExportDialog({
       }
     >
       <div className="space-y-4 text-xs">
-        <div className="rounded-control border border-primary/30 bg-primary/[0.06] p-3 text-[11px] leading-relaxed text-foreground/80">
-          <p className="font-medium text-primary">
+        <div className="rounded-control border border-brand-500/30 bg-brand-500/[0.06] p-3 text-[11px] leading-relaxed text-slate-300">
+          <p className="font-medium text-brand-300">
             This download shows the cohorts currently displayed.
           </p>
-          <p className="mt-1 text-muted-foreground">
+          <p className="mt-1 text-slate-400">
             {cohorts.length > 0
               ? `Included: ${cohorts.join(", ")}. Disabled cohorts are left out.`
               : "No cohorts are enabled, so the cohort charts cover all patients."}{" "}
@@ -144,7 +144,7 @@ export function AnalysisExportDialog({
         </div>
 
         <fieldset className="space-y-2">
-          <legend className="mb-2 text-xs font-semibold text-foreground">
+          <legend className="mb-2 text-xs font-semibold text-slate-100">
             Which charts
           </legend>
           {SCOPE_OPTIONS.map((option) => (
@@ -153,8 +153,8 @@ export function AnalysisExportDialog({
               className={cn(
                 "flex cursor-pointer gap-3 rounded-control border p-3 transition-colors",
                 scope === option.value
-                  ? "border-primary/60 bg-primary/10"
-                  : "border-border hover:border-muted-foreground/40",
+                  ? "border-brand-500/60 bg-brand-500/10"
+                  : "border-slate-700 hover:border-slate-600",
               )}
             >
               <input
@@ -166,13 +166,13 @@ export function AnalysisExportDialog({
                   setScope(option.value);
                   setStatus(null);
                 }}
-                className="mt-0.5 accent-primary"
+                className="mt-0.5 accent-brand-500"
               />
               <span>
-                <span className="block text-xs font-medium text-foreground">
+                <span className="block text-xs font-medium text-slate-100">
                   {option.label}
                 </span>
-                <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                <span className="mt-0.5 block text-[11px] text-slate-400">
                   {option.description}
                 </span>
               </span>
@@ -181,7 +181,7 @@ export function AnalysisExportDialog({
         </fieldset>
 
         <fieldset className="space-y-2">
-          <legend className="mb-2 text-xs font-semibold text-foreground">
+          <legend className="mb-2 text-xs font-semibold text-slate-100">
             What to include
           </legend>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -191,8 +191,8 @@ export function AnalysisExportDialog({
                 className={cn(
                   "flex cursor-pointer gap-2 rounded-control border p-3 transition-colors",
                   content === option.value
-                    ? "border-primary/60 bg-primary/10"
-                    : "border-border hover:border-muted-foreground/40",
+                    ? "border-brand-500/60 bg-brand-500/10"
+                    : "border-slate-700 hover:border-slate-600",
                 )}
               >
                 <input
@@ -204,13 +204,13 @@ export function AnalysisExportDialog({
                     setContent(option.value);
                     setStatus(null);
                   }}
-                  className="mt-0.5 accent-primary"
+                  className="mt-0.5 accent-brand-500"
                 />
                 <span>
-                  <span className="block text-xs font-medium text-foreground">
+                  <span className="block text-xs font-medium text-slate-100">
                     {option.label}
                   </span>
-                  <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                  <span className="mt-0.5 block text-[11px] text-slate-400">
                     {option.description}
                   </span>
                 </span>
@@ -219,7 +219,7 @@ export function AnalysisExportDialog({
           </div>
         </fieldset>
 
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-[11px] text-slate-400">
           {poseFilters.length > 0
             ? `Pose filters applied on screen are kept: ${poseFilters.join(" · ")}.`
             : "No pose filter is applied on screen, so every pose is included."}
@@ -236,7 +236,7 @@ export function AnalysisExportDialog({
         {status && (
           <p
             role="status"
-            className="rounded-control border border-primary/30 bg-primary/5 p-2 text-primary"
+            className="rounded-control border border-brand-500/30 bg-brand-500/5 p-2 text-brand-300"
           >
             {status}
           </p>

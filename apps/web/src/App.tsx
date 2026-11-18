@@ -52,7 +52,7 @@ export function App() {
             <span className="truncate font-mono text-base font-bold tracking-tight text-foreground sm:hidden">
               Pilates AI
             </span>
-            <Badge variant="brand" className="hidden sm:inline-flex">
+            <Badge variant="default" className="hidden sm:inline-flex">
               Clinical Cloud
             </Badge>
           </div>

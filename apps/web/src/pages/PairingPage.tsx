@@ -108,7 +108,7 @@ export function PairingPage() {
         <h1 className="text-lg font-semibold text-foreground">
           Authorise this workstation?
         </h1>
-        <Badge variant="brand">{code}</Badge>
+        <Badge variant="default">{code}</Badge>
       </div>
 
       <p className="mt-3 text-sm text-muted-foreground">

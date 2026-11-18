@@ -29,6 +29,12 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Table,
   TableBody,
   TableCell,
@@ -226,7 +232,7 @@ function Section({
                 {icon}
               </span>
               {title}
-              {count && <Badge variant="neutral">{count}</Badge>}
+              {count && <Badge variant="secondary">{count}</Badge>}
             </CardTitle>
           </button>
           {actions}
@@ -514,13 +520,13 @@ export function PatientView({
           )}
           <h3 className="text-xl font-semibold text-foreground">{patient.name}</h3>
           <div className="mt-1 flex flex-wrap items-center gap-2">
-            {ordered.length > 0 && <Badge variant="brand">Active program</Badge>}
+            {ordered.length > 0 && <Badge variant="default">Active program</Badge>}
             {legacy && <Badge variant="warning">Legacy history</Badge>}
-            {lapsed && <Badge variant="danger">Lapsed {sinceDays}d</Badge>}
+            {lapsed && <Badge variant="destructive">Lapsed {sinceDays}d</Badge>}
             {declining && <Badge variant="warning">Declining</Badge>}
-            {stalled && <Badge variant="neutral">Stalled</Badge>}
+            {stalled && <Badge variant="secondary">Stalled</Badge>}
             {ordered.length === 0 && !legacy && (
-              <Badge variant="neutral">No history</Badge>
+              <Badge variant="secondary">No history</Badge>
             )}
           </div>
         </div>
@@ -652,17 +658,17 @@ export function PatientView({
             {editing ? (
               <div className="space-y-2 py-2">
                 {PROFILE_FIELDS.map(([key, label]) => (
-                  <label key={key} className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div key={key} className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span className="w-14 shrink-0">{label}</span>
-                    <input
+                    <Input
                       value={draft[key]}
                       onChange={(event) =>
                         setDraft((current) => ({ ...current, [key]: event.target.value }))
                       }
                       aria-label={label}
-                      className="h-8 min-w-0 flex-1 rounded-control border border-border bg-background px-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                      className="h-8 min-w-0 flex-1 px-2 text-sm"
                     />
-                  </label>
+                  </div>
                 ))}
                 {saveError && <p className="text-xs text-red-400">{saveError}</p>}
                 <div className="flex gap-2 pt-1">
@@ -714,7 +720,7 @@ export function PatientView({
                 <MessageSquare className="h-4 w-4 text-primary" aria-hidden="true" />
                 Clinical notes
               </CardTitle>
-              <Badge variant="neutral">{comments.length}</Badge>
+              <Badge variant="secondary">{comments.length}</Badge>
             </div>
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col gap-3 pt-4">
@@ -881,18 +887,25 @@ export function PatientView({
               <p className="text-xs text-muted-foreground">
                 Form and hold across repetitions within one session.
               </p>
-              <select
+              <Select
                 value={profileSessionId}
-                onChange={(event) => setProfileSessionId(event.target.value)}
-                aria-label="Select session for the repetition profile"
-                className="h-8 rounded-control border border-border bg-background px-2 text-xs text-foreground focus:border-primary focus:outline-none"
+                onValueChange={setProfileSessionId}
               >
-                {poseSessions.map((session, index) => (
-                  <option key={session.session_id} value={session.session_id}>
-                    Session {index + 1} · {formatDateTime(session.completed_at)}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  size="sm"
+                  aria-label="Select session for the repetition profile"
+                  className="text-xs"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {poseSessions.map((session, index) => (
+                    <SelectItem key={session.session_id} value={session.session_id}>
+                      Session {index + 1} · {formatDateTime(session.completed_at)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <RepProfileChart reps={profileReps} />
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -969,7 +982,7 @@ export function PatientView({
                       </div>
                     </div>
                     {session.upload_state && (
-                      <Badge variant={session.upload_state === "synced" ? "success" : "neutral"}>
+                      <Badge variant={session.upload_state === "synced" ? "success" : "secondary"}>
                         {session.upload_state}
                       </Badge>
                     )}

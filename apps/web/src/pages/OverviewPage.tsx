@@ -213,7 +213,7 @@ export function OverviewPage() {
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-400" aria-hidden="true" />
             <CardTitle className="text-sm">Needs attention</CardTitle>
-            <Badge variant={attention.length > 0 ? "warning" : "neutral"}>
+            <Badge variant={attention.length > 0 ? "warning" : "secondary"}>
               {attention.length}
             </Badge>
           </div>
@@ -234,10 +234,10 @@ export function OverviewPage() {
                   <Badge
                     variant={
                       item.reason === "Lapsed"
-                        ? "danger"
+                        ? "destructive"
                         : item.reason === "Declining"
                           ? "warning"
-                          : "neutral"
+                          : "secondary"
                     }
                   >
                     {item.reason}

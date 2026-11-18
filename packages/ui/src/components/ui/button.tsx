@@ -46,17 +46,34 @@ function Button({
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
+    /** Shows a spinner and blocks interaction while the action runs. */
+    loading?: boolean
   }) {
   const Comp = asChild ? Slot.Root : "button"
+  const { loading, disabled, children, ...rest } = props
 
   return (
     <Comp
       data-slot="button"
       data-variant={variant}
       data-size={size}
+      aria-busy={loading || undefined}
+      disabled={disabled || loading}
       className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
+      {...rest}
+    >
+      {loading ? (
+        <>
+          <span
+            aria-hidden="true"
+            className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+          />
+          {children}
+        </>
+      ) : (
+        children
+      )}
+    </Comp>
   )
 }
 

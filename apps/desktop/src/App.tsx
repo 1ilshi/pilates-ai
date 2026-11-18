@@ -3,7 +3,19 @@ import { getVersion } from "@tauri-apps/api/app";
 import { BarChart3, Camera, ExternalLink, LogOut, Users } from "lucide-react";
 import type { ClinicalSessionDocument } from "@pilates/types";
 import { poseDisplayLabel } from "@pilates/types";
-import { Badge, Button, cn, Toaster } from "@pilates/ui";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Badge,
+  cn,
+  Toaster,
+} from "@pilates/ui";
 import { PatientListPage } from "./pages/PatientListPage";
 import { PatientDetailPage } from "./pages/PatientDetailPage";
 import { ActiveCapturePage } from "./pages/ActiveCapturePage";
@@ -420,36 +432,29 @@ export function App() {
       </main>
 
       {confirmSignOut && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            onClick={() => setConfirmSignOut(false)}
-            aria-hidden="true"
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="signout-title"
-            className="relative w-full max-w-sm rounded-card border border-border bg-card p-5 text-card-foreground shadow-xl"
-          >
-            <h2 id="signout-title" className="font-mono text-base font-semibold text-card-foreground">
-              Sign out of this workstation?
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              You will need your email and password to sign in again. Sessions
-              already recorded stay on this machine and upload after you sign in.
-            </p>
-            <div className="mt-5 flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setConfirmSignOut(false)}>
-                Cancel
-              </Button>
-              <Button onClick={signOut}>
-                <LogOut className="h-4 w-4" aria-hidden="true" />
+        <AlertDialog open onOpenChange={(next) => !next && setConfirmSignOut(false)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Sign out of this workstation?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                You will need your email and password to sign in again.
+                Sessions already recorded stay on this machine and upload
+                after you sign in.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={signOut}
+                className="bg-destructive text-white hover:bg-destructive/90"
+              >
                 Sign out
-              </Button>
-            </div>
-          </div>
-        </div>
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
       <Toaster position="bottom-right" />
     </div>

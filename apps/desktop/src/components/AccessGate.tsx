@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { KeyRound, Lock } from "lucide-react";
-import { Button, Card } from "@pilates/ui";
+import { Button, Card, Checkbox, Input, Label } from "@pilates/ui";
 import { authSignIn } from "../lib/ipc";
 import { Logo } from "./Logo";
 import { PairingGate } from "./PairingGate";
@@ -88,9 +88,10 @@ export function AccessGate({ onSignedIn }: { onSignedIn: () => void }) {
         </p>
 
         <form onSubmit={onSubmit} className="mt-4 space-y-3">
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-muted-foreground">Email</span>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="access-email">Email</Label>
+            <Input
+              id="access-email"
               type="email"
               autoComplete="username"
               required
@@ -100,13 +101,13 @@ export function AccessGate({ onSignedIn }: { onSignedIn: () => void }) {
                 setError(null);
                 setEmail(event.target.value);
               }}
-              className="h-10 w-full rounded-control border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
             />
-          </label>
+          </div>
 
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-muted-foreground">Password</span>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="access-password">Password</Label>
+            <Input
+              id="access-password"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               required
@@ -116,19 +117,23 @@ export function AccessGate({ onSignedIn }: { onSignedIn: () => void }) {
                 setError(null);
                 setPassword(event.target.value);
               }}
-              className="h-10 w-full rounded-control border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
             />
-          </label>
+          </div>
 
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            <input
-              type="checkbox"
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="access-show-password"
               checked={showPassword}
-              onChange={(event) => setShowPassword(event.target.checked)}
-              className="h-3.5 w-3.5 accent-primary"
+              onCheckedChange={(checked) => setShowPassword(checked === true)}
+              className="size-3.5"
             />
-            Show password
-          </label>
+            <Label
+              htmlFor="access-show-password"
+              className="text-xs font-normal text-muted-foreground"
+            >
+              Show password
+            </Label>
+          </div>
 
           {error && (
             <p className="rounded-control border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
@@ -136,7 +141,7 @@ export function AccessGate({ onSignedIn }: { onSignedIn: () => void }) {
             </p>
           )}
 
-          <Button type="submit" loading={busy} fullWidth size="lg">
+          <Button type="submit" loading={busy} className="w-full" size="lg">
             <Lock className="h-4 w-4" aria-hidden="true" />
             Sign in
           </Button>

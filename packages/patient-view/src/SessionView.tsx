@@ -288,7 +288,7 @@ export function SessionView({
                 archived
               </Badge>
             ) : (
-              <Badge variant="neutral">not captured</Badge>
+              <Badge variant="secondary">not captured</Badge>
             )}
           </CardTitle>
           <p className="mt-1 text-xs text-muted-foreground">

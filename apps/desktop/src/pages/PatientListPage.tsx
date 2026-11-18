@@ -5,13 +5,24 @@ import {
   Button,
   Card,
   Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-  cn,
 } from "@pilates/ui";
 import {
   deletePatient,
@@ -48,11 +59,6 @@ const EMPTY_FORM: PatientInput = {
 };
 
 const GENDERS = ["Female", "Male"] as const;
-
-const FIELD_CLASSES = cn(
-  "h-9 w-full rounded-control border border-border bg-background px-3 text-sm text-foreground",
-  "focus:border-primary focus:outline-none",
-);
 
 /** Digits only — age is a whole number of years. */
 function sanitizeInteger(value: string): string {
@@ -231,15 +237,15 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[220px]">
           <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden="true"
           />
-          <input
+          <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search patients by name…"
             aria-label="Search patients"
-            className="h-10 w-full rounded-control border border-border bg-card/60 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
+            className="h-10 pl-9"
           />
         </div>
 
@@ -330,99 +336,107 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
         </Table>
       </Card>
 
-      <Dialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        title="New patient"
-        description="Clinical demographics are stored locally and synced to Firestore."
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => void submit()} loading={saving}>
-              Save patient
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-3">
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-muted-foreground">Full name</span>
-            <input
-              data-autofocus
-              type="text"
-              value={form.name}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, name: event.target.value }))
-              }
-              className={FIELD_CLASSES}
-            />
-          </label>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>New patient</DialogTitle>
+            <DialogDescription>
+              Clinical demographics are stored locally and synced to Firestore.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="grid gap-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submit();
+            }}
+          >
+            <div className="grid gap-2">
+              <Label htmlFor="new-patient-name">Full name</Label>
+              <Input
+                id="new-patient-name"
+                value={form.name}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, name: event.target.value }))
+                }
+              />
+            </div>
 
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-muted-foreground">Age (years)</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={form.age ?? ""}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, age: sanitizeInteger(event.target.value) }))
-              }
-              className={FIELD_CLASSES}
-            />
-          </label>
+            <div className="grid gap-2">
+              <Label htmlFor="new-patient-age">Age (years)</Label>
+              <Input
+                id="new-patient-age"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={form.age ?? ""}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, age: sanitizeInteger(event.target.value) }))
+                }
+              />
+            </div>
 
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-muted-foreground">Weight (kg)</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={form.weight ?? ""}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  weight: sanitizeDecimal(event.target.value),
-                }))
-              }
-              className={FIELD_CLASSES}
-            />
-          </label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor="new-patient-weight">Weight (kg)</Label>
+                <Input
+                  id="new-patient-weight"
+                  inputMode="decimal"
+                  value={form.weight ?? ""}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      weight: sanitizeDecimal(event.target.value),
+                    }))
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="new-patient-height">Height (cm)</Label>
+                <Input
+                  id="new-patient-height"
+                  inputMode="decimal"
+                  value={form.height ?? ""}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      height: sanitizeDecimal(event.target.value),
+                    }))
+                  }
+                />
+              </div>
+            </div>
 
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-muted-foreground">Height (cm)</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={form.height ?? ""}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  height: sanitizeDecimal(event.target.value),
-                }))
-              }
-              className={FIELD_CLASSES}
-            />
-          </label>
+            <div className="grid gap-2">
+              <Label htmlFor="new-patient-gender">Gender</Label>
+              <Select
+                value={form.gender ?? "Female"}
+                onValueChange={(value) =>
+                  setForm((current) => ({ ...current, gender: value }))
+                }
+              >
+                <SelectTrigger id="new-patient-gender" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {GENDERS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-muted-foreground">Gender</span>
-            <select
-              value={form.gender ?? "Female"}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, gender: event.target.value }))
-              }
-              className={FIELD_CLASSES}
-            >
-              {GENDERS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" loading={saving}>
+                Save patient
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
       </Dialog>
     </div>
   );

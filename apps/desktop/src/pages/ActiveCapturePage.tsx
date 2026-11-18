@@ -10,6 +10,12 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   cn,
   formatPercent,
 } from "@pilates/ui";
@@ -34,9 +40,9 @@ export interface ActiveCapturePageProps {
 }
 
 const PHASE_TONE: Record<string, string> = {
-  idle: "neutral",
-  start_position: "neutral",
-  eccentric: "brand",
+  idle: "secondary",
+  start_position: "secondary",
+  eccentric: "default",
   concentric: "warning",
   holding: "success",
   rep_completed: "success",
@@ -276,7 +282,7 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
           </Card>
 
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant={running ? "success" : "neutral"} dot>
+            <Badge variant={running ? "success" : "secondary"} dot>
               {running ? "Live" : "Idle"}
             </Badge>
             {status?.device && (
@@ -345,33 +351,37 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
                 </span>
               </div>
 
-              <label className="block">
-                <span className="mb-1 block text-xs font-medium text-muted-foreground">Pose</span>
-                <select
+              <div className="grid gap-1.5">
+                <Label htmlFor="capture-pose">Pose</Label>
+                <Select
                   value={poseId}
-                  onChange={(event) => {
-                    setPoseId(event.target.value);
-                    void selectPose(event.target.value);
+                  onValueChange={(value) => {
+                    setPoseId(value);
+                    void selectPose(value);
                   }}
-                  className="h-9 w-full rounded-control border border-border bg-background px-2 text-sm text-foreground focus:border-primary focus:outline-none"
                 >
-                  {(poses.length
-                    ? poses
-                    : [{ pose_id: "pose1", display_name: "Pose 1" } as PoseSummary]
-                  ).map((pose) => (
-                    <option key={pose.pose_id} value={pose.pose_id}>
-                      {poseDisplayLabel(pose.pose_id)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <SelectTrigger id="capture-pose" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(poses.length
+                      ? poses
+                      : [{ pose_id: "pose1", display_name: "Pose 1" } as PoseSummary]
+                    ).map((pose) => (
+                      <SelectItem key={pose.pose_id} value={pose.pose_id}>
+                        {poseDisplayLabel(pose.pose_id)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <div className="grid grid-cols-2 gap-2">
                 {!sessionId ? (
                   <Button
                     onClick={() => void beginSession()}
                     disabled={!native || busy || !patient}
-                    fullWidth
+                    className="w-full"
                   >
                     <Play className="h-4 w-4" aria-hidden="true" />
                     Start
@@ -381,8 +391,7 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
                     variant="destructive"
                     onClick={() => void endSession()}
                     loading={finishing}
-                    fullWidth
-                    className="col-span-2 h-12 text-base"
+                    className="col-span-2 h-12 w-full text-base"
                   >
                     <Square className="h-4 w-4" aria-hidden="true" />
                     Stop &amp; save
@@ -394,7 +403,7 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
                     variant="outline"
                     onClick={() => void (running ? stop() : start(undefined, poseId))}
                     disabled={!native || busy}
-                    fullWidth
+                    className="w-full"
                   >
                     {running ? "Stop preview" : "Preview"}
                   </Button>
@@ -468,7 +477,7 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">Phase</span>
               <Badge
-                variant={(PHASE_TONE[phase] ?? "neutral") as "neutral" | "brand" | "warning" | "success"}
+                variant={(PHASE_TONE[phase] ?? "secondary") as "secondary" | "default" | "warning" | "success"}
               >
                 {phase.replace("_", " ")}
               </Badge>

@@ -25,12 +25,12 @@ const VARIANT_CLASSES: Record<BadgeVariant, string> = {
 };
 
 const DOT_CLASSES: Record<BadgeVariant, string> = {
-  neutral: "bg-slate-400",
-  brand: "bg-brand-400",
+  neutral: "bg-muted-foreground",
+  brand: "bg-primary",
   success: "bg-emerald-400",
   warning: "bg-amber-400",
   danger: "bg-red-400",
-  outline: "bg-slate-400",
+  outline: "bg-muted-foreground",
 };
 
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(

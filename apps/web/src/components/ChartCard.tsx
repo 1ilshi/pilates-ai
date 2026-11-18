@@ -31,7 +31,7 @@ export function ChartCard({
           <div className="min-w-0 flex-1 basis-40">
             <CardTitle className="text-sm">{title}</CardTitle>
             {description && (
-              <p className="mt-1 text-xs text-slate-500">{description}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{description}</p>
             )}
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-1">
@@ -40,7 +40,7 @@ export function ChartCard({
               type="button"
               onClick={onExpand}
               aria-label={`Expand ${title}`}
-              className="rounded-control p-1 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200"
+              className="rounded-control p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <Maximize2 className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -71,7 +71,7 @@ export function ChartOverlay({ title, onClose, actions, children }: ChartOverlay
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-slate-950 p-4 sm:p-6">
+    <div className="fixed inset-0 z-50 flex flex-col bg-background p-4 sm:p-6">
       <div className="mb-4 flex items-center justify-between gap-3">
         <Button variant="ghost" onClick={onClose}>
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -79,10 +79,10 @@ export function ChartOverlay({ title, onClose, actions, children }: ChartOverlay
         </Button>
         <div className="flex min-w-0 items-center gap-2">
           {actions}
-          <h3 className="truncate text-sm font-semibold text-slate-200">{title}</h3>
+          <h3 className="truncate text-sm font-semibold text-foreground">{title}</h3>
         </div>
       </div>
-      <div className="flex-1 overflow-auto rounded-card border border-slate-800 bg-slate-900/40 p-3 sm:p-6">
+      <div className="flex-1 overflow-auto rounded-card border border-border bg-card/40 p-3 sm:p-6">
         {children}
       </div>
     </div>

@@ -80,7 +80,7 @@ export function RepTimelineChart({
     return (
       <div
         className={cn(
-          "flex items-center justify-center rounded-card border border-slate-800 bg-slate-900/30 text-sm text-slate-500",
+          "flex items-center justify-center rounded-card border border-border bg-card/30 text-sm text-muted-foreground",
           className,
         )}
         style={{ height }}

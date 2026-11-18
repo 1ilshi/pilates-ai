@@ -85,7 +85,7 @@ export function SessionTrendCard({
 
   const deltaTone =
     !previous || Math.abs(delta) < 0.05
-      ? "text-slate-400"
+      ? "text-muted-foreground"
       : delta > 0
         ? "text-emerald-400"
         : "text-red-400";
@@ -100,7 +100,7 @@ export function SessionTrendCard({
       <CardHeader className="flex-row items-start justify-between gap-3">
         <div className="flex flex-col gap-1.5">
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-brand-400" aria-hidden="true" />
+            <TrendingUp className="h-4 w-4 text-primary" aria-hidden="true" />
             {title}
           </CardTitle>
           <CardDescription>
@@ -108,7 +108,7 @@ export function SessionTrendCard({
           </CardDescription>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-slate-100">
+          <div className="text-2xl font-bold text-foreground">
             {formatPercent(latest.mean_form_score)}
           </div>
           <div className={cn("flex items-center justify-end gap-1 text-xs font-medium", deltaTone)}>
@@ -146,20 +146,20 @@ export function SessionTrendCard({
           </ResponsiveContainer>
         </div>
 
-        <dl className="grid grid-cols-3 gap-2 border-t border-slate-800 pt-3 text-center">
+        <dl className="grid grid-cols-3 gap-2 border-t border-border pt-3 text-center">
           <div>
-            <dt className="text-xs text-slate-500">Reps</dt>
-            <dd className="text-sm font-semibold text-slate-200">{latest.total_reps}</dd>
+            <dt className="text-xs text-muted-foreground">Reps</dt>
+            <dd className="text-sm font-semibold text-foreground">{latest.total_reps}</dd>
           </div>
           <div>
-            <dt className="text-xs text-slate-500">Peak ROM</dt>
-            <dd className="text-sm font-semibold text-slate-200">
+            <dt className="text-xs text-muted-foreground">Peak ROM</dt>
+            <dd className="text-sm font-semibold text-foreground">
               {`${latest.peak_rom_angle.toFixed(1)}\u00b0`}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-slate-500">Sessions</dt>
-            <dd className="text-sm font-semibold text-slate-200">{ordered.length}</dd>
+            <dt className="text-xs text-muted-foreground">Sessions</dt>
+            <dd className="text-sm font-semibold text-foreground">{ordered.length}</dd>
           </div>
         </dl>
       </CardContent>

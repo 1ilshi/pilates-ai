@@ -95,7 +95,7 @@ export function LivePreview({
         ref={canvasRef}
         width={PREVIEW_WIDTH}
         height={PREVIEW_HEIGHT}
-        className="h-full w-full rounded-lg bg-slate-950"
+        className="h-full w-full rounded-lg bg-background"
         aria-label="Live camera preview"
       />
 
@@ -112,7 +112,7 @@ export function LivePreview({
       </div>
 
       {!running && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-lg border border-slate-800 bg-slate-950/80 text-sm text-slate-500">
+        <div className="absolute inset-0 flex items-center justify-center rounded-lg border border-border bg-black/80 text-sm text-muted-foreground">
           Camera preview stopped
         </div>
       )}

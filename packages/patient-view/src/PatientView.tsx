@@ -149,8 +149,8 @@ const COMMENT_COUNTER_WARN = COMMENT_MAX_LENGTH - 100;
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3 py-1.5">
-      <span className="text-xs text-slate-500">{label}</span>
-      <span className="text-right text-sm text-slate-200">{value || "—"}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-right text-sm text-foreground">{value || "—"}</span>
     </div>
   );
 }
@@ -169,9 +169,9 @@ function Snapshot({
   const showDelta = typeof delta === "number" && Number.isFinite(delta);
   return (
     <Card className="p-4">
-      <p className="text-xs text-slate-400">{label}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
       <div className="mt-1 flex items-baseline gap-2">
-        <p className="text-2xl font-bold text-slate-50">{value}</p>
+        <p className="text-2xl font-bold text-foreground">{value}</p>
         {showDelta && Math.abs(delta) >= 0.5 && (
           <span
             className={
@@ -184,7 +184,7 @@ function Snapshot({
           </span>
         )}
       </div>
-      {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </Card>
   );
 }
@@ -217,9 +217,9 @@ function Section({
             className="flex items-center gap-2 text-left"
           >
             {open ? (
-              <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             ) : (
-              <ChevronRight className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             )}
             <CardTitle className="flex items-center gap-2">
               <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center">
@@ -506,13 +506,13 @@ export function PatientView({
             <button
               type="button"
               onClick={onBack}
-              className="mb-1 inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300"
+              className="mb-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground/80"
             >
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
               {backLabel}
             </button>
           )}
-          <h3 className="text-xl font-semibold text-slate-100">{patient.name}</h3>
+          <h3 className="text-xl font-semibold text-foreground">{patient.name}</h3>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             {ordered.length > 0 && <Badge variant="brand">Active program</Badge>}
             {legacy && <Badge variant="warning">Legacy history</Badge>}
@@ -580,7 +580,7 @@ export function PatientView({
                   className={
                     selected
                       ? "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium"
-                      : "inline-flex items-center gap-2 rounded-full border border-slate-700 px-3 py-1.5 text-xs text-slate-400 hover:border-slate-500 hover:text-slate-200"
+                      : "inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground"
                   }
                   style={
                     selected
@@ -607,8 +607,8 @@ export function PatientView({
               {METRICS.map((entry) => (
                 <Card key={entry.metric} className="p-4">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs font-medium text-slate-300">{entry.label}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs font-medium text-foreground/80">{entry.label}</p>
+                    <p className="text-xs text-muted-foreground">
                       {poseSessions.length} session(s)
                     </p>
                   </div>
@@ -618,9 +618,9 @@ export function PatientView({
             </div>
           ) : (
             <Card className="flex h-full flex-col items-center justify-center gap-2 p-8 text-center">
-              <History className="h-6 w-6 text-slate-600" aria-hidden="true" />
-              <p className="text-sm text-slate-400">No sessions recorded yet</p>
-              <p className="text-xs text-slate-500">
+              <History className="h-6 w-6 text-muted-foreground/70" aria-hidden="true" />
+              <p className="text-sm text-muted-foreground">No sessions recorded yet</p>
+              <p className="text-xs text-muted-foreground">
                 Start a session to begin building this patient&apos;s programme.
               </p>
             </Card>
@@ -633,14 +633,14 @@ export function PatientView({
           <CardHeader className="pb-0">
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="flex items-center gap-2">
-                <User className="h-4 w-4 text-brand-400" aria-hidden="true" />
+                <User className="h-4 w-4 text-primary" aria-hidden="true" />
                 Profile
               </CardTitle>
               {editable && onSaveProfile && !editing && (
                 <button
                   type="button"
                   onClick={startEdit}
-                  className="inline-flex items-center gap-1 text-xs text-slate-400 transition-colors hover:text-slate-200"
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                   Edit
@@ -648,11 +648,11 @@ export function PatientView({
               )}
             </div>
           </CardHeader>
-          <CardContent className="divide-y divide-slate-800">
+          <CardContent className="divide-y divide-border">
             {editing ? (
               <div className="space-y-2 py-2">
                 {PROFILE_FIELDS.map(([key, label]) => (
-                  <label key={key} className="flex items-center gap-2 text-xs text-slate-500">
+                  <label key={key} className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span className="w-14 shrink-0">{label}</span>
                     <input
                       value={draft[key]}
@@ -660,7 +660,7 @@ export function PatientView({
                         setDraft((current) => ({ ...current, [key]: event.target.value }))
                       }
                       aria-label={label}
-                      className="h-8 min-w-0 flex-1 rounded-control border border-slate-700 bg-slate-950 px-2 text-sm text-slate-100 focus:border-brand-500 focus:outline-none"
+                      className="h-8 min-w-0 flex-1 rounded-control border border-border bg-background px-2 text-sm text-foreground focus:border-primary focus:outline-none"
                     />
                   </label>
                 ))}
@@ -711,7 +711,7 @@ export function PatientView({
           <CardHeader className="pb-0">
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="flex items-center gap-2 text-sm">
-                <MessageSquare className="h-4 w-4 text-brand-400" aria-hidden="true" />
+                <MessageSquare className="h-4 w-4 text-primary" aria-hidden="true" />
                 Clinical notes
               </CardTitle>
               <Badge variant="neutral">{comments.length}</Badge>
@@ -719,7 +719,7 @@ export function PatientView({
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col gap-3 pt-4">
             {onAddComment && (
-              <div className="rounded-card border border-slate-800 bg-slate-900/40 transition-colors focus-within:border-brand-500/60">
+              <div className="rounded-card border border-border bg-card/40 transition-colors focus-within:border-primary/60">
                 <textarea
                   value={commentDraft}
                   onChange={(event) => setCommentDraft(event.target.value)}
@@ -727,11 +727,11 @@ export function PatientView({
                   maxLength={COMMENT_MAX_LENGTH}
                   placeholder="Add a note for the next session…"
                   aria-label="New clinical note"
-                  className="w-full resize-none bg-transparent px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none"
+                  className="w-full resize-none bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
                 />
-                <div className="flex items-center justify-between gap-2 border-t border-slate-800/70 px-2 py-1.5">
+                <div className="flex items-center justify-between gap-2 border-t border-border/70 px-2 py-1.5">
                   <div className="flex min-w-0 items-center gap-2 pl-1">
-                    <span className="truncate text-[10px] text-slate-600">
+                    <span className="truncate text-[10px] text-muted-foreground/70">
                       Visible to everyone in the clinic
                     </span>
                     {commentDraft.length > COMMENT_COUNTER_FROM && (
@@ -739,7 +739,7 @@ export function PatientView({
                         className={
                           commentDraft.length >= COMMENT_COUNTER_WARN
                             ? "shrink-0 text-[10px] tabular-nums text-amber-400"
-                            : "shrink-0 text-[10px] tabular-nums text-slate-500"
+                            : "shrink-0 text-[10px] tabular-nums text-muted-foreground"
                         }
                       >
                         {commentDraft.length}/{COMMENT_MAX_LENGTH}
@@ -760,9 +760,9 @@ export function PatientView({
 
             <div className="max-h-80 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 md:max-h-none">
               {comments.length === 0 ? (
-                <div className="flex h-full min-h-24 flex-col items-center justify-center gap-1 rounded-card border border-dashed border-slate-800 text-center">
-                  <p className="text-xs text-slate-500">No notes yet</p>
-                  <p className="text-[11px] text-slate-600">
+                <div className="flex h-full min-h-24 flex-col items-center justify-center gap-1 rounded-card border border-dashed border-border text-center">
+                  <p className="text-xs text-muted-foreground">No notes yet</p>
+                  <p className="text-[11px] text-muted-foreground/70">
                     Anything the next session should know.
                   </p>
                 </div>
@@ -770,10 +770,10 @@ export function PatientView({
                 comments.map((comment) => (
                   <div
                     key={comment.id}
-                    className="group rounded-card border border-slate-800/80 bg-slate-900/30 p-3 transition-colors hover:border-slate-700"
+                    className="group rounded-card border border-border/80 bg-card/30 p-3 transition-colors hover:border-muted-foreground/40"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                         {formatDateTime(comment.created_at)}
                       </p>
                       {onDeleteComment && (
@@ -782,13 +782,13 @@ export function PatientView({
                           onClick={() => void removeComment(comment.id)}
                           disabled={commentBusy}
                           aria-label="Delete note"
-                          className="shrink-0 rounded p-0.5 text-slate-600 opacity-0 transition-opacity hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
+                          className="shrink-0 rounded p-0.5 text-muted-foreground/70 opacity-0 transition-opacity hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
                         >
                           <X className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>
                       )}
                     </div>
-                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-200">
+                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
                       {comment.text}
                     </p>
                   </div>
@@ -805,13 +805,13 @@ export function PatientView({
       <Card>
         <CardHeader className="pb-0">
           <CardTitle className="text-sm">Last session</CardTitle>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             What was actually done, before planning the next one.
           </p>
         </CardHeader>
         <CardContent className="pt-4">
           {ordered.length === 0 ? (
-            <p className="text-xs text-slate-500">Nothing recorded yet.</p>
+            <p className="text-xs text-muted-foreground">Nothing recorded yet.</p>
           ) : (
             (() => {
               const last = ordered[ordered.length - 1];
@@ -819,10 +819,10 @@ export function PatientView({
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <p className="text-sm font-medium text-slate-200">
+                      <p className="text-sm font-medium text-foreground">
                         {poseDisplayLabel(last.pose_id)}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-muted-foreground">
                         {formatDateTime(last.completed_at)}
                       </p>
                     </div>
@@ -834,27 +834,27 @@ export function PatientView({
                     )}
                   </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <div className="rounded-card border border-slate-800 bg-slate-900/40 p-2">
-                      <p className="text-xs text-slate-500">Reps</p>
-                      <p className="text-lg font-semibold text-slate-100">
+                    <div className="rounded-card border border-border bg-card/40 p-2">
+                      <p className="text-xs text-muted-foreground">Reps</p>
+                      <p className="text-lg font-semibold text-foreground">
                         {last.summary?.total_reps ?? 0}
                       </p>
                     </div>
-                    <div className="rounded-card border border-slate-800 bg-slate-900/40 p-2">
-                      <p className="text-xs text-slate-500">Mean score</p>
-                      <p className="text-lg font-semibold text-slate-100">
+                    <div className="rounded-card border border-border bg-card/40 p-2">
+                      <p className="text-xs text-muted-foreground">Mean score</p>
+                      <p className="text-lg font-semibold text-foreground">
                         {scoreOf(last) ? formatPercent(scoreOf(last), 0) : "—"}
                       </p>
                     </div>
-                    <div className="rounded-card border border-slate-800 bg-slate-900/40 p-2">
-                      <p className="text-xs text-slate-500">Hold per rep</p>
-                      <p className="text-lg font-semibold text-slate-100">
+                    <div className="rounded-card border border-border bg-card/40 p-2">
+                      <p className="text-xs text-muted-foreground">Hold per rep</p>
+                      <p className="text-lg font-semibold text-foreground">
                         {meanRepSeconds(last) ? `${meanRepSeconds(last).toFixed(1)}s` : "—"}
                       </p>
                     </div>
-                    <div className="rounded-card border border-slate-800 bg-slate-900/40 p-2">
-                      <p className="text-xs text-slate-500">Completion</p>
-                      <p className="text-lg font-semibold text-slate-100">
+                    <div className="rounded-card border border-border bg-card/40 p-2">
+                      <p className="text-xs text-muted-foreground">Completion</p>
+                      <p className="text-lg font-semibold text-foreground">
                         {last.summary?.completion_rate !== undefined
                           ? formatPercent(last.summary.completion_rate, 0)
                           : "—"}
@@ -872,20 +872,20 @@ export function PatientView({
       {poseSessions.length > 0 && (
         <Section
           title="Rep mechanics"
-          icon={<History className="h-4 w-4 text-brand-400" aria-hidden="true" />}
+          icon={<History className="h-4 w-4 text-primary" aria-hidden="true" />}
           open={mechanicsOpen}
           onToggle={() => setMechanicsOpen((open) => !open)}
         >
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Form and hold across repetitions within one session.
               </p>
               <select
                 value={profileSessionId}
                 onChange={(event) => setProfileSessionId(event.target.value)}
                 aria-label="Select session for the repetition profile"
-                className="h-8 rounded-control border border-slate-700 bg-slate-950 px-2 text-xs text-slate-100 focus:border-brand-500 focus:outline-none"
+                className="h-8 rounded-control border border-border bg-background px-2 text-xs text-foreground focus:border-primary focus:outline-none"
               >
                 {poseSessions.map((session, index) => (
                   <option key={session.session_id} value={session.session_id}>
@@ -897,13 +897,13 @@ export function PatientView({
             <RepProfileChart reps={profileReps} />
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <div>
-                <p className="mb-2 text-xs font-medium text-slate-400">
+                <p className="mb-2 text-xs font-medium text-muted-foreground">
                   Hold duration vs pose accuracy
                 </p>
                 <HoldQualityScatter points={holdQuality} />
               </div>
               <div>
-                <p className="mb-2 text-xs font-medium text-slate-400">Rep consistency</p>
+                <p className="mb-2 text-xs font-medium text-muted-foreground">Rep consistency</p>
                 <ConsistencyChart points={consistency} />
               </div>
             </div>
@@ -914,15 +914,15 @@ export function PatientView({
       {/* Session history ------------------------------------------------ */}
       <Section
         title="Sessions"
-        icon={<History className="h-4 w-4 text-brand-400" aria-hidden="true" />}
+        icon={<History className="h-4 w-4 text-primary" aria-hidden="true" />}
         count={String(ordered.length)}
         open={sessionsOpen}
         onToggle={() => setSessionsOpen((open) => !open)}
       >
         {ordered.length === 0 ? (
-          <p className="py-3 text-xs text-slate-500">No sessions recorded yet.</p>
+          <p className="py-3 text-xs text-muted-foreground">No sessions recorded yet.</p>
         ) : (
-          <ul className="divide-y divide-slate-800">
+          <ul className="divide-y divide-border">
             {[...ordered].reverse().map((session) => {
               const isOpen = expanded.has(session.session_id);
               return (
@@ -931,37 +931,37 @@ export function PatientView({
                     type="button"
                     onClick={() => toggleRow(session.session_id)}
                     aria-expanded={isOpen}
-                    className="flex w-full items-center gap-3 py-3 text-left transition-colors hover:bg-slate-900/40"
+                    className="flex w-full items-center gap-3 py-3 text-left transition-colors hover:bg-card/60"
                   >
                     {isOpen ? (
-                      <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+                      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                     ) : (
-                      <ChevronRight className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-slate-200">
+                      <p className="truncate text-sm font-medium text-foreground">
                         {poseDisplayLabel(session.pose_id)}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-muted-foreground">
                         {formatDateTime(session.completed_at)}
                       </p>
                     </div>
                     <div className="hidden shrink-0 gap-6 text-right sm:flex">
                       <div>
-                        <p className="text-xs text-slate-500">Reps</p>
-                        <p className="text-sm text-slate-200">
+                        <p className="text-xs text-muted-foreground">Reps</p>
+                        <p className="text-sm text-foreground">
                           {session.summary?.total_reps ?? 0}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">Accuracy</p>
-                        <p className="text-sm text-slate-200">
+                        <p className="text-xs text-muted-foreground">Accuracy</p>
+                        <p className="text-sm text-foreground">
                           {scoreOf(session) ? formatPercent(scoreOf(session), 0) : "—"}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">Duration</p>
-                        <p className="text-sm text-slate-200">
+                        <p className="text-xs text-muted-foreground">Duration</p>
+                        <p className="text-sm text-foreground">
                           {session.duration_seconds
                             ? `${Math.round(session.duration_seconds)}s`
                             : "—"}
@@ -990,13 +990,13 @@ export function PatientView({
                           <TableBody>
                             {(session.reps ?? []).map((rep) => (
                               <TableRow key={rep.rep_index}>
-                                <TableCell className="text-slate-400">
+                                <TableCell className="text-muted-foreground">
                                   {rep.rep_index}
                                 </TableCell>
-                                <TableCell className="text-slate-400">
+                                <TableCell className="text-muted-foreground">
                                   {Number(rep.duration_sec ?? 0).toFixed(1)}s
                                 </TableCell>
-                                <TableCell className="text-slate-400">
+                                <TableCell className="text-muted-foreground">
                                   {Number(rep.peak_rom_angle ?? 0).toFixed(1)}°
                                 </TableCell>
                                 <TableCell>
@@ -1007,7 +1007,7 @@ export function PatientView({
                           </TableBody>
                         </Table>
                       ) : (
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-muted-foreground">
                           No per-repetition detail recorded for this session.
                         </p>
                       )}
@@ -1035,7 +1035,7 @@ export function PatientView({
               Legacy history
               <Badge variant="warning">Read-only</Badge>
             </CardTitle>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               Recorded by the previous application. Last sample{" "}
               {formatDate(legacy.last_sample_at)} — these figures are frozen and will
               not update. They measure classification <em>accuracy</em>, a different
@@ -1044,17 +1044,17 @@ export function PatientView({
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-card border border-slate-800 bg-slate-900/40 p-3">
-                <p className="text-xs text-slate-500">Samples</p>
-                <p className="text-xl font-bold text-slate-100">{legacy.total_samples}</p>
+              <div className="rounded-card border border-border bg-card/40 p-3">
+                <p className="text-xs text-muted-foreground">Samples</p>
+                <p className="text-xl font-bold text-foreground">{legacy.total_samples}</p>
               </div>
-              <div className="rounded-card border border-slate-800 bg-slate-900/40 p-3">
-                <p className="text-xs text-slate-500">Poses recorded</p>
-                <p className="text-xl font-bold text-slate-100">{legacyRows.length}</p>
+              <div className="rounded-card border border-border bg-card/40 p-3">
+                <p className="text-xs text-muted-foreground">Poses recorded</p>
+                <p className="text-xl font-bold text-foreground">{legacyRows.length}</p>
               </div>
-              <div className="rounded-card border border-slate-800 bg-slate-900/40 p-3">
-                <p className="text-xs text-slate-500">Comments</p>
-                <p className="text-xl font-bold text-slate-100">{legacy.comments_count}</p>
+              <div className="rounded-card border border-border bg-card/40 p-3">
+                <p className="text-xs text-muted-foreground">Comments</p>
+                <p className="text-xl font-bold text-foreground">{legacy.comments_count}</p>
               </div>
             </div>
 
@@ -1074,12 +1074,12 @@ export function PatientView({
                     <TableCell className="font-medium">
                       {poseDisplayLabel(poseId)}
                     </TableCell>
-                    <TableCell className="text-slate-400">{row.count}</TableCell>
+                    <TableCell className="text-muted-foreground">{row.count}</TableCell>
                     <TableCell>{formatPercent(row.avg, 1)}</TableCell>
-                    <TableCell className="text-slate-400">
+                    <TableCell className="text-muted-foreground">
                       {row.min.toFixed(1)}–{row.max.toFixed(1)}%
                     </TableCell>
-                    <TableCell className="text-slate-400">
+                    <TableCell className="text-muted-foreground">
                       {formatDate(row.last_sample_at)}
                     </TableCell>
                   </TableRow>
@@ -1089,7 +1089,7 @@ export function PatientView({
           </CardContent>
         </Card>
       ) : (
-        <Card className="p-4 text-xs text-slate-500">
+        <Card className="p-4 text-xs text-muted-foreground">
           No legacy history for this patient — the record was created in this
           application.
         </Card>

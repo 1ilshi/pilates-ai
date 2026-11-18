@@ -25,7 +25,7 @@ export function SessionDetailPage({
 }: SessionDetailPageProps) {
   if (!document) {
     return (
-      <Card className="p-6 text-sm text-slate-400">
+      <Card className="p-6 text-sm text-muted-foreground">
         No session is loaded. Open one from a patient&apos;s history.
       </Card>
     );

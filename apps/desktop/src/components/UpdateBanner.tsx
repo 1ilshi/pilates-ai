@@ -24,7 +24,7 @@ export function UpdateBanner({ update, className }: UpdateBannerProps) {
   return (
     <div
       className={cn(
-        "border-b border-brand-500/30 bg-brand-500/10 px-4 py-3 text-xs text-slate-200 sm:px-6",
+        "border-b border-primary/30 bg-primary/10 px-4 py-3 text-xs text-foreground sm:px-6",
         className,
       )}
       role="status"
@@ -32,13 +32,13 @@ export function UpdateBanner({ update, className }: UpdateBannerProps) {
     >
       <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
-          <span className="mt-0.5 shrink-0 rounded-control bg-brand-500/15 p-1.5 text-brand-400">
+          <span className="mt-0.5 shrink-0 rounded-control bg-primary/15 p-1.5 text-primary">
             <Download className="h-4 w-4" aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-100">
+            <p className="text-sm font-semibold text-foreground">
               Update available
-              <span className="ml-1.5 font-normal text-slate-400">
+              <span className="ml-1.5 font-normal text-muted-foreground">
                 {update.currentVersion
                   ? `${update.currentVersion} → ${update.version}`
                   : `v${update.version}`}
@@ -46,24 +46,24 @@ export function UpdateBanner({ update, className }: UpdateBannerProps) {
             </p>
 
             {update.notes ? (
-              <p className="mt-1 max-h-24 overflow-y-auto whitespace-pre-line text-slate-400">
+              <p className="mt-1 max-h-24 overflow-y-auto whitespace-pre-line text-muted-foreground">
                 {update.notes}
               </p>
             ) : (
-              <p className="mt-1 text-slate-400">
+              <p className="mt-1 text-muted-foreground">
                 A newer workstation build is ready to install.
               </p>
             )}
 
             {update.installing && (
               <div className="mt-2 flex items-center gap-2">
-                <div className="h-1.5 w-44 overflow-hidden rounded-full bg-slate-800">
+                <div className="h-1.5 w-44 overflow-hidden rounded-full bg-secondary">
                   <div
-                    className="h-full rounded-full bg-brand-400 transition-all"
+                    className="h-full rounded-full bg-primary transition-all"
                     style={{ width: `${percent ?? 10}%` }}
                   />
                 </div>
-                <span className="text-slate-400">
+                <span className="text-muted-foreground">
                   {percent !== null ? `${percent}%` : "Downloading…"}
                 </span>
               </div>

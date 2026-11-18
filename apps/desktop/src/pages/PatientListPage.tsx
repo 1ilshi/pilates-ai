@@ -50,8 +50,8 @@ const EMPTY_FORM: PatientInput = {
 const GENDERS = ["Female", "Male"] as const;
 
 const FIELD_CLASSES = cn(
-  "h-9 w-full rounded-control border border-slate-700 bg-slate-950 px-3 text-sm text-slate-100",
-  "focus:border-brand-500 focus:outline-none",
+  "h-9 w-full rounded-control border border-border bg-background px-3 text-sm text-foreground",
+  "focus:border-primary focus:outline-none",
 );
 
 /** Digits only — age is a whole number of years. */
@@ -93,8 +93,8 @@ function SortHeader({
         aria-label={`Sort by ${label}`}
         className={
           isActive
-            ? "inline-flex items-center gap-1 font-semibold text-brand-400"
-            : "inline-flex items-center gap-1 text-slate-400 hover:text-slate-200"
+            ? "inline-flex items-center gap-1 font-semibold text-primary"
+            : "inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
         }
       >
         {label}
@@ -223,7 +223,7 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
       {!native && (
         <Card className="border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-300">
           Running in a browser: the native engine is unavailable. Launch with{" "}
-          <code className="rounded bg-slate-800 px-1">pnpm tauri dev</code> to load
+          <code className="rounded bg-secondary px-1">pnpm tauri dev</code> to load
           patients.
         </Card>
       )}
@@ -231,7 +231,7 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[220px]">
           <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden="true"
           />
           <input
@@ -239,7 +239,7 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search patients by name…"
             aria-label="Search patients"
-            className="h-10 w-full rounded-control border border-slate-800 bg-slate-900/60 pl-9 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none"
+            className="h-10 w-full rounded-control border border-border bg-card/60 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
           />
         </div>
 
@@ -277,20 +277,20 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
                   <button
                     type="button"
                     onClick={() => onSelectPatient(patient)}
-                    className="text-left font-medium text-brand-400 hover:underline"
+                    className="text-left font-medium text-primary hover:underline"
                   >
                     {patient.name}
                   </button>
                 </TableCell>
-                <TableCell className="text-slate-400">{patient.gender || "—"}</TableCell>
-                <TableCell className="text-slate-400">{patient.age || "—"}</TableCell>
-                <TableCell className="text-slate-400">{patient.total_sessions ?? 0}</TableCell>
-                <TableCell className="text-slate-400">
+                <TableCell className="text-muted-foreground">{patient.gender || "—"}</TableCell>
+                <TableCell className="text-muted-foreground">{patient.age || "—"}</TableCell>
+                <TableCell className="text-muted-foreground">{patient.total_sessions ?? 0}</TableCell>
+                <TableCell className="text-muted-foreground">
                   {patient.lifetime_avg_score != null
                     ? `${patient.lifetime_avg_score.toFixed(1)}%`
                     : "—"}
                 </TableCell>
-                <TableCell className="text-slate-400">
+                <TableCell className="text-muted-foreground">
                   {patient.last_active ? formatDate(patient.last_active) : "—"}
                 </TableCell>
                 <TableCell className="text-right">
@@ -298,7 +298,7 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
                     type="button"
                     onClick={() => void remove(patient)}
                     aria-label={`Delete ${patient.name}`}
-                    className="rounded-control p-1.5 text-slate-500 transition-colors hover:bg-red-500/10 hover:text-red-400"
+                    className="rounded-control p-1.5 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-400"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -309,8 +309,8 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
             {loading && (
               <TableRow>
                 <TableCell colSpan={7} className="py-10 text-center">
-                  <span className="inline-flex items-center gap-2 text-sm text-slate-500">
-                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-700 border-t-brand-400" />
+                  <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-border border-t-primary" />
                     Loading patients…
                   </span>
                 </TableCell>
@@ -319,7 +319,7 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
 
             {!loading && sorted.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="py-8 text-center text-sm text-slate-500">
+                <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
                   {patients.length === 0
                     ? "No patients yet. Create the first record to begin a session."
                     : `No patients match “${query}”.`}
@@ -348,7 +348,7 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
       >
         <div className="space-y-3">
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-400">Full name</span>
+            <span className="mb-1 block text-xs font-medium text-muted-foreground">Full name</span>
             <input
               data-autofocus
               type="text"
@@ -361,7 +361,7 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-400">Age (years)</span>
+            <span className="mb-1 block text-xs font-medium text-muted-foreground">Age (years)</span>
             <input
               type="text"
               inputMode="numeric"
@@ -375,7 +375,7 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-400">Weight (kg)</span>
+            <span className="mb-1 block text-xs font-medium text-muted-foreground">Weight (kg)</span>
             <input
               type="text"
               inputMode="decimal"
@@ -391,7 +391,7 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-400">Height (cm)</span>
+            <span className="mb-1 block text-xs font-medium text-muted-foreground">Height (cm)</span>
             <input
               type="text"
               inputMode="decimal"
@@ -407,7 +407,7 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-400">Gender</span>
+            <span className="mb-1 block text-xs font-medium text-muted-foreground">Gender</span>
             <select
               value={form.gender ?? "Female"}
               onChange={(event) =>

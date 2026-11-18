@@ -130,7 +130,7 @@ export function PoseMetricsChart({
 
   if (plotted.length === 0) {
     return (
-      <div className="flex items-center justify-center rounded-card border border-slate-800 bg-slate-900/30 py-10 text-xs text-slate-500">
+      <div className="flex items-center justify-center rounded-card border border-border bg-card/30 py-10 text-xs text-muted-foreground">
         {emptyMessage}
       </div>
     );
@@ -154,7 +154,7 @@ export function PoseMetricsChart({
 
   return (
     <div className="space-y-4" ref={containerRef}>
-      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
         {plotted.map((entry) => (
           <span key={entry.id} className="inline-flex items-center gap-1.5">
             <span
@@ -162,7 +162,7 @@ export function PoseMetricsChart({
               style={{ backgroundColor: entry.color }}
             />
             {entry.label}
-            <span className="text-slate-600">({entry.points.length})</span>
+            <span className="text-muted-foreground/70">({entry.points.length})</span>
           </span>
         ))}
       </div>
@@ -178,8 +178,8 @@ export function PoseMetricsChart({
         return (
           <div key={metric.key}>
             <div className="mb-1 flex items-baseline justify-between text-xs">
-              <span className="font-medium text-slate-400">{metric.label}</span>
-              <span className="text-slate-600">
+              <span className="font-medium text-muted-foreground">{metric.label}</span>
+              <span className="text-muted-foreground/70">
                 {metric.unit ? `max ${axisMax}${metric.unit}` : `max ${axisMax}`}
               </span>
             </div>

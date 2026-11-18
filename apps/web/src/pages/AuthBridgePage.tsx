@@ -82,7 +82,7 @@ export function AuthBridgePage() {
   }, []);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-slate-100">
+    <div className="flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
       <Card className="w-full max-w-sm p-6 text-center">
         <div className="mb-4 flex items-center justify-center gap-2">
           <Logo className="h-7 w-7" />
@@ -95,7 +95,7 @@ export function AuthBridgePage() {
             <p className="mt-3 text-sm text-red-300">{message}</p>
             <a
               href="/"
-              className="mt-4 inline-block text-sm text-brand-400 hover:underline"
+              className="mt-4 inline-block text-sm text-primary hover:underline"
             >
               Sign in manually
             </a>
@@ -103,10 +103,10 @@ export function AuthBridgePage() {
         ) : (
           <>
             <Loader2
-              className="mx-auto h-8 w-8 animate-spin text-brand-400"
+              className="mx-auto h-8 w-8 animate-spin text-primary"
               aria-hidden="true"
             />
-            <p className="mt-3 text-sm text-slate-400">Signing you in…</p>
+            <p className="mt-3 text-sm text-muted-foreground">Signing you in…</p>
           </>
         )}
       </Card>

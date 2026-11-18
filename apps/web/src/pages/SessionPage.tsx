@@ -115,11 +115,11 @@ export function SessionPage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-slate-400">Loading session…</p>;
+    return <p className="text-sm text-muted-foreground">Loading session…</p>;
   }
 
   if (!session) {
-    return <Card className="p-6 text-sm text-slate-400">Session not found.</Card>;
+    return <Card className="p-6 text-sm text-muted-foreground">Session not found.</Card>;
   }
 
   return (

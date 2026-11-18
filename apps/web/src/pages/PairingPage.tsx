@@ -76,12 +76,12 @@ export function PairingPage() {
   if (!code) {
     return (
       <Card className="mx-auto max-w-lg p-6">
-        <h1 className="text-lg font-semibold text-slate-100">No code supplied</h1>
-        <p className="mt-2 text-sm text-slate-400">
+        <h1 className="text-lg font-semibold text-foreground">No code supplied</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Open this page from the workstation you want to authorise — the app
           provides the link and the code.
         </p>
-        <Link to="/" className="mt-4 inline-block text-sm text-brand-400 hover:underline">
+        <Link to="/" className="mt-4 inline-block text-sm text-primary hover:underline">
           Back to the overview
         </Link>
       </Card>
@@ -92,8 +92,8 @@ export function PairingPage() {
     return (
       <Card className="mx-auto max-w-lg p-6 text-center">
         <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-400" aria-hidden="true" />
-        <h1 className="mt-3 text-lg font-semibold text-slate-100">Workstation authorised</h1>
-        <p className="mt-2 text-sm text-slate-400">
+        <h1 className="mt-3 text-lg font-semibold text-foreground">Workstation authorised</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           {code} can now record sessions and sync to this clinic. You can close
           this tab — the workstation will continue on its own.
         </p>
@@ -104,14 +104,14 @@ export function PairingPage() {
   return (
     <Card className="mx-auto max-w-lg p-6">
       <div className="flex items-center gap-2">
-        <MonitorSmartphone className="h-5 w-5 text-brand-400" aria-hidden="true" />
-        <h1 className="text-lg font-semibold text-slate-100">
+        <MonitorSmartphone className="h-5 w-5 text-primary" aria-hidden="true" />
+        <h1 className="text-lg font-semibold text-foreground">
           Authorise this workstation?
         </h1>
         <Badge variant="brand">{code}</Badge>
       </div>
 
-      <p className="mt-3 text-sm text-slate-400">
+      <p className="mt-3 text-sm text-muted-foreground">
         A clinical workstation is waiting to be paired with this clinic.
       </p>
 
@@ -120,7 +120,7 @@ export function PairingPage() {
           <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
           This workstation will be able to read and write patient records
         </p>
-        <p className="mt-1.5 text-xs text-slate-400">
+        <p className="mt-1.5 text-xs text-muted-foreground">
           Pairing grants the same access this account has, including patient
           details, clinical notes and session history. Only approve a machine you
           are setting up. Your name is recorded against it.
@@ -135,7 +135,7 @@ export function PairingPage() {
       )}
 
       <div className="mt-5 flex items-center justify-between gap-3">
-        <Link to="/" className="text-xs text-slate-500 hover:text-slate-300">
+        <Link to="/" className="text-xs text-muted-foreground hover:text-foreground/80">
           Cancel
         </Link>
         <Button onClick={() => void approve()} disabled={state.kind === "approving"}>

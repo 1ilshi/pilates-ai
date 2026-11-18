@@ -40,8 +40,8 @@ function SortHeader({
         aria-label={`Sort by ${label}`}
         className={
           isActive
-            ? "inline-flex items-center gap-1 font-semibold text-brand-400"
-            : "inline-flex items-center gap-1 text-slate-400 hover:text-slate-200"
+            ? "inline-flex items-center gap-1 font-semibold text-primary"
+            : "inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
         }
       >
         {label}
@@ -133,7 +133,7 @@ export function PatientsPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-white">Patients</h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           {loading ? "Loading…" : `${patients.length} record(s)`}
         </p>
       </div>
@@ -144,7 +144,7 @@ export function PatientsPage() {
 
       <div className="relative max-w-md">
         <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
           aria-hidden="true"
         />
         <input
@@ -152,7 +152,7 @@ export function PatientsPage() {
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search by name…"
           aria-label="Search patients"
-          className="h-10 w-full rounded-control border border-slate-800 bg-slate-900/60 pl-9 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-500 focus:outline-none"
+          className="h-10 w-full rounded-control border border-border bg-card/60 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
         />
       </div>
 
@@ -176,20 +176,20 @@ export function PatientsPage() {
                   <Link
                     to={`/patients/${patient.id}`}
                     state={{ from: "Patients" }}
-                    className="font-medium text-brand-400 hover:underline"
+                    className="font-medium text-primary hover:underline"
                   >
                     {patient.name}
                   </Link>
                 </TableCell>
-                <TableCell className="text-slate-400">{patient.gender || "—"}</TableCell>
-                <TableCell className="text-slate-400">{patient.age || "—"}</TableCell>
-                <TableCell className="text-slate-400">{patient.totalSessions}</TableCell>
+                <TableCell className="text-muted-foreground">{patient.gender || "—"}</TableCell>
+                <TableCell className="text-muted-foreground">{patient.age || "—"}</TableCell>
+                <TableCell className="text-muted-foreground">{patient.totalSessions}</TableCell>
                 <TableCell>
                   {patient.lifetimeAvgScore != null
                     ? formatPercent(patient.lifetimeAvgScore)
                     : "—"}
                 </TableCell>
-                <TableCell className="text-slate-400">{formatDate(patient.lastActive)}</TableCell>
+                <TableCell className="text-muted-foreground">{formatDate(patient.lastActive)}</TableCell>
                 <TableCell>
                   <div className="flex gap-1.5">
                     {patient.totalSessions > 0 && <Badge variant="brand">Current</Badge>}
@@ -204,8 +204,8 @@ export function PatientsPage() {
             {loading && (
               <TableRow>
                 <TableCell colSpan={7} className="py-10 text-center">
-                  <span className="inline-flex items-center gap-2 text-sm text-slate-500">
-                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-700 border-t-brand-400" />
+                  <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-border border-t-primary" />
                     Loading patients…
                   </span>
                 </TableCell>
@@ -214,7 +214,7 @@ export function PatientsPage() {
 
             {filtered.length === 0 && !loading && (
               <TableRow>
-                <TableCell colSpan={7} className="py-8 text-center text-sm text-slate-500">
+                <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
                   {patients.length === 0
                     ? "No patients found in Firestore."
                     : `No patients match “${query}”.`}
@@ -229,14 +229,14 @@ export function PatientsPage() {
           390px without becoming unreadable. */}
       <div className="space-y-2 sm:hidden">
         {loading && (
-          <Card className="flex items-center justify-center gap-2 p-6 text-sm text-slate-500">
-            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-700 border-t-brand-400" />
+          <Card className="flex items-center justify-center gap-2 p-6 text-sm text-muted-foreground">
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-border border-t-primary" />
             Loading patients…
           </Card>
         )}
 
         {!loading && sorted.length === 0 && (
-          <Card className="p-6 text-center text-sm text-slate-500">
+          <Card className="p-6 text-center text-sm text-muted-foreground">
             {patients.length === 0
               ? "No patients found in Firestore."
               : `No patients match “${query}”.`}
@@ -248,10 +248,10 @@ export function PatientsPage() {
             key={patient.id}
             to={`/patients/${patient.id}`}
             state={{ from: "Patients" }}
-            className="block rounded-card border border-slate-800 bg-slate-900/40 p-3 active:bg-slate-800/60"
+            className="block rounded-card border border-border bg-card/40 p-3 active:bg-accent/60"
           >
             <div className="flex items-start justify-between gap-2">
-              <p className="truncate text-sm font-semibold text-brand-400">
+              <p className="truncate text-sm font-semibold text-primary">
                 {patient.name}
               </p>
               <div className="flex shrink-0 gap-1">
@@ -264,28 +264,28 @@ export function PatientsPage() {
             </div>
             <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
               <div className="flex justify-between gap-2">
-                <dt className="text-slate-500">Gender</dt>
-                <dd className="text-slate-300">{patient.gender || "—"}</dd>
+                <dt className="text-muted-foreground">Gender</dt>
+                <dd className="text-foreground/80">{patient.gender || "—"}</dd>
               </div>
               <div className="flex justify-between gap-2">
-                <dt className="text-slate-500">Age</dt>
-                <dd className="text-slate-300">{patient.age || "—"}</dd>
+                <dt className="text-muted-foreground">Age</dt>
+                <dd className="text-foreground/80">{patient.age || "—"}</dd>
               </div>
               <div className="flex justify-between gap-2">
-                <dt className="text-slate-500">Sessions</dt>
-                <dd className="text-slate-300">{patient.totalSessions}</dd>
+                <dt className="text-muted-foreground">Sessions</dt>
+                <dd className="text-foreground/80">{patient.totalSessions}</dd>
               </div>
               <div className="flex justify-between gap-2">
-                <dt className="text-slate-500">Accuracy</dt>
-                <dd className="text-slate-300">
+                <dt className="text-muted-foreground">Accuracy</dt>
+                <dd className="text-foreground/80">
                   {patient.lifetimeAvgScore != null
                     ? formatPercent(patient.lifetimeAvgScore)
                     : "—"}
                 </dd>
               </div>
               <div className="col-span-2 flex justify-between gap-2">
-                <dt className="text-slate-500">Last active</dt>
-                <dd className="text-slate-300">
+                <dt className="text-muted-foreground">Last active</dt>
+                <dd className="text-foreground/80">
                   {patient.lastActive ? formatDate(patient.lastActive) : "—"}
                 </dd>
               </div>

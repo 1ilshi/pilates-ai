@@ -34,9 +34,9 @@ function formatDateTime(iso: string | null | undefined): string {
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <Card className="p-4">
-      <span className="text-xs text-slate-400">{label}</span>
-      <p className="mt-1 text-2xl font-bold text-slate-100">{value}</p>
-      {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <p className="mt-1 text-2xl font-bold text-foreground">{value}</p>
+      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </Card>
   );
 }
@@ -86,17 +86,17 @@ export function SessionView({
             <button
               type="button"
               onClick={onBack}
-              className="mb-1 inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300"
+              className="mb-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground/80"
             >
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
               {backLabel}
             </button>
           )}
-          <h3 className="text-xl font-semibold text-slate-100">
+          <h3 className="text-xl font-semibold text-foreground">
             {poseDisplayLabel(session.pose_id)}
           </h3>
-          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
-            <span className="inline-flex items-center gap-1 text-slate-400">
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1 text-muted-foreground">
               <Clock className="h-3 w-3" aria-hidden="true" />
               {formatDateTime(session.completed_at)}
             </span>
@@ -154,7 +154,7 @@ export function SessionView({
       <Card>
         <CardHeader className="pb-0">
           <CardTitle>Angle trajectory</CardTitle>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             Primary joint angle over the session, with the pose accuracy overlay.
           </p>
         </CardHeader>
@@ -162,7 +162,7 @@ export function SessionView({
           {curve.length > 0 ? (
             <RepTimelineChart data={curve} showScore height={280} />
           ) : (
-            <p className="py-6 text-center text-xs text-slate-500">
+            <p className="py-6 text-center text-xs text-muted-foreground">
               No kinematic curve recorded for this session.
             </p>
           )}
@@ -173,7 +173,7 @@ export function SessionView({
       <Card>
         <CardHeader className="pb-0">
           <CardTitle>Repetition breakdown</CardTitle>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             {reps.length} repetition(s) · completion{" "}
             {summary.completion_rate !== undefined
               ? formatPercent(summary.completion_rate, 0)
@@ -189,38 +189,38 @@ export function SessionView({
               {reps.map((rep) => (
                 <div
                   key={rep.rep_index}
-                  className="rounded-card border border-slate-800 bg-slate-900/30 p-3"
+                  className="rounded-card border border-border bg-card/30 p-3"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-slate-300">
+                    <span className="text-xs font-semibold text-foreground/80">
                       Rep {rep.rep_index}
                     </span>
-                    <span className="text-sm font-semibold text-slate-100">
+                    <span className="text-sm font-semibold text-foreground">
                       {formatPercent(Number(rep.form_score ?? 0), 0)}
                     </span>
                   </div>
                   <dl className="mt-1.5 grid grid-cols-2 gap-2 text-[11px]">
                     <div>
-                      <dt className="text-slate-500">Duration</dt>
-                      <dd className="text-slate-300">
+                      <dt className="text-muted-foreground">Duration</dt>
+                      <dd className="text-foreground/80">
                         {Number(rep.duration_sec ?? 0).toFixed(1)}s
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-slate-500">Hold</dt>
-                      <dd className="text-slate-300">
+                      <dt className="text-muted-foreground">Hold</dt>
+                      <dd className="text-foreground/80">
                         {Number(rep.avg_hold_duration_sec ?? 0).toFixed(1)}s
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-slate-500">Peak ROM</dt>
-                      <dd className="text-slate-300">
+                      <dt className="text-muted-foreground">Peak ROM</dt>
+                      <dd className="text-foreground/80">
                         {Number(rep.peak_rom_angle ?? 0).toFixed(1)}°
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-slate-500">Stability</dt>
-                      <dd className="text-slate-300">
+                      <dt className="text-muted-foreground">Stability</dt>
+                      <dd className="text-foreground/80">
                         {rep.stability_variance !== undefined
                           ? Number(rep.stability_variance).toFixed(2)
                           : "—"}
@@ -246,18 +246,18 @@ export function SessionView({
               <TableBody>
                 {reps.map((rep) => (
                   <TableRow key={rep.rep_index}>
-                    <TableCell className="text-slate-400">{rep.rep_index}</TableCell>
-                    <TableCell className="text-slate-400">
+                    <TableCell className="text-muted-foreground">{rep.rep_index}</TableCell>
+                    <TableCell className="text-muted-foreground">
                       {Number(rep.duration_sec ?? 0).toFixed(1)}s
                     </TableCell>
-                    <TableCell className="text-slate-400">
+                    <TableCell className="text-muted-foreground">
                       {Number(rep.peak_rom_angle ?? 0).toFixed(1)}°
                     </TableCell>
-                    <TableCell className="text-slate-400">
+                    <TableCell className="text-muted-foreground">
                       {Number(rep.avg_hold_duration_sec ?? 0).toFixed(1)}s
                     </TableCell>
                     <TableCell>{formatPercent(Number(rep.form_score ?? 0), 0)}</TableCell>
-                    <TableCell className="text-slate-400">
+                    <TableCell className="text-muted-foreground">
                       {rep.stability_variance !== undefined
                         ? Number(rep.stability_variance).toFixed(2)
                         : "—"}
@@ -269,7 +269,7 @@ export function SessionView({
             </div>
             </>
           ) : (
-            <p className="py-6 text-center text-xs text-slate-500">
+            <p className="py-6 text-center text-xs text-muted-foreground">
               No per-repetition detail recorded for this session.
             </p>
           )}
@@ -280,7 +280,7 @@ export function SessionView({
       <Card>
         <CardHeader className="pb-0">
           <CardTitle className="flex items-center gap-2">
-            <CloudUpload className="h-4 w-4 text-brand-400" aria-hidden="true" />
+            <CloudUpload className="h-4 w-4 text-primary" aria-hidden="true" />
             Research telemetry
             {telemetry?.storage_path ? (
               <Badge variant="success">
@@ -291,7 +291,7 @@ export function SessionView({
               <Badge variant="neutral">not captured</Badge>
             )}
           </CardTitle>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             The raw frame archive is optional cold storage; the session document
             above is the clinical record.
           </p>
@@ -300,34 +300,34 @@ export function SessionView({
           {telemetry?.storage_path ? (
             <div className="space-y-1.5 text-sm">
               <div className="flex items-baseline justify-between gap-3">
-                <span className="text-xs text-slate-500">Archive path</span>
-                <span className="break-all text-right font-mono text-xs text-slate-300">
+                <span className="text-xs text-muted-foreground">Archive path</span>
+                <span className="break-all text-right font-mono text-xs text-foreground/80">
                   {telemetry.storage_path}
                 </span>
               </div>
               {telemetry.sha256 && (
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-xs text-slate-500">SHA-256</span>
-                  <span className="break-all text-right font-mono text-xs text-slate-300">
+                  <span className="text-xs text-muted-foreground">SHA-256</span>
+                  <span className="break-all text-right font-mono text-xs text-foreground/80">
                     {telemetry.sha256}
                   </span>
                 </div>
               )}
               <div className="flex items-baseline justify-between gap-3">
-                <span className="text-xs text-slate-500">Parquet size</span>
-                <span className="text-slate-300">
+                <span className="text-xs text-muted-foreground">Parquet size</span>
+                <span className="text-foreground/80">
                   {telemetry.file_size_bytes
                     ? `${(telemetry.file_size_bytes / 1024).toFixed(1)} KB`
                     : "—"}
                 </span>
               </div>
               <div className="flex items-baseline justify-between gap-3">
-                <span className="text-xs text-slate-500">Frames</span>
-                <span className="text-slate-300">{telemetry.frame_count ?? "—"}</span>
+                <span className="text-xs text-muted-foreground">Frames</span>
+                <span className="text-foreground/80">{telemetry.frame_count ?? "—"}</span>
               </div>
             </div>
           ) : (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               No archive was written for this session — a Cloud Storage bucket
               must be configured to capture raw frames.
             </p>

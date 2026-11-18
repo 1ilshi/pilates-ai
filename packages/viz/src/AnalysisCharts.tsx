@@ -37,7 +37,7 @@ function niceMax(value: number): number {
 function Empty({ message, height = 120 }: { message: string; height?: number }) {
   return (
     <div
-      className="flex items-center justify-center rounded-card border border-slate-800 bg-slate-900/30 px-4 text-center text-xs text-slate-500"
+      className="flex items-center justify-center rounded-card border border-border bg-card/30 px-4 text-center text-xs text-muted-foreground"
       style={{ height }}
     >
       {message}
@@ -385,7 +385,7 @@ export function BmiScoreChart({ points, bands, height = 280 }: BmiScoreChartProp
         ))}
       </svg>
 
-      <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-400">
+      <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-2 w-2 rounded-full bg-[#60a5fa]" />
           patient
@@ -397,7 +397,7 @@ export function BmiScoreChart({ points, bands, height = 280 }: BmiScoreChartProp
         {bands
           .filter((band) => band.count > 0)
           .map((band) => (
-            <span key={band.label} className="text-slate-500">
+            <span key={band.label} className="text-muted-foreground">
               {band.label}: {band.mean.toFixed(0)}% ({band.count})
             </span>
           ))}
@@ -627,7 +627,7 @@ export function AdherenceChart({ rows, rowHeight = 26 }: AdherenceChartProps) {
           );
         })}
       </svg>
-      <p className="mt-1 text-center text-xs text-slate-500">
+      <p className="mt-1 text-center text-xs text-muted-foreground">
         bars are session counts · the second figure is the median gap between sessions
       </p>
     </div>
@@ -849,7 +849,7 @@ export function ActivityHeatmap({
         )}
       </svg>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-500">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-muted-foreground">
         <span>
           {total} session(s) in the last {weeks} weeks
         </span>
@@ -1011,7 +1011,7 @@ export function CohortHistogram({
         </text>
       </svg>
 
-      <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-400">
+      <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground">
         {buckets.map((entry) => (
           <span key={entry.id} className="inline-flex items-center gap-1.5">
             <span
@@ -1019,7 +1019,7 @@ export function CohortHistogram({
               style={{ backgroundColor: entry.color }}
             />
             {entry.label}
-            <span className="text-slate-600">({entry.values.length} reps)</span>
+            <span className="text-muted-foreground/70">({entry.values.length} reps)</span>
           </span>
         ))}
       </div>
@@ -1406,7 +1406,7 @@ export function CohortRepScatter({
         {usable.map((entry) => (
           <span
             key={entry.id}
-            className="flex items-center gap-1.5 text-[11px] text-slate-400"
+            className="flex items-center gap-1.5 text-[11px] text-muted-foreground"
           >
             <span
               className="inline-block h-2 w-2 rounded-full"

@@ -105,14 +105,14 @@ export function PairingGate({
   const pairing = phase.kind === "waiting" || phase.kind === "expired" ? phase.pairing : null;
 
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-slate-950 p-6">
+    <div className="flex h-screen w-screen items-center justify-center bg-background p-6">
       <Card className="w-full max-w-md p-6">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-brand-400" aria-hidden="true" />
-          <h1 className="text-lg font-semibold text-slate-100">Pair this workstation</h1>
+          <ShieldCheck className="h-5 w-5 text-primary" aria-hidden="true" />
+          <h1 className="text-lg font-semibold text-foreground">Pair this workstation</h1>
         </div>
 
-        <p className="mt-2 text-sm text-slate-400">
+        <p className="mt-2 text-sm text-muted-foreground">
           This machine is not linked to a clinic yet. Pair it once, and it will
           open straight to the workstation from then on — no sign-in on every
           launch.
@@ -125,13 +125,13 @@ export function PairingGate({
         )}
 
         {pairing && (
-          <div className="mt-5 rounded-card border border-slate-800 bg-slate-900/50 p-4 text-center">
-            <p className="text-xs text-slate-500">Enter this code in the portal</p>
-            <p className="mt-1 font-mono text-3xl font-bold tracking-[0.2em] text-slate-50">
+          <div className="mt-5 rounded-card border border-border bg-card/50 p-4 text-center">
+            <p className="text-xs text-muted-foreground">Enter this code in the portal</p>
+            <p className="mt-1 font-mono text-3xl font-bold tracking-[0.2em] text-foreground">
               {pairing.code}
             </p>
             {phase.kind === "waiting" ? (
-              <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-slate-500">
+              <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
                 <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
                 Waiting for approval… {remaining > 0 ? `${remaining}s left` : ""}
               </p>
@@ -144,7 +144,7 @@ export function PairingGate({
         )}
 
         {phase.kind === "waiting" && (
-          <p className="mt-3 text-center text-xs text-slate-500">
+          <p className="mt-3 text-center text-xs text-muted-foreground">
             The portal should have opened in your browser. Sign in as a clinician
             and approve the code.
           </p>
@@ -202,7 +202,7 @@ export function PairingGate({
           )}
         </div>
 
-        <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-slate-600">
+        <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground/70">
           <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
           Needs internet once. After pairing it works offline.
         </p>
@@ -211,7 +211,7 @@ export function PairingGate({
           <button
             type="button"
             onClick={onBack}
-            className="mt-3 flex w-full items-center justify-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-300"
+            className="mt-3 flex w-full items-center justify-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground/80"
           >
             <ArrowLeft className="h-3 w-3" aria-hidden="true" />
             Sign in with an account instead

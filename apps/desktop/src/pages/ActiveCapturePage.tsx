@@ -243,15 +243,15 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
           Archive upload is disabled — no telemetry bucket is configured. Sessions are
           recorded and queued on this computer, but the portal will show no charts for
           them until{" "}
-          <code className="rounded bg-slate-950/60 px-1 py-0.5 font-mono text-[11px]">
+          <code className="rounded bg-black/40 px-1 py-0.5 font-mono text-[11px]">
             bucket
           </code>{" "}
           is set in{" "}
-          <code className="rounded bg-slate-950/60 px-1 py-0.5 font-mono text-[11px]">
+          <code className="rounded bg-black/40 px-1 py-0.5 font-mono text-[11px]">
             cloud.json
           </code>{" "}
           (or{" "}
-          <code className="rounded bg-slate-950/60 px-1 py-0.5 font-mono text-[11px]">
+          <code className="rounded bg-black/40 px-1 py-0.5 font-mono text-[11px]">
             PILATES_FIREBASE_BUCKET
           </code>{" "}
           is set for this installation).
@@ -269,13 +269,13 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
               poseId={poseId as PoseId}
               showAngles
             />
-            <div className="pointer-events-none absolute left-2 top-2 rounded bg-slate-950/80 px-2 py-1 font-mono text-[10px] leading-tight text-slate-300">
+            <div className="pointer-events-none absolute left-2 top-2 rounded bg-black/80 px-2 py-1 font-mono text-[10px] leading-tight text-foreground/80">
               det {frame?.detections?.length ?? 0} · kp {keypoints.length} · ev{" "}
               {telemetryFrames}
             </div>
           </Card>
 
-          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <Badge variant={running ? "success" : "neutral"} dot>
               {running ? "Live" : "Idle"}
             </Badge>
@@ -306,14 +306,14 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
                     ? "text-emerald-400"
                     : frame.best_class_score >= 0.1
                       ? "text-amber-400"
-                      : "text-slate-500"
+                      : "text-muted-foreground"
                 }
               >
                 Model: {frame.best_class_label || "—"} {frame.best_class_score.toFixed(2)}
               </span>
             )}
             {frame && <span>{frame.inference_ms.toFixed(0)} ms</span>}
-            <span className={telemetryFrames === 0 ? "text-amber-400" : "text-slate-500"}>
+            <span className={telemetryFrames === 0 ? "text-amber-400" : "text-muted-foreground"}>
               Events: {telemetryFrames}
             </span>
             {frame && <span>Frame {frame.frame_index}</span>}
@@ -338,22 +338,22 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
               <CardTitle>Session</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="text-sm text-slate-400">
+              <div className="text-sm text-muted-foreground">
                 Patient:{" "}
-                <span className="font-medium text-slate-200">
+                <span className="font-medium text-foreground">
                   {patient?.name ?? "none selected"}
                 </span>
               </div>
 
               <label className="block">
-                <span className="mb-1 block text-xs font-medium text-slate-400">Pose</span>
+                <span className="mb-1 block text-xs font-medium text-muted-foreground">Pose</span>
                 <select
                   value={poseId}
                   onChange={(event) => {
                     setPoseId(event.target.value);
                     void selectPose(event.target.value);
                   }}
-                  className="h-9 w-full rounded-control border border-slate-700 bg-slate-950 px-2 text-sm text-slate-100 focus:border-brand-500 focus:outline-none"
+                  className="h-9 w-full rounded-control border border-border bg-background px-2 text-sm text-foreground focus:border-primary focus:outline-none"
                 >
                   {(poses.length
                     ? poses
@@ -404,7 +404,7 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
               <button
                 type="button"
                 onClick={() => setMuted((value) => !value)}
-                className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200"
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
               >
                 {muted ? (
                   <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />
@@ -415,7 +415,7 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
               </button>
 
               {cameras.length > 1 && (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   {cameras.length} cameras detected — device {cameras[0].index} is in use.
                 </p>
               )}
@@ -435,26 +435,26 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
 
           <div className="grid grid-cols-2 gap-3">
             <Card className="p-4">
-              <span className="text-xs text-slate-400">Repetitions</span>
-              <p className="mt-1 text-3xl font-bold text-brand-400">
+              <span className="text-xs text-muted-foreground">Repetitions</span>
+              <p className="mt-1 text-3xl font-bold text-primary">
                 {capture?.session_active ? capture.rep_count : (frame?.rep_count ?? 0)}
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {capture?.session_active
                   ? `${capture.attempts} start(s) · ${capture.rejected_reps} rejected`
                   : "not recording"}
               </p>
             </Card>
             <Card className="p-4">
-              <span className="text-xs text-slate-400">Pose accuracy</span>
-              <p className="mt-1 text-3xl font-bold text-slate-100">
+              <span className="text-xs text-muted-foreground">Pose accuracy</span>
+              <p className="mt-1 text-3xl font-bold text-foreground">
                 {frame
                   ? formatPercent(frame.instantaneous_form_score, 0)
                   : capture && capture.last_form_score > 0
                     ? formatPercent(capture.last_form_score, 0)
                     : "—"}
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {capture && capture.last_rep_duration_sec > 0
                   ? `last rep ${capture.last_rep_duration_sec.toFixed(1)}s`
                   : capture?.session_active && capture.active_hold_sec > 0
@@ -466,7 +466,7 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
 
           <Card className="p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400">Phase</span>
+              <span className="text-xs text-muted-foreground">Phase</span>
               <Badge
                 variant={(PHASE_TONE[phase] ?? "neutral") as "neutral" | "brand" | "warning" | "success"}
               >
@@ -474,14 +474,14 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
               </Badge>
             </div>
             <div className="mt-3 flex items-center justify-between">
-              <span className="text-xs text-slate-400">Since start position</span>
-              <span className={cn("text-sm font-medium", "text-slate-200")}>
+              <span className="text-xs text-muted-foreground">Since start position</span>
+              <span className={cn("text-sm font-medium", "text-foreground")}>
                 {(frame?.hold_duration_sec ?? 0).toFixed(1)}s
               </span>
             </div>
             <div className="mt-2 flex items-center justify-between">
-              <span className="text-xs text-slate-400">Deviation</span>
-              <span className="text-sm font-medium text-slate-200">
+              <span className="text-xs text-muted-foreground">Deviation</span>
+              <span className="text-sm font-medium text-foreground">
                 {(frame?.angle_deviation ?? 0).toFixed(1)}°
               </span>
             </div>

@@ -120,17 +120,9 @@
 }
 
 @theme {
-  /* Clinical brand ramp (teal) — used for primary actions and live indicators. */
-  --color-brand-50: #f0fdfa;
-  --color-brand-100: #ccfbf1;
-  --color-brand-200: #99f6e4;
-  --color-brand-300: #5eead4;
-  --color-brand-400: #2dd4bf;
-  --color-brand-500: #14b8a6;
-  --color-brand-600: #0d9488;
-  --color-brand-700: #0f766e;
-  --color-brand-800: #115e59;
-  --color-brand-900: #134e4a;
+  /* Teal brand ramp retired in favour of the preset's cyan primary
+     (--color-primary). The Logo keeps its teal waveform: it is the product
+     mark, not a theme color. */
 
   /* Biomechanical status colours — shared by canvas, gauges and badges. */
   --color-pose-high: #22c55e;

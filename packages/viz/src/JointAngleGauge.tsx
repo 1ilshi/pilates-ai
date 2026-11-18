@@ -178,7 +178,7 @@ export function JointAngleGauge({
       </svg>
 
       {label && (
-        <span className="mt-1 text-xs font-medium text-slate-400">{label}</span>
+        <span className="mt-1 text-xs font-medium text-muted-foreground">{label}</span>
       )}
     </div>
   );

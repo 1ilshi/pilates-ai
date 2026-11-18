@@ -22,19 +22,19 @@ export function SignInPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-slate-100">
+    <div className="flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
       <Card className="w-full max-w-sm p-6">
         <div className="mb-6 flex items-center gap-2">
           <Logo className="h-8 w-8" />
           <div>
             <h1 className="text-lg font-bold text-white">Pilates AI Portal</h1>
-            <p className="text-xs text-slate-500">Clinical cloud access</p>
+            <p className="text-xs text-muted-foreground">Clinical cloud access</p>
           </div>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-3">
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-400">Email</span>
+            <span className="mb-1 block text-xs font-medium text-muted-foreground">Email</span>
             <input
               data-autofocus
               type="email"
@@ -45,12 +45,12 @@ export function SignInPage() {
                 clearError();
                 setEmail(event.target.value);
               }}
-              className="h-10 w-full rounded-control border border-slate-700 bg-slate-950 px-3 text-sm text-slate-100 focus:border-brand-500 focus:outline-none"
+              className="h-10 w-full rounded-control border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
             />
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-400">Password</span>
+            <span className="mb-1 block text-xs font-medium text-muted-foreground">Password</span>
             <input
               type="password"
               autoComplete="current-password"
@@ -60,7 +60,7 @@ export function SignInPage() {
                 clearError();
                 setPassword(event.target.value);
               }}
-              className="h-10 w-full rounded-control border border-slate-700 bg-slate-950 px-3 text-sm text-slate-100 focus:border-brand-500 focus:outline-none"
+              className="h-10 w-full rounded-control border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
             />
           </label>
 
@@ -76,7 +76,7 @@ export function SignInPage() {
           </Button>
         </form>
 
-        <p className="mt-4 text-center text-xs text-slate-500">
+        <p className="mt-4 text-center text-xs text-muted-foreground">
           Accounts are managed in the Firebase console.
         </p>
       </Card>

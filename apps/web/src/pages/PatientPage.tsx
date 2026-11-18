@@ -99,12 +99,12 @@ export function PatientPage() {
   }, [id]);
 
   if (loading) {
-    return <p className="text-sm text-slate-400">Loading patient…</p>;
+    return <p className="text-sm text-muted-foreground">Loading patient…</p>;
   }
 
   if (!patient) {
     return (
-      <Card className="p-6 text-sm text-slate-400">
+      <Card className="p-6 text-sm text-muted-foreground">
         {error ?? "Patient not found."}
       </Card>
     );

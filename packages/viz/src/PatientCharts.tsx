@@ -33,7 +33,7 @@ const AXIS_TEXT = "#64748b";
 function Empty({ message, height = 120 }: { message: string; height?: number }) {
   return (
     <div
-      className="flex items-center justify-center rounded-card border border-slate-800 bg-slate-900/30 text-xs text-slate-500"
+      className="flex items-center justify-center rounded-card border border-border bg-card/30 text-xs text-muted-foreground"
       style={{ height }}
     >
       {message}
@@ -258,13 +258,13 @@ export function RepProfileChart({ reps, rowHeight = 110 }: RepProfileChartProps)
   return (
     <div className="space-y-4" ref={containerRef}>
       <div className="flex flex-wrap items-center gap-3 text-xs">
-        <span className="text-slate-400">
+        <span className="text-muted-foreground">
           {reps.length} rep(s) · first {Math.round(first)}% → last {Math.round(last)}%
         </span>
         <span
           className={
             Math.abs(delta) < 3
-              ? "text-slate-500"
+              ? "text-muted-foreground"
               : delta < 0
                 ? "text-amber-400"
                 : "text-emerald-400"
@@ -281,8 +281,8 @@ export function RepProfileChart({ reps, rowHeight = 110 }: RepProfileChartProps)
       {/* Pose accuracy across reps */}
       <div>
         <div className="mb-1 flex items-baseline justify-between text-xs">
-          <span className="font-medium text-slate-400">Pose accuracy</span>
-          <span className="text-slate-600">max 100%</span>
+          <span className="font-medium text-muted-foreground">Pose accuracy</span>
+          <span className="text-muted-foreground/70">max 100%</span>
         </div>
         <svg
           viewBox={`0 0 ${width} ${rowHeight}`}
@@ -340,8 +340,8 @@ export function RepProfileChart({ reps, rowHeight = 110 }: RepProfileChartProps)
       {/* Hold duration across reps */}
       <div>
         <div className="mb-1 flex items-baseline justify-between text-xs">
-          <span className="font-medium text-slate-400">Hold duration</span>
-          <span className="text-slate-600">max {holdMax}s</span>
+          <span className="font-medium text-muted-foreground">Hold duration</span>
+          <span className="text-muted-foreground/70">max {holdMax}s</span>
         </div>
         <svg
           viewBox={`0 0 ${width} ${rowHeight}`}
@@ -530,7 +530,7 @@ export function HoldQualityScatter({ points, height = 260 }: HoldQualityScatterP
         ))}
       </svg>
 
-      <p className="text-center text-xs text-slate-500">
+      <p className="text-center text-xs text-muted-foreground">
         {points.length} rep(s) · {trend}
       </p>
     </div>
@@ -664,7 +664,7 @@ export function ConsistencyChart({ points, height = 240 }: ConsistencyChartProps
         })}
       </svg>
 
-      <p className="text-center text-xs text-slate-500">
+      <p className="text-center text-xs text-muted-foreground">
         average spread {averageSpread.toFixed(1)} points · lower is more consistent
       </p>
     </div>

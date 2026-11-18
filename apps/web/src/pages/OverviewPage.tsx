@@ -59,11 +59,11 @@ function Hero({
     <Card className="p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs text-slate-400">{label}</p>
-          <p className="mt-1 truncate text-3xl font-bold text-slate-50">{value}</p>
-          {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className="mt-1 truncate text-3xl font-bold text-foreground">{value}</p>
+          {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
         </div>
-        <span className="shrink-0 rounded-control bg-brand-500/10 p-2 text-brand-400">
+        <span className="shrink-0 rounded-control bg-primary/10 p-2 text-primary">
           {icon}
         </span>
       </div>
@@ -162,7 +162,7 @@ export function OverviewPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Clinic overview</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             {patients.length} patient(s) · {sessions.length} session(s) recorded
           </p>
         </div>
@@ -217,18 +217,18 @@ export function OverviewPage() {
               {attention.length}
             </Badge>
           </div>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             Lapsed beyond 21 days, a fall of 10+ points since the previous
             session, or no improvement across three or more sessions.
           </p>
         </CardHeader>
         <CardContent className="pt-3">
           {attention.length === 0 ? (
-            <p className="py-3 text-xs text-slate-500">
+            <p className="py-3 text-xs text-muted-foreground">
               No patients need attention right now.
             </p>
           ) : (
-            <ul className="divide-y divide-slate-800">
+            <ul className="divide-y divide-border">
               {attention.map((item) => (
                 <li key={item.patientId} className="flex items-center gap-3 py-2.5">
                   <Badge
@@ -246,11 +246,11 @@ export function OverviewPage() {
                     <Link
                       to={`/patients/${item.patientId}`}
                 state={{ from: "Overview" }}
-                      className="truncate text-sm font-medium text-brand-400 hover:underline"
+                      className="truncate text-sm font-medium text-primary hover:underline"
                     >
                       {item.name}
                     </Link>
-                    <p className="truncate text-xs text-slate-500">{item.detail}</p>
+                    <p className="truncate text-xs text-muted-foreground">{item.detail}</p>
                   </div>
                 </li>
               ))}
@@ -278,7 +278,7 @@ export function OverviewPage() {
         </ChartCard>
       </div>
 
-      {loading && <p className="text-xs text-slate-500">Loading clinic data…</p>}
+      {loading && <p className="text-xs text-muted-foreground">Loading clinic data…</p>}
 
       {expanded && (
         <ChartOverlay

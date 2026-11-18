@@ -35,7 +35,7 @@ export function LegacyPanel({ legacy }: { legacy: LegacySummary }) {
           Legacy history
           <Badge variant="warning">Read-only</Badge>
         </CardTitle>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-muted-foreground">
           Recorded by the previous application. Last sample {formatDate(legacy.last_sample_at)} —
           these figures are frozen and will not update. They measure classification{" "}
           <em>accuracy</em>, a different metric from pose accuracy.
@@ -44,17 +44,17 @@ export function LegacyPanel({ legacy }: { legacy: LegacySummary }) {
 
       <CardContent className="space-y-4 pt-4">
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <div className="rounded-card border border-slate-800 bg-slate-900/40 p-2 sm:p-3">
-            <p className="text-xs text-slate-500">Samples</p>
-            <p className="text-xl font-bold text-slate-100">{legacy.total_samples}</p>
+          <div className="rounded-card border border-border bg-card/40 p-2 sm:p-3">
+            <p className="text-xs text-muted-foreground">Samples</p>
+            <p className="text-xl font-bold text-foreground">{legacy.total_samples}</p>
           </div>
-          <div className="rounded-card border border-slate-800 bg-slate-900/40 p-2 sm:p-3">
-            <p className="text-xs text-slate-500">Poses</p>
-            <p className="text-xl font-bold text-slate-100">{rows.length}</p>
+          <div className="rounded-card border border-border bg-card/40 p-2 sm:p-3">
+            <p className="text-xs text-muted-foreground">Poses</p>
+            <p className="text-xl font-bold text-foreground">{rows.length}</p>
           </div>
-          <div className="rounded-card border border-slate-800 bg-slate-900/40 p-2 sm:p-3">
-            <p className="text-xs text-slate-500">Comments</p>
-            <p className="text-xl font-bold text-slate-100">{legacy.comments_count}</p>
+          <div className="rounded-card border border-border bg-card/40 p-2 sm:p-3">
+            <p className="text-xs text-muted-foreground">Comments</p>
+            <p className="text-xl font-bold text-foreground">{legacy.comments_count}</p>
           </div>
         </div>
 
@@ -72,12 +72,12 @@ export function LegacyPanel({ legacy }: { legacy: LegacySummary }) {
             {rows.map((row) => (
               <TableRow key={row.pose}>
                 <TableCell className="font-medium capitalize">{row.pose}</TableCell>
-                <TableCell className="text-slate-400">{row.count}</TableCell>
+                <TableCell className="text-muted-foreground">{row.count}</TableCell>
                 <TableCell>{formatPercent(row.avg, 1)}</TableCell>
-                <TableCell className="text-slate-400">
+                <TableCell className="text-muted-foreground">
                   {row.min.toFixed(1)}–{row.max.toFixed(1)}%
                 </TableCell>
-                <TableCell className="text-slate-400">{formatDate(row.last_sample_at)}</TableCell>
+                <TableCell className="text-muted-foreground">{formatDate(row.last_sample_at)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

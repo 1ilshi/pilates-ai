@@ -72,24 +72,24 @@ export function AccessGate({ onSignedIn }: { onSignedIn: () => void }) {
   }
 
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-slate-950 p-6">
+    <div className="flex h-screen w-screen items-center justify-center bg-background p-6">
       <Card className="w-full max-w-md p-6">
         <div className="flex items-center gap-2.5">
           <Logo className="h-9 w-9 shrink-0" />
           <div>
-            <h1 className="text-lg font-semibold text-slate-100">Pilates AI</h1>
-            <p className="text-xs text-slate-500">Clinical workstation</p>
+            <h1 className="text-lg font-semibold text-foreground">Pilates AI</h1>
+            <p className="text-xs text-muted-foreground">Clinical workstation</p>
           </div>
         </div>
 
-        <p className="mt-5 text-sm font-medium text-slate-200">Sign in to start</p>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-5 text-sm font-medium text-foreground">Sign in to start</p>
+        <p className="mt-1 text-xs text-muted-foreground">
           Use the clinic account your supervisor gave you.
         </p>
 
         <form onSubmit={onSubmit} className="mt-4 space-y-3">
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-400">Email</span>
+            <span className="mb-1 block text-xs font-medium text-muted-foreground">Email</span>
             <input
               type="email"
               autoComplete="username"
@@ -100,12 +100,12 @@ export function AccessGate({ onSignedIn }: { onSignedIn: () => void }) {
                 setError(null);
                 setEmail(event.target.value);
               }}
-              className="h-10 w-full rounded-control border border-slate-700 bg-slate-950 px-3 text-sm text-slate-100 focus:border-brand-500 focus:outline-none"
+              className="h-10 w-full rounded-control border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
             />
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-400">Password</span>
+            <span className="mb-1 block text-xs font-medium text-muted-foreground">Password</span>
             <input
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
@@ -116,16 +116,16 @@ export function AccessGate({ onSignedIn }: { onSignedIn: () => void }) {
                 setError(null);
                 setPassword(event.target.value);
               }}
-              className="h-10 w-full rounded-control border border-slate-700 bg-slate-950 px-3 text-sm text-slate-100 focus:border-brand-500 focus:outline-none"
+              className="h-10 w-full rounded-control border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
             />
           </label>
 
-          <label className="flex items-center gap-2 text-xs text-slate-500">
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
             <input
               type="checkbox"
               checked={showPassword}
               onChange={(event) => setShowPassword(event.target.checked)}
-              className="h-3.5 w-3.5 accent-brand-400"
+              className="h-3.5 w-3.5 accent-primary"
             />
             Show password
           </label>
@@ -142,18 +142,18 @@ export function AccessGate({ onSignedIn }: { onSignedIn: () => void }) {
           </Button>
         </form>
 
-        <div className="mt-5 border-t border-slate-800 pt-4">
+        <div className="mt-5 border-t border-border pt-4">
           <button
             type="button"
             onClick={() => setMode("pair")}
-            className="flex items-center gap-1.5 text-left text-xs text-slate-500 hover:text-slate-300"
+            className="flex items-center gap-1.5 text-left text-xs text-muted-foreground hover:text-foreground/80"
           >
             <KeyRound className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             Shared or unattended machine? Pair it with a code instead.
           </button>
         </div>
 
-        <p className="mt-4 text-center text-[11px] text-slate-600">
+        <p className="mt-4 text-center text-[11px] text-muted-foreground/70">
           The internet is needed once, to sign in. After that this workstation
           works offline.
         </p>

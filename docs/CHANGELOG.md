@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.1.1 — 2026-11-18
+
+- **Pose Capture, Patients and Analysis now sit together in the centre of the
+  workstation header.** The selected destination is a solid teal pill, the same
+  treatment as the portal's active navigation.
+- **Deleting a patient asks for a second, explicit approval.** The confirmation
+  names the patient and explains that the record and its session history are
+  hidden and queued for sync, so a misclicked trash icon can no longer remove a
+  patient from the list.
+
 ## 2.1.0 — 2026-11-18
 
 - **A warm studio redesign across the workstation and the portal.** The

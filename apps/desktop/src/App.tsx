@@ -105,12 +105,18 @@ export function App() {
       .catch(() => setAppVersion(null));
   }, []);
 
+  // Analysis opens in the portal, so it cannot be derived from `tab`. Keep it
+  // highlighted once opened until the clinician picks another destination.
+  const [analysisActive, setAnalysisActive] = useState(false);
+
   const navigate = (next: Partial<View>) => {
+    setAnalysisActive(false);
     setHistory((current) => [...current, view]);
     setView((current) => ({ ...current, ...next }));
   };
 
   const goBack = () => {
+    setAnalysisActive(false);
     if (history.length === 0) {
       setView((current) => ({ ...current, tab: "patients", session: null }));
       return;
@@ -152,7 +158,9 @@ export function App() {
   const openAnalysis = () => {
     // Clear first, so a successful retry does not leave a stale warning.
     setPortalError(null);
-    openPortal().catch((error) => setPortalError(String(error)));
+    openPortal()
+      .then(() => setAnalysisActive(true))
+      .catch((error) => setPortalError(String(error)));
   };
 
   // Shared laptop: hand the workstation to the next person. Blocked during a
@@ -203,8 +211,9 @@ export function App() {
         : NAV.find((entry) => entry.id === tab)?.label;
 
   const navItem =
-    "inline-flex items-center gap-2 rounded-full border border-transparent px-3 py-1.5 text-sm font-medium transition-colors";
-  const navActive = "bg-primary/10 text-primary";
+    "inline-flex items-center gap-2 rounded-full border border-transparent px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50";
+  // Same solid teal pill as the portal's selected studio-rail destination.
+  const navActive = "bg-primary text-primary-foreground";
   const navIdle =
     "text-muted-foreground hover:bg-accent hover:text-foreground";
 
@@ -234,7 +243,7 @@ export function App() {
     <div className="flex h-screen w-screen flex-col bg-background font-sans text-foreground">
       {/* Top bar — brand and destinations on one line. */}
       <header className="flex h-14 shrink-0 items-center gap-4 border-b border-sidebar-border bg-sidebar px-4">
-        <div className="flex shrink-0 items-center gap-2.5">
+        <div className="flex flex-1 items-center gap-2.5">
           <Logo className="h-8 w-8 shrink-0" />
           <div className="hidden leading-tight lg:block">
             <h1 className="font-display text-sm font-semibold tracking-tight text-foreground">
@@ -268,7 +277,8 @@ export function App() {
             type="button"
             onClick={openAnalysis}
             title="Opens the clinical portal in your browser"
-            className={cn(navItem, navIdle)}
+            aria-current={analysisActive ? "page" : undefined}
+            className={cn(navItem, analysisActive ? navActive : navIdle)}
           >
             <BarChart3 className="h-4 w-4" aria-hidden="true" />
             Analysis
@@ -279,7 +289,7 @@ export function App() {
           </button>
         </nav>
 
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+        <div className="flex flex-1 items-center justify-end gap-2">
           {patient && (
             <span
               className="hidden max-w-40 truncate rounded-full bg-sidebar-accent px-2.5 py-1 text-xs text-foreground md:inline"

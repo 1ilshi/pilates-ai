@@ -2,6 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { signalSync } from "../lib/syncSignal";
 import { Search, UserPlus, Trash2 } from "lucide-react";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   Button,
   Card,
   Dialog,
@@ -118,6 +126,11 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  // A deletion needs its own deliberate approval — the record holds clinical
+  // history, and a misclick used to hide it with no confirmation at all.
+  const [patientToDelete, setPatientToDelete] = useState<PatientRecord | null>(
+    null,
+  );
   const [form, setForm] = useState<PatientInput>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("name");
@@ -146,6 +159,16 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
     window.addEventListener("pilates:data-changed", onChanged);
     return () => window.removeEventListener("pilates:data-changed", onChanged);
   }, [refresh]);
+
+  // Escape closes the confirmation, matching the workstation's other dialogs.
+  useEffect(() => {
+    if (!patientToDelete) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPatientToDelete(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [patientToDelete]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -222,6 +245,13 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
     } catch (caught) {
       setError(String(caught));
     }
+  };
+
+  // Only the explicit action in the confirmation dialog reaches `remove`.
+  const confirmDelete = () => {
+    const target = patientToDelete;
+    setPatientToDelete(null);
+    if (target) void remove(target);
   };
 
   return (
@@ -302,7 +332,7 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
                 <TableCell className="text-right">
                   <button
                     type="button"
-                    onClick={() => void remove(patient)}
+                    onClick={() => setPatientToDelete(patient)}
                     aria-label={`Delete ${patient.name}`}
                     className="rounded-control p-1.5 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-400"
                   >
@@ -432,6 +462,36 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
           </div>
         </DialogContent>
       </Dialog>
+
+      {patientToDelete && (
+        <AlertDialog
+          open
+          onOpenChange={(next) => !next && setPatientToDelete(null)}
+        >
+          <AlertDialogContent onOutsideDismiss={() => setPatientToDelete(null)}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Delete {patientToDelete.name}?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                This hides the patient and their session history from the
+                workstation and queues the deletion for cloud sync. The record
+                is not erased, but it disappears from the list. Confirm only
+                if this is the right patient.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                className="bg-destructive text-white hover:bg-destructive/90"
+              >
+                Delete patient
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }

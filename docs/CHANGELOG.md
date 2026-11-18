@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.0.11 — 2026-11-18
+
+- **Cameras without exactly MJPEG 640x480@30 now open instead of failing with
+  "Could not initialize Mediafoundation: failed to fulfill request format".**
+  The engine asks for the ideal format first and otherwise opens the device at
+  its default format, then picks the best mode it actually supports — closest
+  to 640x480 at 30 FPS, cheapest codec first (MJPEG, YUYV, NV12). Previously
+  one hard-coded format request was made with no fallback, so any camera whose
+  modes didn't contain that exact combination was refused outright.
+- **A failed camera open says what was tried** and points at the two usual
+  environmental causes: another app holding the camera and camera privacy
+  settings.
+
 ## 2.0.10 — 2026-11-13
 
 - **Signing in now enables archive upload immediately.** The telemetry bucket is

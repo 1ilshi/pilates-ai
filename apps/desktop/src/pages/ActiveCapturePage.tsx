@@ -215,288 +215,286 @@ export function ActiveCapturePage({ patient, onSessionComplete }: ActiveCaptureP
   const phase = frame?.phase ?? "idle";
 
   return (
-    <div className="space-y-5">
-      {!native && (
-        <Card className="border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-300">
-          Browser preview mode — the Rust capture engine is only available inside
-          Tauri.
-        </Card>
-      )}
+    /* Camera fills the workspace. Panels float above it, small and translucent
+       so the view is never shielded — the session still has every control. */
+    <div className="relative h-full min-h-0 w-full overflow-hidden rounded-card border border-border bg-black">
+      <LivePreview
+        running={running}
+        keypoints={keypoints}
+        detections={detections}
+        poseId={poseId as PoseId}
+        showAngles
+        className="absolute inset-0 h-full w-full"
+      />
 
-      {(engineError || sessionError) && (
-        <Card className="border-red-500/30 bg-red-500/5 p-3 text-sm text-red-300">
-          {sessionError ?? engineError}
-        </Card>
-      )}
-
-      {capture?.camera_error && (
-        <Card className="border-rose-500/30 bg-rose-500/5 p-3 text-sm text-rose-200">
-          The camera stopped delivering frames — {capture.camera_error}. The preview
-          is showing its last image, so anything recorded now is not from the camera.
-          Check the connection, then stop and start the preview.
-        </Card>
-      )}
-
-      {capture?.preview_running && !capture.engine_available && (
-        <Card className="border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-300">
-          Pose detection has not loaded — {engine?.detail ?? "unknown error"}. Recording
-          still works, but no skeleton or repetitions will be detected.
-        </Card>
-      )}
-
-      {engine && !engine.bucket_configured && (
-        <Card className="border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-300">
-          Archive upload is disabled — no telemetry bucket is configured. Sessions are
-          recorded and queued on this computer, but the portal will show no charts for
-          them until{" "}
-          <code className="rounded bg-black/40 px-1 py-0.5 font-mono text-[11px]">
-            bucket
-          </code>{" "}
-          is set in{" "}
-          <code className="rounded bg-black/40 px-1 py-0.5 font-mono text-[11px]">
-            cloud.json
-          </code>{" "}
-          (or{" "}
-          <code className="rounded bg-black/40 px-1 py-0.5 font-mono text-[11px]">
-            PILATES_FIREBASE_BUCKET
-          </code>{" "}
-          is set for this installation).
-        </Card>
-      )}
-
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        {/* Video + skeleton */}
-        <div className="lg:col-span-2 space-y-3">
-          <Card className="relative overflow-hidden p-3">
-            <LivePreview
-              running={running}
-              keypoints={keypoints}
-              detections={detections}
-              poseId={poseId as PoseId}
-              showAngles
-            />
-            <div className="pointer-events-none absolute left-2 top-2 rounded bg-black/80 px-2 py-1 font-mono text-[10px] leading-tight text-foreground/80">
-              det {frame?.detections?.length ?? 0} · kp {keypoints.length} · ev{" "}
-              {telemetryFrames}
-            </div>
+      {/* Warnings stay readable but take only as much room as they need. */}
+      <div className="pointer-events-none absolute left-1/2 top-3 z-20 flex w-full max-w-xl -translate-x-1/2 flex-col gap-2 px-3">
+        {!native && (
+          <Card className="pointer-events-auto border-amber-500/30 bg-background/85 p-2.5 text-xs text-amber-300 backdrop-blur-sm">
+            Browser preview mode — the Rust capture engine is only available inside
+            Tauri.
           </Card>
+        )}
 
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant={running ? "success" : "secondary"} dot>
-              {running ? "Live" : "Idle"}
-            </Badge>
-            {status?.device && (
-              <span className="inline-flex items-center gap-1">
-                <Camera className="h-3.5 w-3.5" aria-hidden="true" />
-                {status.device.human_name}
-              </span>
-            )}
-            <span>
-              Engine:{" "}
-              {capture ? (capture.engine_available ? "ready" : "not loaded") : "…"}
-            </span>
-            {frame && (
-              <span
-                className={
-                  frame.detections.length > 0 ? "font-medium text-emerald-400" : undefined
-                }
-              >
-                Detections: {frame.detections.length}
-              </span>
-            )}
-            {frame && (
-              <span
-                title="Strongest class score in the frame, even when below the drawing threshold"
-                className={
-                  frame.best_class_score >= 0.25
-                    ? "text-emerald-400"
-                    : frame.best_class_score >= 0.1
-                      ? "text-amber-400"
-                      : "text-muted-foreground"
-                }
-              >
-                Model: {frame.best_class_label || "—"} {frame.best_class_score.toFixed(2)}
-              </span>
-            )}
-            {frame && <span>{frame.inference_ms.toFixed(0)} ms</span>}
-            <span className={telemetryFrames === 0 ? "text-amber-400" : "text-muted-foreground"}>
-              Events: {telemetryFrames}
-            </span>
-            {frame && <span>Frame {frame.frame_index}</span>}
-            {capture && (
-              <span
-                className={
-                  capture.session_active && capture.session_frames === 0
-                    ? "font-medium text-amber-400"
-                    : undefined
-                }
-              >
-                Camera {capture.camera_frames} · Recorded {capture.session_frames}
-              </span>
-            )}
-          </div>
+        {(engineError || sessionError) && (
+          <Card className="pointer-events-auto border-red-500/30 bg-background/85 p-2.5 text-xs text-red-300 backdrop-blur-sm">
+            {sessionError ?? engineError}
+          </Card>
+        )}
+
+        {capture?.camera_error && (
+          <Card className="pointer-events-auto border-rose-500/30 bg-background/85 p-2.5 text-xs text-rose-200 backdrop-blur-sm">
+            The camera stopped delivering frames — {capture.camera_error}. The preview
+            is showing its last image, so anything recorded now is not from the camera.
+            Check the connection, then stop and start the preview.
+          </Card>
+        )}
+
+        {capture?.preview_running && !capture.engine_available && (
+          <Card className="pointer-events-auto border-amber-500/30 bg-background/85 p-2.5 text-xs text-amber-300 backdrop-blur-sm">
+            Pose detection has not loaded — {engine?.detail ?? "unknown error"}. Recording
+            still works, but no skeleton or repetitions will be detected.
+          </Card>
+        )}
+
+        {engine && !engine.bucket_configured && (
+          <Card className="pointer-events-auto border-amber-500/30 bg-background/85 p-2.5 text-xs text-amber-300 backdrop-blur-sm">
+            Archive upload is disabled — no telemetry bucket is configured. Sessions are
+            recorded and queued on this computer, but the portal will show no charts for
+            them until{" "}
+            <code className="rounded bg-black/40 px-1 py-0.5 font-mono text-[11px]">
+              bucket
+            </code>{" "}
+            is set in{" "}
+            <code className="rounded bg-black/40 px-1 py-0.5 font-mono text-[11px]">
+              cloud.json
+            </code>{" "}
+            (or{" "}
+            <code className="rounded bg-black/40 px-1 py-0.5 font-mono text-[11px]">
+              PILATES_FIREBASE_BUCKET
+            </code>{" "}
+            is set for this installation).
+          </Card>
+        )}
+      </div>
+
+      <div className="pointer-events-none absolute left-3 top-3 rounded bg-black/80 px-2 py-1 font-mono text-[10px] leading-tight text-foreground/80">
+        det {frame?.detections?.length ?? 0} · kp {keypoints.length} · ev{" "}
+        {telemetryFrames}
+      </div>
+
+      {/* Engine / capture telemetry, tucked into one small strip. */}
+      <div className="absolute left-3 top-14 z-10 flex max-w-[55%] flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-border/50 bg-background/70 px-3 py-2 text-[11px] text-muted-foreground backdrop-blur-sm">
+        <Badge variant={running ? "success" : "secondary"} dot>
+          {running ? "Live" : "Idle"}
+        </Badge>
+        {status?.device && (
+          <span className="inline-flex items-center gap-1">
+            <Camera className="h-3.5 w-3.5" aria-hidden="true" />
+            {status.device.human_name}
+          </span>
+        )}
+        <span>
+          Engine: {capture ? (capture.engine_available ? "ready" : "not loaded") : "…"}
+        </span>
+        {frame && (
+          <span
+            className={
+              frame.detections.length > 0 ? "font-medium text-emerald-400" : undefined
+            }
+          >
+            Detections: {frame.detections.length}
+          </span>
+        )}
+        {frame && (
+          <span
+            title="Strongest class score in the frame, even when below the drawing threshold"
+            className={
+              frame.best_class_score >= 0.25
+                ? "text-emerald-400"
+                : frame.best_class_score >= 0.1
+                  ? "text-amber-400"
+                  : "text-muted-foreground"
+            }
+          >
+            Model: {frame.best_class_label || "—"} {frame.best_class_score.toFixed(2)}
+          </span>
+        )}
+        {frame && <span>{frame.inference_ms.toFixed(0)} ms</span>}
+        <span className={telemetryFrames === 0 ? "text-amber-400" : "text-muted-foreground"}>
+          Events: {telemetryFrames}
+        </span>
+        {frame && <span>Frame {frame.frame_index}</span>}
+        {capture && (
+          <span
+            className={
+              capture.session_active && capture.session_frames === 0
+                ? "font-medium text-amber-400"
+                : undefined
+            }
+          >
+            Camera {capture.camera_frames} · Recorded {capture.session_frames}
+          </span>
+        )}
+      </div>
+
+      {/* Reps + accuracy: small, semi-transparent, out of the way. */}
+      <div className="absolute right-3 top-3 z-10 flex gap-2">
+        <div className="rounded-xl border border-border/50 bg-background/75 px-3 py-2 backdrop-blur-sm">
+          <span className="block text-[10px] text-muted-foreground">Repetitions</span>
+          <p className="font-mono text-xl font-semibold text-primary">
+            {capture?.session_active ? capture.rep_count : (frame?.rep_count ?? 0)}
+          </p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">
+            {capture?.session_active
+              ? `${capture.attempts} start(s) · ${capture.rejected_reps} rejected`
+              : "not recording"}
+          </p>
         </div>
-
-        {/* Clinical panel */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Session</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="text-sm text-muted-foreground">
-                Patient:{" "}
-                <span className="font-medium text-foreground">
-                  {patient?.name ?? "none selected"}
-                </span>
-              </div>
-
-              <div className="grid gap-1.5">
-                <Label htmlFor="capture-pose">Pose</Label>
-                <Select
-                  value={poseId}
-                  onValueChange={(value) => {
-                    setPoseId(value);
-                    void selectPose(value);
-                  }}
-                >
-                  <SelectTrigger id="capture-pose" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(poses.length
-                      ? poses
-                      : [{ pose_id: "pose1", display_name: "Pose 1" } as PoseSummary]
-                    ).map((pose) => (
-                      <SelectItem key={pose.pose_id} value={pose.pose_id}>
-                        {poseDisplayLabel(pose.pose_id)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                {!sessionId ? (
-                  <Button
-                    onClick={() => void beginSession()}
-                    disabled={!native || busy || !patient}
-                    className="w-full"
-                  >
-                    <Play className="h-4 w-4" aria-hidden="true" />
-                    Start
-                  </Button>
-                ) : (
-                  <Button
-                    variant="destructive"
-                    onClick={() => void endSession()}
-                    loading={finishing}
-                    className="col-span-2 h-12 w-full text-base"
-                  >
-                    <Square className="h-4 w-4" aria-hidden="true" />
-                    Stop &amp; save
-                  </Button>
-                )}
-
-                {!sessionId && (
-                  <Button
-                    variant="outline"
-                    onClick={() => void (running ? stop() : start(undefined, poseId))}
-                    disabled={!native || busy}
-                    className="w-full"
-                  >
-                    {running ? "Stop preview" : "Preview"}
-                  </Button>
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setMuted((value) => !value)}
-                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-              >
-                {muted ? (
-                  <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />
-                ) : (
-                  <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
-                )}
-                {muted ? "Chime muted" : "Chime on rep completion"}
-              </button>
-
-              {cameras.length > 1 && (
-                <p className="text-xs text-muted-foreground">
-                  {cameras.length} cameras detected — device {cameras[0].index} is in use.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="flex flex-col items-center gap-2 pt-5">
-              <JointAngleGauge
-                angle={frame?.primary_angle ?? Number.NaN}
-                target={frame?.target_angle ?? 90}
-                label={phase.replace("_", " ")}
-                size={200}
-              />
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Card className="p-4">
-              <span className="text-xs text-muted-foreground">Repetitions</span>
-              <p className="mt-1 text-3xl font-bold text-primary">
-                {capture?.session_active ? capture.rep_count : (frame?.rep_count ?? 0)}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {capture?.session_active
-                  ? `${capture.attempts} start(s) · ${capture.rejected_reps} rejected`
-                  : "not recording"}
-              </p>
-            </Card>
-            <Card className="p-4">
-              <span className="text-xs text-muted-foreground">Pose accuracy</span>
-              <p className="mt-1 text-3xl font-bold text-foreground">
-                {frame
-                  ? formatPercent(frame.instantaneous_form_score, 0)
-                  : capture && capture.last_form_score > 0
-                    ? formatPercent(capture.last_form_score, 0)
-                    : "—"}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {capture && capture.last_rep_duration_sec > 0
-                  ? `last rep ${capture.last_rep_duration_sec.toFixed(1)}s`
-                  : capture?.session_active && capture.active_hold_sec > 0
-                    ? `since start ${capture.active_hold_sec.toFixed(1)}s`
-                    : "—"}
-              </p>
-            </Card>
-          </div>
-
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Phase</span>
-              <Badge
-                variant={(PHASE_TONE[phase] ?? "secondary") as "secondary" | "default" | "warning" | "success"}
-              >
-                {phase.replace("_", " ")}
-              </Badge>
-            </div>
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Since start position</span>
-              <span className={cn("text-sm font-medium", "text-foreground")}>
-                {(frame?.hold_duration_sec ?? 0).toFixed(1)}s
-              </span>
-            </div>
-            <div className="mt-2 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Deviation</span>
-              <span className="text-sm font-medium text-foreground">
-                {(frame?.angle_deviation ?? 0).toFixed(1)}°
-              </span>
-            </div>
-          </Card>
+        <div className="rounded-xl border border-border/50 bg-background/75 px-3 py-2 backdrop-blur-sm">
+          <span className="block text-[10px] text-muted-foreground">Pose accuracy</span>
+          <p className="font-mono text-xl font-semibold text-foreground">
+            {frame
+              ? formatPercent(frame.instantaneous_form_score, 0)
+              : capture && capture.last_form_score > 0
+                ? formatPercent(capture.last_form_score, 0)
+                : "—"}
+          </p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">
+            {capture && capture.last_rep_duration_sec > 0
+              ? `last rep ${capture.last_rep_duration_sec.toFixed(1)}s`
+              : capture?.session_active && capture.active_hold_sec > 0
+                ? `since start ${capture.active_hold_sec.toFixed(1)}s`
+                : "—"}
+          </p>
         </div>
       </div>
+
+      <div className="absolute right-3 top-28 z-10 w-32 rounded-xl border border-border/50 bg-background/60 p-1 backdrop-blur-sm">
+        <JointAngleGauge
+          angle={frame?.primary_angle ?? Number.NaN}
+          target={frame?.target_angle ?? 90}
+          label={phase.replace("_", " ")}
+          size={112}
+        />
+      </div>
+
+      {/* Phase: compact, bottom-right. */}
+      <div className="absolute bottom-3 right-3 z-10 w-48 rounded-xl border border-border/50 bg-background/75 p-3 backdrop-blur-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] text-muted-foreground">Phase</span>
+          <Badge
+            variant={(PHASE_TONE[phase] ?? "secondary") as "secondary" | "default" | "warning" | "success"}
+          >
+            {phase.replace("_", " ")}
+          </Badge>
+        </div>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-[10px] text-muted-foreground">Since start position</span>
+          <span className={cn("text-xs font-medium", "text-foreground")}>
+            {(frame?.hold_duration_sec ?? 0).toFixed(1)}s
+          </span>
+        </div>
+        <div className="mt-1 flex items-center justify-between">
+          <span className="text-[10px] text-muted-foreground">Deviation</span>
+          <span className="text-xs font-medium text-foreground">
+            {(frame?.angle_deviation ?? 0).toFixed(1)}°
+          </span>
+        </div>
+      </div>
+
+      {/* Session controls stay fully interactive, bottom-left. */}
+      <Card className="absolute bottom-3 left-3 z-10 w-72 gap-3 border-border/60 bg-background/80 p-4 backdrop-blur-sm">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-sm">Session</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 px-0 pb-0">
+          <div className="text-xs text-muted-foreground">
+            Patient:{" "}
+            <span className="font-medium text-foreground">
+              {patient?.name ?? "none selected"}
+            </span>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="capture-pose">Pose</Label>
+            <Select
+              value={poseId}
+              onValueChange={(value) => {
+                setPoseId(value);
+                void selectPose(value);
+              }}
+            >
+              <SelectTrigger id="capture-pose" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(poses.length
+                  ? poses
+                  : [{ pose_id: "pose1", display_name: "Pose 1" } as PoseSummary]
+                ).map((pose) => (
+                  <SelectItem key={pose.pose_id} value={pose.pose_id}>
+                    {poseDisplayLabel(pose.pose_id)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {!sessionId ? (
+              <Button
+                onClick={() => void beginSession()}
+                disabled={!native || busy || !patient}
+                className="w-full"
+              >
+                <Play className="h-4 w-4" aria-hidden="true" />
+                Start
+              </Button>
+            ) : (
+              <Button
+                variant="destructive"
+                onClick={() => void endSession()}
+                loading={finishing}
+                className="col-span-2 h-12 w-full text-base"
+              >
+                <Square className="h-4 w-4" aria-hidden="true" />
+                Stop &amp; save
+              </Button>
+            )}
+
+            {!sessionId && (
+              <Button
+                variant="outline"
+                onClick={() => void (running ? stop() : start(undefined, poseId))}
+                disabled={!native || busy}
+                className="w-full"
+              >
+                {running ? "Stop preview" : "Preview"}
+              </Button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMuted((value) => !value)}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            {muted ? (
+              <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />
+            ) : (
+              <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
+            {muted ? "Chime muted" : "Chime on rep completion"}
+          </button>
+
+          {cameras.length > 1 && (
+            <p className="text-xs text-muted-foreground">
+              {cameras.length} cameras detected — device {cameras[0].index} is in use.
+            </p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

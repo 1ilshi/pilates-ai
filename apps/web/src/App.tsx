@@ -1,6 +1,6 @@
-import { NavLink, Route, Routes } from "react-router-dom";
+import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { BarChart3, LayoutDashboard, LogOut, Users } from "lucide-react";
-import { Badge, Button, Logo, cn, Toaster } from "@pilates/ui";
+import { Badge, Button, Logo, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, cn, Toaster } from "@pilates/ui";
 import { useAuth } from "./lib/auth";
 import { SignInPage } from "./pages/SignInPage";
 import { AuthBridgePage } from "./pages/AuthBridgePage";
@@ -19,6 +19,7 @@ const NAV = [
 
 export function App() {
   const { user, loading, signOutUser } = useAuth();
+  const { pathname } = useLocation();
 
   // The desktop opens `/auth#code=…` to hand this browser its session. The
   // bridge must render before the signed-out gate, and it navigates away when
@@ -39,26 +40,78 @@ export function App() {
   if (!user) return <SignInPage />;
 
   return (
-    <div className="flex min-h-screen flex-col overflow-x-clip bg-background font-sans text-foreground">
-      <header className="sticky top-0 z-10 border-b border-sidebar-border bg-sidebar/70 px-4 py-2.5 backdrop-blur sm:px-6 sm:py-3">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <Logo className="h-7 w-7 shrink-0" />
-            {/* The wordmark and badge cost ~250px; the mark alone carries the
-                identity on a phone. */}
-            <span className="hidden truncate font-mono text-lg font-bold tracking-tight text-foreground sm:inline">
-              Pilates AI Portal
-            </span>
-            <span className="truncate font-mono text-base font-bold tracking-tight text-foreground sm:hidden">
-              Pilates AI
-            </span>
-            <Badge variant="default" className="hidden sm:inline-flex">
-              Clinical Cloud
-            </Badge>
-          </div>
+    <TooltipProvider delayDuration={200}>
+      <div className="flex min-h-screen bg-background font-sans text-foreground">
+        {/* Studio rail — circular icon buttons, the active route as a solid
+            teal disc. Desktop affordance only; phones keep the bottom bar. */}
+        <aside className="sticky top-0 hidden h-screen shrink-0 flex-col items-center gap-1.5 border-r border-sidebar-border bg-sidebar px-3 py-5 sm:flex">
+          <Logo className="mb-4 h-9 w-9 shrink-0" />
 
-          {/* Inline navigation is a desktop affordance; phones get the bar below. */}
-          <nav className="hidden items-center gap-1 sm:flex" aria-label="Main navigation">
+          <nav className="flex flex-col items-center gap-1.5" aria-label="Main navigation">
+            {NAV.map(({ to, label, icon: Icon, end }) => (
+              <Tooltip key={to}>
+                <TooltipTrigger asChild>
+                  <NavLink
+                    to={to}
+                    end={end}
+                    aria-label={label}
+                    className={cn(
+                      "flex size-11 items-center justify-center rounded-full transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                      (end ? pathname === to : pathname.startsWith(to))
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                    )}
+                  >
+                    <Icon className="size-5" aria-hidden="true" />
+                  </NavLink>
+                </TooltipTrigger>
+                <TooltipContent side="right">{label}</TooltipContent>
+              </Tooltip>
+            ))}
+          </nav>
+
+          <div className="mt-auto flex flex-col items-center gap-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="max-w-12 cursor-default truncate text-[10px] text-muted-foreground" title={user.email ?? ""}>
+                  {user.email}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="right">{user.email}</TooltipContent>
+            </Tooltip>
+            <Button variant="ghost" size="icon" onClick={() => void signOutUser()} aria-label="Sign out">
+              <LogOut className="size-4" aria-hidden="true" />
+            </Button>
+          </div>
+        </aside>
+
+        <div className="min-w-0 flex-1">
+          {/* Compact identity strip for phones; the rail is hidden there. */}
+          <header className="flex items-center gap-2 px-4 py-3 sm:hidden">
+            <Logo className="h-7 w-7 shrink-0" />
+            <span className="truncate font-display text-lg font-semibold tracking-tight">Pilates AI</span>
+            <Badge variant="secondary" className="ml-auto">Clinical Cloud</Badge>
+          </header>
+
+          <main className="mx-auto w-full min-w-0 max-w-6xl p-4 pb-24 sm:p-8 sm:pb-10">
+            <Routes>
+              <Route path="/" element={<OverviewPage />} />
+              <Route path="/patients" element={<PatientsPage />} />
+              <Route path="/analysis" element={<AnalysisPage />} />
+              <Route path="/patients/:id" element={<PatientPage />} />
+              <Route path="/patients/:patientId/sessions/:sessionId" element={<SessionPage />} />
+              <Route path="/pair" element={<PairingPage />} />
+              <Route path="*" element={<OverviewPage />} />
+            </Routes>
+          </main>
+        </div>
+
+        {/* Thumb-reachable navigation, phones only. */}
+        <nav
+          className="fixed inset-x-0 bottom-0 z-20 border-t border-sidebar-border bg-sidebar/95 backdrop-blur sm:hidden"
+          aria-label="Main navigation"
+        >
+          <div className="grid grid-cols-3">
             {NAV.map(({ to, label, icon: Icon, end }) => (
               <NavLink
                 key={to}
@@ -66,68 +119,20 @@ export function App() {
                 end={end}
                 className={({ isActive }) =>
                   cn(
-                    "inline-flex items-center gap-2 rounded-control px-3 py-1.5 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                    "flex min-h-[56px] flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",
+                    isActive ? "text-primary" : "text-muted-foreground active:bg-accent/60",
                   )
                 }
               >
-                <Icon className="h-4 w-4" aria-hidden="true" />
+                <Icon className="size-5" aria-hidden="true" />
                 {label}
               </NavLink>
             ))}
-          </nav>
-
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <span className="hidden text-xs text-muted-foreground lg:inline">{user.email}</span>
-            <Button variant="ghost" size="sm" onClick={() => void signOutUser()}>
-              <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
-              <span className="hidden sm:inline">Sign out</span>
-            </Button>
           </div>
-        </div>
-      </header>
-
-      {/* Bottom padding clears the fixed tab bar on phones. */}
-      <main className="mx-auto w-full min-w-0 max-w-7xl flex-1 p-4 pb-24 sm:p-6 sm:pb-6">
-        <Routes>
-          <Route path="/" element={<OverviewPage />} />
-          <Route path="/patients" element={<PatientsPage />} />
-          <Route path="/analysis" element={<AnalysisPage />} />
-          <Route path="/patients/:id" element={<PatientPage />} />
-          <Route path="/patients/:patientId/sessions/:sessionId" element={<SessionPage />} />
-          <Route path="/pair" element={<PairingPage />} />
-          <Route path="*" element={<OverviewPage />} />
-        </Routes>
-      </main>
-
-      {/* Thumb-reachable navigation, phones only. */}
-      <nav
-        className="fixed inset-x-0 bottom-0 z-20 border-t border-sidebar-border bg-sidebar/95 backdrop-blur sm:hidden"
-        aria-label="Main navigation"
-      >
-        <div className="grid grid-cols-3">
-          {NAV.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                cn(
-                  "flex min-h-[56px] flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground active:bg-accent/60",
-                )
-              }
-            >
-              <Icon className="h-5 w-5" aria-hidden="true" />
-              {label}
-            </NavLink>
-          ))}
-        </div>
-      </nav>
-      <Toaster position="bottom-right" />
-    </div>
+        </nav>
+        <Toaster position="bottom-right" />
+      </div>
+    </TooltipProvider>
   );
 }
 

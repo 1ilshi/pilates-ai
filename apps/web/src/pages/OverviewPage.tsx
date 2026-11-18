@@ -14,6 +14,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  cn,
   formatPercent,
 } from "@pilates/ui";
 import { buildCohort, improvement, poseOptions } from "../lib/analytics";
@@ -49,21 +50,24 @@ function Hero({
   value,
   hint,
   icon,
+  tint,
 }: {
   label: string;
   value: string;
   hint?: string;
   icon: React.ReactNode;
+  /** Pastel chip classes, e.g. "bg-chart-1/15 text-chart-1". */
+  tint: string;
 }) {
   return (
     <Card className="p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="mt-1 truncate text-3xl font-bold text-foreground">{value}</p>
-          {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+          <p className="text-xs font-medium tracking-wide text-muted-foreground">{label}</p>
+          <p className="mt-2 truncate font-mono text-3xl font-semibold tracking-tight text-foreground">{value}</p>
+          {hint && <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p>}
         </div>
-        <span className="shrink-0 rounded-control bg-primary/10 p-2 text-primary">
+        <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-full", tint)}>
           {icon}
         </span>
       </div>
@@ -161,8 +165,10 @@ export function OverviewPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Clinic overview</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">
+            Clinic overview
+          </h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
             {patients.length} patient(s) · {sessions.length} session(s) recorded
           </p>
         </div>
@@ -187,24 +193,28 @@ export function OverviewPage() {
           value={String(patients.length)}
           hint={`${patients.filter((patient) => patient.legacy).length} with legacy history`}
           icon={<Users className="h-5 w-5" aria-hidden="true" />}
+          tint="bg-chart-1/15 text-chart-1"
         />
         <Hero
           label="Sessions"
           value={String(sessions.length)}
           hint={`${poses.length} pose(s) in use`}
           icon={<CalendarCheck className="h-5 w-5" aria-hidden="true" />}
+          tint="bg-chart-2/15 text-chart-2"
         />
         <Hero
           label="Mean pose accuracy"
           value={meanScore ? formatPercent(meanScore, 1) : "—"}
           hint={`${scored.length} patient(s) scored`}
           icon={<Gauge className="h-5 w-5" aria-hidden="true" />}
+          tint="bg-chart-3/15 text-chart-3"
         />
         <Hero
           label="Last activity"
           value={formatDay(lastActivity)}
           hint={lastActivity ? "most recent session" : "no sessions yet"}
           icon={<Activity className="h-5 w-5" aria-hidden="true" />}
+          tint="bg-chart-4/15 text-chart-4"
         />
       </div>
 

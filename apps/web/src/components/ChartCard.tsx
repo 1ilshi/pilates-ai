@@ -82,7 +82,7 @@ export function ChartOverlay({ title, onClose, actions, children }: ChartOverlay
           <h3 className="truncate text-sm font-semibold text-foreground">{title}</h3>
         </div>
       </div>
-      <div className="flex-1 overflow-auto rounded-card border border-border bg-card/40 p-3 sm:p-6">
+      <div className="flex-1 overflow-auto rounded-card border border-border bg-card p-3 shadow-card sm:p-6">
         {children}
       </div>
     </div>

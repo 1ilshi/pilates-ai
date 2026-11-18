@@ -83,10 +83,10 @@ export function AuthBridgePage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
-      <Card className="w-full max-w-sm p-6 text-center">
+      <Card className="w-full max-w-sm p-6 text-center shadow-lift">
         <div className="mb-4 flex items-center justify-center gap-2">
-          <Logo className="h-7 w-7" />
-          <span className="text-lg font-bold text-white">Pilates AI Portal</span>
+          <Logo className="h-8 w-8" />
+          <span className="font-display text-lg font-semibold tracking-tight">Pilates AI Portal</span>
         </div>
 
         {message ? (

@@ -198,7 +198,7 @@ export function PoseMetricsChart({
                     y1={y(tick)}
                     x2={width - padding.right}
                     y2={y(tick)}
-                    stroke="rgba(148, 163, 184, 0.15)"
+                    stroke="rgba(168, 162, 158, 0.18)"
                     strokeWidth={1}
                   />
                   <text
@@ -206,7 +206,7 @@ export function PoseMetricsChart({
                     y={y(tick) + 3}
                     textAnchor="end"
                     fontSize={10}
-                    fill="#64748b"
+                    fill="#a8a29e"
                   >
                     {Math.round(tick)}
                     {metric.unit}
@@ -237,7 +237,7 @@ export function PoseMetricsChart({
                         cy={y(value(point))}
                         r={3.5}
                         fill={entry.color}
-                        stroke="#0f172a"
+                        stroke="#1c1917"
                         strokeWidth={1.5}
                       />
                     ))}
@@ -247,7 +247,7 @@ export function PoseMetricsChart({
 
               {metricIndex === METRICS.length - 1 && (
                 <>
-                  <text x={padding.left} y={rowHeight - 6} fontSize={10} fill="#64748b">
+                  <text x={padding.left} y={rowHeight - 6} fontSize={10} fill="#a8a29e">
                     {formatDay(minTime)}
                     {sameDay && span > 0 ? ` ${formatTime(minTime)}` : ""}
                   </text>
@@ -256,7 +256,7 @@ export function PoseMetricsChart({
                       x={width - padding.right}
                       y={rowHeight - 6}
                       fontSize={10}
-                      fill="#64748b"
+                      fill="#a8a29e"
                       textAnchor="end"
                     >
                       {formatDay(maxTime)}

@@ -76,7 +76,7 @@ export function PairingPage() {
   if (!code) {
     return (
       <Card className="mx-auto max-w-lg p-6">
-        <h1 className="text-lg font-semibold text-foreground">No code supplied</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">No code supplied</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Open this page from the workstation you want to authorise — the app
           provides the link and the code.
@@ -92,7 +92,7 @@ export function PairingPage() {
     return (
       <Card className="mx-auto max-w-lg p-6 text-center">
         <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-400" aria-hidden="true" />
-        <h1 className="mt-3 text-lg font-semibold text-foreground">Workstation authorised</h1>
+        <h1 className="mt-3 font-display text-2xl font-semibold tracking-tight text-foreground">Workstation authorised</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {code} can now record sessions and sync to this clinic. You can close
           this tab — the workstation will continue on its own.
@@ -105,10 +105,10 @@ export function PairingPage() {
     <Card className="mx-auto max-w-lg p-6">
       <div className="flex items-center gap-2">
         <MonitorSmartphone className="h-5 w-5 text-primary" aria-hidden="true" />
-        <h1 className="text-lg font-semibold text-foreground">
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">
           Authorise this workstation?
         </h1>
-        <Badge variant="default">{code}</Badge>
+        <Badge variant="default" className="font-mono text-sm tracking-wider">{code}</Badge>
       </div>
 
       <p className="mt-3 text-sm text-muted-foreground">

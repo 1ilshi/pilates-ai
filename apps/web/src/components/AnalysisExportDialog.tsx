@@ -130,8 +130,8 @@ export function AnalysisExportDialog({
         </>
       }
     >
-      <div className="space-y-4 text-xs">
-        <div className="rounded-control border border-primary/30 bg-primary/[0.06] p-3 text-[11px] leading-relaxed text-foreground/80">
+      <div className="space-y-5 text-xs">
+        <div className="rounded-xl border border-primary/30 bg-primary/[0.06] p-4 text-[11px] leading-relaxed text-foreground/80">
           <p className="font-medium text-primary">
             This download shows the cohorts currently displayed.
           </p>
@@ -151,7 +151,7 @@ export function AnalysisExportDialog({
             <label
               key={option.value}
               className={cn(
-                "flex cursor-pointer gap-3 rounded-control border p-3 transition-colors",
+                "flex cursor-pointer gap-3 rounded-xl border p-4 transition-colors",
                 scope === option.value
                   ? "border-primary/60 bg-primary/10"
                   : "border-border hover:border-muted-foreground/40",
@@ -189,7 +189,7 @@ export function AnalysisExportDialog({
               <label
                 key={option.value}
                 className={cn(
-                  "flex cursor-pointer gap-2 rounded-control border p-3 transition-colors",
+                  "flex cursor-pointer gap-2 rounded-xl border p-4 transition-colors",
                   content === option.value
                     ? "border-primary/60 bg-primary/10"
                     : "border-border hover:border-muted-foreground/40",
@@ -228,7 +228,7 @@ export function AnalysisExportDialog({
         {error && (
           <p
             role="alert"
-            className="rounded-control border border-red-500/30 bg-red-500/5 p-2 text-red-300"
+            className="rounded-xl border border-red-500/30 bg-red-500/5 p-3 text-red-300"
           >
             {error}
           </p>
@@ -236,7 +236,7 @@ export function AnalysisExportDialog({
         {status && (
           <p
             role="status"
-            className="rounded-control border border-primary/30 bg-primary/5 p-2 text-primary"
+            className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-primary"
           >
             {status}
           </p>

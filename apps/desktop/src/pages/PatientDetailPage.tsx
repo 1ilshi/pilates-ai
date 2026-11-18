@@ -149,7 +149,7 @@ export function PatientDetailPage({
   return (
     <div className="space-y-4">
       {error && (
-        <p className="rounded-control border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-300">
+        <p className="rounded-xl border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-300">
           {error}
         </p>
       )}

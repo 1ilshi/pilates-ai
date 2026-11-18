@@ -77,7 +77,7 @@ export function AccessGate({ onSignedIn }: { onSignedIn: () => void }) {
         <div className="flex items-center gap-2.5">
           <Logo className="h-9 w-9 shrink-0" />
           <div>
-            <h1 className="text-lg font-semibold text-foreground">Pilates AI</h1>
+            <h1 className="font-display text-lg font-semibold tracking-tight text-foreground">Pilates AI</h1>
             <p className="text-xs text-muted-foreground">Clinical workstation</p>
           </div>
         </div>
@@ -136,7 +136,7 @@ export function AccessGate({ onSignedIn }: { onSignedIn: () => void }) {
           </div>
 
           {error && (
-            <p className="rounded-control border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+            <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
               {error}
             </p>
           )}

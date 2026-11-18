@@ -94,7 +94,7 @@ export function RepTimelineChart({
     <div className={cn("w-full", className)} style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
-          <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />
+          <CartesianGrid stroke="#332e28" strokeDasharray="3 3" />
 
           {targetRom && (
             <ReferenceArea
@@ -133,14 +133,14 @@ export function RepTimelineChart({
 
           <XAxis
             dataKey="t_sec"
-            stroke="#64748b"
+            stroke="#a8a29e"
             tick={{ fontSize: 11 }}
             tickFormatter={(value: number) => `${value}s`}
           />
           <YAxis
             yAxisId="angle"
             domain={yDomain}
-            stroke="#64748b"
+            stroke="#a8a29e"
             tick={{ fontSize: 11 }}
             tickFormatter={(value: number) => `${value}\u00b0`}
             width={44}
@@ -150,7 +150,7 @@ export function RepTimelineChart({
               yAxisId="score"
               orientation="right"
               domain={[0, 100]}
-              stroke="#64748b"
+              stroke="#a8a29e"
               tick={{ fontSize: 11 }}
               tickFormatter={(value: number) => `${value}%`}
               width={44}
@@ -159,12 +159,12 @@ export function RepTimelineChart({
 
           <Tooltip
             contentStyle={{
-              background: "#0f172a",
-              border: "1px solid #1e293b",
+              background: "#1c1917",
+              border: "1px solid #3f3a34",
               borderRadius: 8,
               fontSize: 12,
             }}
-            labelStyle={{ color: "#94a3b8" }}
+            labelStyle={{ color: "#a8a29e" }}
             labelFormatter={(value) => `t = ${value}s`}
             formatter={(value, name) =>
               name === "angle"

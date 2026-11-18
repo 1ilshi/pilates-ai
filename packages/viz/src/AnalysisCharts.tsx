@@ -22,8 +22,8 @@ function useElementWidth<T extends HTMLElement>(): [React.RefObject<T | null>, n
   return [ref, width];
 }
 
-const GRID = "rgba(148, 163, 184, 0.15)";
-const AXIS_TEXT = "#64748b";
+const GRID = "rgba(168, 162, 158, 0.18)";
+const AXIS_TEXT = "#a8a29e";
 
 /** Round an axis maximum up to a readable value. */
 function niceMax(value: number): number {
@@ -124,7 +124,7 @@ export function PoseDifficultyChart({ rows, rowHeight = 30 }: PoseDifficultyChar
                 y={cy + 3}
                 textAnchor="end"
                 fontSize={10}
-                fill="#94a3b8"
+                fill="#a8a29e"
               >
                 {row.label}
               </text>
@@ -139,7 +139,7 @@ export function PoseDifficultyChart({ rows, rowHeight = 30 }: PoseDifficultyChar
                 opacity={0.45}
               />
               <circle cx={x(row.mean)} cy={cy} r={5} fill="#2dd4bf" />
-              <text x={width - padding.right} y={cy + 3} textAnchor="end" fontSize={9} fill="#475569">
+              <text x={width - padding.right} y={cy + 3} textAnchor="end" fontSize={9} fill="#78716c">
                 {row.sessions} session(s)
               </text>
             </g>
@@ -204,7 +204,7 @@ export function ImprovementRankingChart({ rows, rowHeight = 26 }: ImprovementRan
           y1={padding.top}
           x2={zero}
           y2={height - padding.bottom}
-          stroke="rgba(148, 163, 184, 0.35)"
+          stroke="rgba(168, 162, 158, 0.35)"
         />
         <text x={zero} y={height - 8} textAnchor="middle" fontSize={9} fill={AXIS_TEXT}>
           0
@@ -222,7 +222,7 @@ export function ImprovementRankingChart({ rows, rowHeight = 26 }: ImprovementRan
                 y={cy + 3}
                 textAnchor="end"
                 fontSize={10}
-                fill="#94a3b8"
+                fill="#a8a29e"
               >
                 {row.name.length > 18 ? `${row.name.slice(0, 17)}…` : row.name}
               </text>
@@ -240,7 +240,7 @@ export function ImprovementRankingChart({ rows, rowHeight = 26 }: ImprovementRan
                 y={cy + 3}
                 textAnchor={positive ? "start" : "end"}
                 fontSize={9}
-                fill="#94a3b8"
+                fill="#a8a29e"
               >
                 {row.delta > 0 ? "+" : ""}
                 {row.delta.toFixed(0)}
@@ -353,7 +353,7 @@ export function BmiScoreChart({ points, bands, height = 280 }: BmiScoreChartProp
           y={height - 4}
           textAnchor="middle"
           fontSize={9}
-          fill="#475569"
+          fill="#78716c"
         >
           BMI
         </text>
@@ -366,7 +366,7 @@ export function BmiScoreChart({ points, bands, height = 280 }: BmiScoreChartProp
             r={3.5}
             fill="#60a5fa"
             fillOpacity={0.7}
-            stroke="#0f172a"
+            stroke="#1c1917"
             strokeWidth={1}
           />
         ))}
@@ -511,7 +511,7 @@ export function SegmentComparisonChart({
                 y={top - 5}
                 textAnchor="middle"
                 fontSize={10}
-                fill="#cbd5e1"
+                fill="#d6d3d1"
               >
                 {Math.round(bar.value * 10) / 10}
                 {unit}
@@ -521,7 +521,7 @@ export function SegmentComparisonChart({
                 y={height - 24}
                 textAnchor="middle"
                 fontSize={9}
-                fill="#94a3b8"
+                fill="#a8a29e"
               >
                 {bar.label.length > 14 ? `${bar.label.slice(0, 13)}…` : bar.label}
               </text>
@@ -530,7 +530,7 @@ export function SegmentComparisonChart({
                 y={height - 12}
                 textAnchor="middle"
                 fontSize={8}
-                fill="#475569"
+                fill="#78716c"
               >
                 {bar.note ?? `${bar.patients}p · ${bar.sessions}s`}
               </text>
@@ -589,7 +589,7 @@ export function AdherenceChart({ rows, rowHeight = 26 }: AdherenceChartProps) {
           y1={padding.top}
           x2={padding.left}
           y2={height - padding.bottom}
-          stroke="rgba(148, 163, 184, 0.35)"
+          stroke="rgba(168, 162, 158, 0.35)"
         />
 
         {rows.map((row, index) => {
@@ -601,7 +601,7 @@ export function AdherenceChart({ rows, rowHeight = 26 }: AdherenceChartProps) {
                 y={cy + 3}
                 textAnchor="end"
                 fontSize={10}
-                fill="#94a3b8"
+                fill="#a8a29e"
               >
                 {row.name.length > 18 ? `${row.name.slice(0, 17)}…` : row.name}
               </text>
@@ -618,7 +618,7 @@ export function AdherenceChart({ rows, rowHeight = 26 }: AdherenceChartProps) {
                 x={width - padding.right + 6}
                 y={cy + 3}
                 fontSize={9}
-                fill="#64748b"
+                fill="#a8a29e"
               >
                 {row.sessions}
                 {row.medianGapDays !== null ? ` · ~${Math.round(row.medianGapDays)}d` : ""}
@@ -660,7 +660,7 @@ function localDayKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-const HEAT_SCALE = ["#1e293b", "#134e4a", "#0f766e", "#14b8a6", "#5eead4"];
+const HEAT_SCALE = ["#332e28", "#134e4a", "#0f766e", "#14b8a6", "#5eead4"];
 
 /**
  * Calendar heatmap of sessions per day.
@@ -779,7 +779,7 @@ export function ActivityHeatmap({
             x={gutterLeft + entry.col * (cellSize + gap)}
             y={11}
             fontSize={9}
-            fill="#94a3b8"
+            fill="#a8a29e"
           >
             {entry.label}
           </text>
@@ -791,7 +791,7 @@ export function ActivityHeatmap({
             x={0}
             y={gutterTop + entry.row * (cellSize + gap) + cellSize - 3}
             fontSize={9}
-            fill="#64748b"
+            fill="#a8a29e"
           >
             {entry.label}
           </text>
@@ -833,15 +833,15 @@ export function ActivityHeatmap({
               width={124}
               height={18}
               rx={4}
-              fill="#0f172a"
-              stroke="#334155"
+              fill="#1c1917"
+              stroke="#3f3a34"
             />
             <text
               x={Math.min(Math.max(hover.x - 62, 0), width - 124) + 62}
               y={Math.max(0, hover.y - 24) + 12}
               textAnchor="middle"
               fontSize={9}
-              fill="#e2e8f0"
+              fill="#e7e5e4"
             >
               {hover.label}
             </text>
@@ -1005,7 +1005,7 @@ export function CohortHistogram({
           y={height - 2}
           textAnchor="middle"
           fontSize={9}
-          fill="#475569"
+          fill="#78716c"
         >
           pose accuracy (%)
         </text>
@@ -1145,7 +1145,7 @@ export function CohortStripPlot({
                 y={height - 22}
                 textAnchor="middle"
                 fontSize={9}
-                fill="#94a3b8"
+                fill="#a8a29e"
               >
                 {entry.label.length > 13 ? `${entry.label.slice(0, 12)}…` : entry.label}
               </text>
@@ -1154,7 +1154,7 @@ export function CohortStripPlot({
                 y={height - 9}
                 textAnchor="middle"
                 fontSize={8}
-                fill="#475569"
+                fill="#78716c"
               >
                 {entry.values.length} pts · mean {mean.toFixed(1)}
                 {unit}
@@ -1269,7 +1269,7 @@ export function CohortScatterPlot({
           y={height - 5}
           textAnchor="middle"
           fontSize={9}
-          fill="#475569"
+          fill="#78716c"
         >
           {xLabel}
         </text>
@@ -1278,7 +1278,7 @@ export function CohortScatterPlot({
           y={padding.top + plotHeight / 2}
           textAnchor="middle"
           fontSize={9}
-          fill="#475569"
+          fill="#78716c"
           transform={`rotate(-90 10 ${padding.top + plotHeight / 2})`}
         >
           {yLabel}
@@ -1292,7 +1292,7 @@ export function CohortScatterPlot({
               y={y(point.y) - 12}
               textAnchor="middle"
               fontSize={9}
-              fill="#94a3b8"
+              fill="#a8a29e"
             >
               {point.label.length > 12 ? `${point.label.slice(0, 11)}…` : point.label}
             </text>
@@ -1463,7 +1463,7 @@ export function CohortRepScatter({
           y={height - 6}
           textAnchor="middle"
           fontSize={9}
-          fill="#475569"
+          fill="#78716c"
         >
           {xLabel}
         </text>
@@ -1472,7 +1472,7 @@ export function CohortRepScatter({
           y={padding.top + plotHeight / 2}
           textAnchor="middle"
           fontSize={9}
-          fill="#475569"
+          fill="#78716c"
           transform={`rotate(-90 10 ${padding.top + plotHeight / 2})`}
         >
           {yLabel}

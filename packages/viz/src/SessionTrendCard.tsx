@@ -126,12 +126,12 @@ export function SessionTrendCard({
               <YAxis domain={[0, 100]} hide />
               <Tooltip
                 contentStyle={{
-                  background: "#0f172a",
-                  border: "1px solid #1e293b",
+                  background: "#1c1917",
+                  border: "1px solid #3f3a34",
                   borderRadius: 8,
                   fontSize: 12,
                 }}
-                labelStyle={{ color: "#94a3b8" }}
+                labelStyle={{ color: "#a8a29e" }}
                 formatter={(value) => [`${Number(value).toFixed(1)}%`, "mean pose accuracy"]}
               />
               <Line

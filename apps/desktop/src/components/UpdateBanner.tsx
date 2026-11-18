@@ -32,7 +32,7 @@ export function UpdateBanner({ update, className }: UpdateBannerProps) {
     >
       <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
-          <span className="mt-0.5 shrink-0 rounded-control bg-primary/15 p-1.5 text-primary">
+          <span className="mt-0.5 shrink-0 rounded-full bg-primary/15 p-1.5 text-primary">
             <Download className="h-4 w-4" aria-hidden="true" />
           </span>
           <div className="min-w-0">

@@ -57,14 +57,14 @@ export function FormScoreRadar({
     <div className={cn("w-full", className)} style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={data} outerRadius="72%">
-          <PolarGrid stroke="#1e293b" />
+          <PolarGrid stroke="#332e28" />
           <PolarAngleAxis
             dataKey="axis"
-            tick={{ fill: "#94a3b8", fontSize: 11 }}
+            tick={{ fill: "#a8a29e", fontSize: 11 }}
           />
           <PolarRadiusAxis
             domain={[0, 100]}
-            tick={{ fill: "#475569", fontSize: 10 }}
+            tick={{ fill: "#78716c", fontSize: 10 }}
             axisLine={false}
             tickCount={4}
           />
@@ -73,8 +73,8 @@ export function FormScoreRadar({
             <Radar
               name="baseline"
               dataKey="baseline"
-              stroke="#94a3b8"
-              fill="#94a3b8"
+              stroke="#a8a29e"
+              fill="#a8a29e"
               fillOpacity={0.12}
               strokeDasharray="4 3"
               isAnimationActive={false}
@@ -92,12 +92,12 @@ export function FormScoreRadar({
 
           <Tooltip
             contentStyle={{
-              background: "#0f172a",
-              border: "1px solid #1e293b",
+              background: "#1c1917",
+              border: "1px solid #3f3a34",
               borderRadius: 8,
               fontSize: 12,
             }}
-            labelStyle={{ color: "#94a3b8" }}
+            labelStyle={{ color: "#a8a29e" }}
             formatter={(value) => `${Number(value).toFixed(1)}%`}
           />
         </RadarChart>

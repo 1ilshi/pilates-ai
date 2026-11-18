@@ -14,6 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  cn,
   formatPercent,
 } from "@pilates/ui";
 import type { SessionDetailLike } from "./types";
@@ -31,11 +32,22 @@ function formatDateTime(iso: string | null | undefined): string {
   });
 }
 
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function Stat({
+  label,
+  value,
+  hint,
+  tint,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  /** Pastel bento wash, e.g. "bg-chart-1/10 border-chart-1/25". */
+  tint?: string;
+}) {
   return (
-    <Card className="p-4">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <p className="mt-1 text-2xl font-bold text-foreground">{value}</p>
+    <Card className={cn("p-4", tint)}>
+      <span className="text-xs font-medium text-foreground/70">{label}</span>
+      <p className="mt-1.5 font-mono text-2xl font-semibold tracking-tight text-foreground">{value}</p>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </Card>
   );
@@ -92,7 +104,7 @@ export function SessionView({
               {backLabel}
             </button>
           )}
-          <h3 className="text-xl font-semibold text-foreground">
+          <h3 className="font-display text-2xl font-semibold tracking-tight text-foreground">
             {poseDisplayLabel(session.pose_id)}
           </h3>
           <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -124,7 +136,11 @@ export function SessionView({
 
       {/* Headline numbers ---------------------------------------------- */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Repetitions" value={String(summary.total_reps ?? reps.length)} />
+        <Stat
+          label="Repetitions"
+          value={String(summary.total_reps ?? reps.length)}
+          tint="bg-chart-1/10 border-chart-1/25"
+        />
         <Stat
           label="Mean pose accuracy"
           value={
@@ -133,6 +149,7 @@ export function SessionView({
               : "—"
           }
           hint="across every repetition"
+          tint="bg-chart-2/10 border-chart-2/25"
         />
         <Stat
           label="Peak ROM"
@@ -142,11 +159,13 @@ export function SessionView({
               : "—"
           }
           hint="largest angle reached"
+          tint="bg-chart-3/10 border-chart-3/25"
         />
         <Stat
           label="Hold time"
           value={meanHold > 0 ? `${meanHold.toFixed(1)}s` : "—"}
           hint="mean per repetition"
+          tint="bg-chart-4/10 border-chart-4/25"
         />
       </div>
 

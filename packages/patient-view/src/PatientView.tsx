@@ -41,6 +41,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  cn,
   formatPercent,
 } from "@pilates/ui";
 import type {
@@ -166,18 +167,21 @@ function Snapshot({
   value,
   hint,
   delta,
+  tint,
 }: {
   label: string;
   value: string;
   hint?: string;
   delta?: number | null;
+  /** Pastel bento wash, e.g. "bg-chart-1/10 border-chart-1/20". */
+  tint: string;
 }) {
   const showDelta = typeof delta === "number" && Number.isFinite(delta);
   return (
-    <Card className="p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <div className="mt-1 flex items-baseline gap-2">
-        <p className="text-2xl font-bold text-foreground">{value}</p>
+    <Card className={cn("p-4", tint)}>
+      <p className="text-xs font-medium text-foreground/70">{label}</p>
+      <div className="mt-1.5 flex items-baseline gap-2">
+        <p className="font-mono text-2xl font-semibold tracking-tight text-foreground">{value}</p>
         {showDelta && Math.abs(delta) >= 0.5 && (
           <span
             className={
@@ -518,7 +522,7 @@ export function PatientView({
               {backLabel}
             </button>
           )}
-          <h3 className="text-xl font-semibold text-foreground">{patient.name}</h3>
+          <h3 className="font-display text-2xl font-semibold tracking-tight text-foreground">{patient.name}</h3>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             {ordered.length > 0 && <Badge variant="default">Active program</Badge>}
             {legacy && <Badge variant="warning">Legacy history</Badge>}
@@ -546,17 +550,20 @@ export function PatientView({
           value={latestScore ? formatPercent(latestScore, 0) : "—"}
           hint={latest ? poseDisplayLabel(pose) : "no sessions"}
           delta={scoreDelta}
+          tint="bg-chart-1/10 border-chart-1/25"
         />
         <Snapshot
           label="Hold time per rep"
           value={latestHold ? `${latestHold.toFixed(1)}s` : "—"}
           hint="mean across the latest session"
           delta={holdDelta}
+          tint="bg-chart-2/10 border-chart-2/25"
         />
         <Snapshot
           label="Sessions & reps"
           value={String(poseSessions.length)}
           hint={`${repsPerSession.toFixed(1)} reps per session`}
+          tint="bg-chart-3/10 border-chart-3/25"
         />
         <Snapshot
           label="Adherence"
@@ -566,6 +573,7 @@ export function PatientView({
               ? `${last30.length} in last 30 days · ~${Math.round(medianGap)}d gap`
               : "no gap recorded yet"
           }
+          tint="bg-chart-4/10 border-chart-4/25"
         />
       </div>
 
@@ -725,7 +733,7 @@ export function PatientView({
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col gap-3 pt-4">
             {onAddComment && (
-              <div className="rounded-card border border-border bg-card/40 transition-colors focus-within:border-primary/60">
+              <div className="rounded-xl border border-border bg-card/40 transition-colors focus-within:border-primary/60">
                 <textarea
                   value={commentDraft}
                   onChange={(event) => setCommentDraft(event.target.value)}
@@ -840,27 +848,27 @@ export function PatientView({
                     )}
                   </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <div className="rounded-card border border-border bg-card/40 p-2">
+                    <div className="rounded-xl border border-border/70 bg-muted/40 p-2">
                       <p className="text-xs text-muted-foreground">Reps</p>
-                      <p className="text-lg font-semibold text-foreground">
+                      <p className="font-mono text-lg font-semibold text-foreground">
                         {last.summary?.total_reps ?? 0}
                       </p>
                     </div>
-                    <div className="rounded-card border border-border bg-card/40 p-2">
+                    <div className="rounded-xl border border-border/70 bg-muted/40 p-2">
                       <p className="text-xs text-muted-foreground">Mean score</p>
-                      <p className="text-lg font-semibold text-foreground">
+                      <p className="font-mono text-lg font-semibold text-foreground">
                         {scoreOf(last) ? formatPercent(scoreOf(last), 0) : "—"}
                       </p>
                     </div>
-                    <div className="rounded-card border border-border bg-card/40 p-2">
+                    <div className="rounded-xl border border-border/70 bg-muted/40 p-2">
                       <p className="text-xs text-muted-foreground">Hold per rep</p>
-                      <p className="text-lg font-semibold text-foreground">
+                      <p className="font-mono text-lg font-semibold text-foreground">
                         {meanRepSeconds(last) ? `${meanRepSeconds(last).toFixed(1)}s` : "—"}
                       </p>
                     </div>
-                    <div className="rounded-card border border-border bg-card/40 p-2">
+                    <div className="rounded-xl border border-border/70 bg-muted/40 p-2">
                       <p className="text-xs text-muted-foreground">Completion</p>
-                      <p className="text-lg font-semibold text-foreground">
+                      <p className="font-mono text-lg font-semibold text-foreground">
                         {last.summary?.completion_rate !== undefined
                           ? formatPercent(last.summary.completion_rate, 0)
                           : "—"}
@@ -1057,17 +1065,17 @@ export function PatientView({
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-card border border-border bg-card/40 p-3">
+              <div className="rounded-xl border border-border/70 bg-muted/40 p-3">
                 <p className="text-xs text-muted-foreground">Samples</p>
-                <p className="text-xl font-bold text-foreground">{legacy.total_samples}</p>
+                <p className="font-mono text-xl font-semibold text-foreground">{legacy.total_samples}</p>
               </div>
-              <div className="rounded-card border border-border bg-card/40 p-3">
+              <div className="rounded-xl border border-border/70 bg-muted/40 p-3">
                 <p className="text-xs text-muted-foreground">Poses recorded</p>
-                <p className="text-xl font-bold text-foreground">{legacyRows.length}</p>
+                <p className="font-mono text-xl font-semibold text-foreground">{legacyRows.length}</p>
               </div>
-              <div className="rounded-card border border-border bg-card/40 p-3">
+              <div className="rounded-xl border border-border/70 bg-muted/40 p-3">
                 <p className="text-xs text-muted-foreground">Comments</p>
-                <p className="text-xl font-bold text-foreground">{legacy.comments_count}</p>
+                <p className="font-mono text-xl font-semibold text-foreground">{legacy.comments_count}</p>
               </div>
             </div>
 

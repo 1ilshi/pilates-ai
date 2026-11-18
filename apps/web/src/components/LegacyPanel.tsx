@@ -44,17 +44,17 @@ export function LegacyPanel({ legacy }: { legacy: LegacySummary }) {
 
       <CardContent className="space-y-4 pt-4">
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <div className="rounded-card border border-border bg-card/40 p-2 sm:p-3">
+          <div className="rounded-xl border border-border/70 bg-muted/40 p-2 sm:p-3">
             <p className="text-xs text-muted-foreground">Samples</p>
-            <p className="text-xl font-bold text-foreground">{legacy.total_samples}</p>
+            <p className="font-mono text-xl font-semibold text-foreground">{legacy.total_samples}</p>
           </div>
-          <div className="rounded-card border border-border bg-card/40 p-2 sm:p-3">
+          <div className="rounded-xl border border-border/70 bg-muted/40 p-2 sm:p-3">
             <p className="text-xs text-muted-foreground">Poses</p>
-            <p className="text-xl font-bold text-foreground">{rows.length}</p>
+            <p className="font-mono text-xl font-semibold text-foreground">{rows.length}</p>
           </div>
-          <div className="rounded-card border border-border bg-card/40 p-2 sm:p-3">
+          <div className="rounded-xl border border-border/70 bg-muted/40 p-2 sm:p-3">
             <p className="text-xs text-muted-foreground">Comments</p>
-            <p className="text-xl font-bold text-foreground">{legacy.comments_count}</p>
+            <p className="font-mono text-xl font-semibold text-foreground">{legacy.comments_count}</p>
           </div>
         </div>
 

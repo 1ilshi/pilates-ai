@@ -105,7 +105,7 @@ export function JointAngleGauge({
         <path
           d={describeArc(center, center, radius, SWEEP_START, SWEEP_START + SWEEP_DEGREES)}
           fill="none"
-          stroke="#1e293b"
+          stroke="#332e28"
           strokeWidth={12}
           strokeLinecap="round"
         />
@@ -137,7 +137,7 @@ export function JointAngleGauge({
             const inner = polar(center, center, radius - 8, toAngle(target));
             return { x1: inner.x, y1: inner.y, x2: outer.x, y2: outer.y };
           })()}
-          stroke="#e2e8f0"
+          stroke="#e7e5e4"
           strokeWidth={2}
         />
 
@@ -153,14 +153,14 @@ export function JointAngleGauge({
             strokeLinecap="round"
           />
         )}
-        <circle cx={center} cy={center} r={4} fill="#94a3b8" />
+        <circle cx={center} cy={center} r={4} fill="#a8a29e" />
 
         {/* Value readout */}
         <text
           x={center}
           y={center + radius * 0.42}
           textAnchor="middle"
-          fill="#f1f5f9"
+          fill="#f5f5f4"
           fontSize={size * 0.15}
           fontWeight={700}
         >
@@ -170,7 +170,7 @@ export function JointAngleGauge({
           x={center}
           y={center + radius * 0.66}
           textAnchor="middle"
-          fill="#94a3b8"
+          fill="#a8a29e"
           fontSize={size * 0.055}
         >
           {`target ${target}\u00b0`}

@@ -109,7 +109,7 @@ export function PairingGate({
       <Card className="w-full max-w-md p-6">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-primary" aria-hidden="true" />
-          <h1 className="text-lg font-semibold text-foreground">Pair this workstation</h1>
+          <h1 className="font-display text-lg font-semibold tracking-tight text-foreground">Pair this workstation</h1>
         </div>
 
         <p className="mt-2 text-sm text-muted-foreground">
@@ -119,7 +119,7 @@ export function PairingGate({
         </p>
 
         {phase.kind === "error" && (
-          <p className="mt-3 rounded-control border border-red-500/30 bg-red-500/5 p-2 text-xs text-red-300">
+          <p className="mt-3 rounded-xl border border-red-500/30 bg-red-500/5 p-2 text-xs text-red-300">
             {phase.message}
           </p>
         )}
@@ -151,7 +151,7 @@ export function PairingGate({
         )}
 
         {openError && pairing && (
-          <div className="mt-3 rounded-control border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
+          <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
             <p>Could not open the browser automatically. Open this address yourself:</p>
             <p className="mt-1 select-all break-all font-mono text-[11px] text-amber-100">
               {pairUrl(pairing.code)}

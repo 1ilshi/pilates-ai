@@ -13,7 +13,7 @@ export function Logo({ className }: { className?: string }) {
       role="img"
       aria-label="Pilates AI"
     >
-      <rect width="512" height="512" rx="112" fill="#0b1220" />
+      <rect width="512" height="512" rx="112" fill="#1f1b17" />
       <rect x="94" y="216.5" width="44" height="79" rx="22" fill="#2dc8de" />
       <rect x="164" y="184" width="44" height="144" rx="22" fill="#5eead4" />
       <rect x="234" y="140" width="44" height="232" rx="22" fill="#2dd4bf" />

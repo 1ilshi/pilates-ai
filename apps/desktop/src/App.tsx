@@ -13,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   Badge,
+  Button,
   cn,
   Toaster,
 } from "@pilates/ui";
@@ -202,10 +203,10 @@ export function App() {
         : NAV.find((entry) => entry.id === tab)?.label;
 
   const navItem =
-    "flex w-full items-center gap-3 rounded-control border px-3 py-2 text-sm font-mono font-medium transition-colors";
-  const navActive = "border-primary/25 bg-primary/10 text-primary";
+    "inline-flex items-center gap-2 rounded-full border border-transparent px-3 py-1.5 text-sm font-medium transition-colors";
+  const navActive = "bg-primary/10 text-primary";
   const navIdle =
-    "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground";
+    "text-muted-foreground hover:bg-accent hover:text-foreground";
 
   if (access === "checking") {
     return (
@@ -230,101 +231,104 @@ export function App() {
   }
 
   return (
-    <div className="flex h-screen w-screen bg-background font-sans text-foreground">
-      <aside className="flex w-60 shrink-0 flex-col justify-between border-r border-sidebar-border bg-sidebar p-4">
-        <div>
-          <div className="mb-8 flex items-center gap-2.5 px-2">
-            <Logo className="h-9 w-9 shrink-0" />
-            <div className="min-w-0">
-              <h1 className="truncate font-mono text-base font-bold leading-tight tracking-tight text-foreground">
-                Pilates AI
-              </h1>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                Clinical workstation
-              </p>
-            </div>
+    <div className="flex h-screen w-screen flex-col bg-background font-sans text-foreground">
+      {/* Top bar — brand and destinations on one line. */}
+      <header className="flex h-14 shrink-0 items-center gap-4 border-b border-sidebar-border bg-sidebar px-4">
+        <div className="flex shrink-0 items-center gap-2.5">
+          <Logo className="h-8 w-8 shrink-0" />
+          <div className="hidden leading-tight lg:block">
+            <h1 className="font-display text-sm font-semibold tracking-tight text-foreground">
+              Pilates AI
+            </h1>
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
+              Clinical workstation
+            </p>
           </div>
-
-          <nav className="space-y-1" aria-label="Main navigation">
-            {NAV.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => navigate({ tab: id, session: null })}
-                aria-current={tab === id ? "page" : undefined}
-                className={cn(navItem, tab === id ? navActive : navIdle)}
-              >
-                <Icon className="h-4 w-4" aria-hidden="true" />
-                {label}
-              </button>
-            ))}
-
-            {/*
-              Analysis lives in the cloud portal, not here: it is a cohort-level
-              view that benefits from shared, always-current data.
-            */}
-            <button
-              type="button"
-              onClick={openAnalysis}
-              title="Opens the clinical portal in your browser"
-              className={cn(navItem, navIdle)}
-            >
-              <BarChart3 className="h-4 w-4" aria-hidden="true" />
-              Analysis
-              <ExternalLink
-                className="ml-auto h-3 w-3 text-muted-foreground/60"
-                aria-hidden="true"
-              />
-            </button>
-          </nav>
-
-          {patient && (
-            <div className="mt-6 rounded-control border border-sidebar-border bg-sidebar-accent p-3">
-              <p className="text-xs text-muted-foreground">Active patient</p>
-              <p className="truncate text-sm font-medium text-foreground">{patient.name}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {patient.gender || "—"} · {patient.age || "—"}
-              </p>
-            </div>
-          )}
         </div>
 
-        <div className="px-2 text-xs text-muted-foreground">
-          <p
+        <nav className="flex min-w-0 items-center gap-1" aria-label="Main navigation">
+          {NAV.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => navigate({ tab: id, session: null })}
+              aria-current={tab === id ? "page" : undefined}
+              className={cn(navItem, tab === id ? navActive : navIdle)}
+            >
+              <Icon className="h-4 w-4" aria-hidden="true" />
+              {label}
+            </button>
+          ))}
+
+          {/*
+            Analysis lives in the cloud portal, not here: it is a cohort-level
+            view that benefits from shared, always-current data.
+          */}
+          <button
+            type="button"
+            onClick={openAnalysis}
+            title="Opens the clinical portal in your browser"
+            className={cn(navItem, navIdle)}
+          >
+            <BarChart3 className="h-4 w-4" aria-hidden="true" />
+            Analysis
+            <ExternalLink
+              className="h-3 w-3 text-muted-foreground/60"
+              aria-hidden="true"
+            />
+          </button>
+        </nav>
+
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {patient && (
+            <span
+              className="hidden max-w-40 truncate rounded-full bg-sidebar-accent px-2.5 py-1 text-xs text-foreground md:inline"
+              title={`Active patient: ${patient.name}`}
+            >
+              {patient.name}
+            </span>
+          )}
+          <span
+            className="hidden text-[11px] text-muted-foreground 2xl:inline"
             title={syncError ?? undefined}
-            className={
-              syncError && syncError !== "offline"
-                ? "text-amber-400"
-                : "text-muted-foreground"
-            }
           >
             {syncLabel}
-          </p>
-          {syncError && syncError !== "offline" && (
-            <p
-              className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-amber-500/80"
-              title={syncError}
-            >
-              {syncError}
-            </p>
-          )}
-          {portalError && (
-            <p
-              className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-amber-500/80"
-              title={portalError}
-            >
-              Could not open portal — {portalError}
-            </p>
-          )}
-          <p className="mt-0.5">
+          </span>
+          <Badge variant={isTauri() ? "success" : "warning"} dot>
+            {isTauri() ? "Engine Ready" : "Browser Mode"}
+          </Badge>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setConfirmSignOut(true)}
+            disabled={tab === "capture"}
+            title={
+              tab === "capture"
+                ? "Finish the recording before signing out"
+                : "Sign out of this workstation"
+            }
+            aria-label="Sign out"
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </div>
+      </header>
+
+      {/* Context strip: the current destination or record, plus sync details. */}
+      <div className="flex h-11 shrink-0 items-center justify-between gap-3 border-b border-border px-6">
+        <h2 className="truncate font-display text-base font-semibold tracking-tight text-foreground">
+          {heading}
+        </h2>
+        <div className="flex shrink-0 items-center gap-3 text-[11px] text-muted-foreground">
+          <span className="hidden md:inline">
             Tauri 2.0 · Rust Engine v{appVersion ?? "…"}
-          </p>
+          </span>
           <button
             type="button"
             onClick={() => void update.checkNow()}
             disabled={update.checking || tab === "capture"}
             title={update.error ?? "Check the release channel for a newer build"}
-            className="mt-1 text-[10px] text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            className="text-[11px] text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
           >
             {update.checking
               ? "Checking for updates…"
@@ -332,31 +336,21 @@ export function App() {
                 ? "Up to date"
                 : "Check for updates"}
           </button>
-          <button
-            type="button"
-            onClick={() => setConfirmSignOut(true)}
-            disabled={tab === "capture"}
-            title={
-              tab === "capture"
-                ? "Finish the recording before signing out"
-                : "Sign out and return to the sign-in screen"
-            }
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-control border border-border px-2 py-1.5 text-xs font-mono font-medium text-foreground transition-colors hover:border-muted-foreground/40 hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
-            Sign out
-          </button>
         </div>
-      </aside>
+      </div>
 
-      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-border px-6">
-          <h2 className="font-mono text-base font-semibold text-foreground">{heading}</h2>
-          <Badge variant={isTauri() ? "success" : "warning"} dot>
-            {isTauri() ? "Engine Ready" : "Browser Mode"}
-          </Badge>
-        </header>
+      {(syncError || portalError) && (
+        <div className="flex shrink-0 flex-wrap gap-x-4 gap-y-1 border-b border-amber-500/30 bg-amber-500/10 px-6 py-1.5 text-[11px] text-amber-300">
+          {syncError && syncError !== "offline" && (
+            <span title={syncError}>{syncError}</span>
+          )}
+          {portalError && (
+            <span title={portalError}>Could not open portal — {portalError}</span>
+          )}
+        </div>
+      )}
 
+      <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {/* Never prompt while a session could be recording. */}
         {tab !== "capture" && <UpdateBanner update={update} />}
 
@@ -369,14 +363,19 @@ export function App() {
             <button
               type="button"
               onClick={() => setAccess("required")}
-              className="rounded-control border border-amber-500/40 px-2 py-1 font-medium hover:bg-amber-500/20"
+              className="rounded-full border border-amber-500/40 px-2.5 py-1 font-medium hover:bg-amber-500/20"
             >
               Sign in
             </button>
           </div>
         )}
 
-        <section className="flex-1 overflow-y-auto p-6">
+        <section
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto p-6",
+            tab === "capture" && "overflow-hidden p-3",
+          )}
+        >
           {tab === "patients" && (
             <PatientListPage
               onSelectPatient={(selected) =>

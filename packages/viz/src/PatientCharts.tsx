@@ -27,8 +27,8 @@ function useElementWidth<T extends HTMLElement>(): [React.RefObject<T | null>, n
   return [ref, width];
 }
 
-const GRID = "rgba(148, 163, 184, 0.15)";
-const AXIS_TEXT = "#64748b";
+const GRID = "rgba(168, 162, 158, 0.18)";
+const AXIS_TEXT = "#a8a29e";
 
 function Empty({ message, height = 120 }: { message: string; height?: number }) {
   return (
@@ -170,7 +170,7 @@ export function SessionMetricChart({ points, metric, height = 190 }: SessionMetr
                 y={hasValue ? top - 4 : padding.top + plotHeight - 4}
                 textAnchor="middle"
                 fontSize={9}
-                fill={hasValue ? "#94a3b8" : "#475569"}
+                fill={hasValue ? "#a8a29e" : "#78716c"}
               >
                 {metric === "form_score" ? Math.round(value) : Math.round(value * 10) / 10}
               </text>
@@ -190,7 +190,7 @@ export function SessionMetricChart({ points, metric, height = 190 }: SessionMetr
                     y={height - 5}
                     textAnchor="middle"
                     fontSize={9}
-                    fill="#475569"
+                    fill="#78716c"
                   >
                     {formatDay(point.at)}
                   </text>
@@ -330,7 +330,7 @@ export function RepProfileChart({ reps, rowHeight = 110 }: RepProfileChartProps)
               cy={scoreY(rep.form_score)}
               r={3.5}
               fill="#2dd4bf"
-              stroke="#0f172a"
+              stroke="#1c1917"
               strokeWidth={1.5}
             />
           ))}
@@ -390,7 +390,7 @@ export function RepProfileChart({ reps, rowHeight = 110 }: RepProfileChartProps)
                   y={top - 3}
                   textAnchor="middle"
                   fontSize={9}
-                  fill="#94a3b8"
+                  fill="#a8a29e"
                 >
                   {rep.duration_sec.toFixed(1)}
                 </text>
@@ -524,7 +524,7 @@ export function HoldQualityScatter({ points, height = 260 }: HoldQualityScatterP
             r={4}
             fill="#2dd4bf"
             fillOpacity={0.75}
-            stroke="#0f172a"
+            stroke="#1c1917"
             strokeWidth={1}
           />
         ))}
@@ -656,7 +656,7 @@ export function ConsistencyChart({ points, height = 240 }: ConsistencyChartProps
               >
                 {point.label}
               </text>
-              <text x={cx} y={height - 7} textAnchor="middle" fontSize={9} fill="#475569">
+              <text x={cx} y={height - 7} textAnchor="middle" fontSize={9} fill="#78716c">
                 {formatDay(point.at)}
               </text>
             </g>

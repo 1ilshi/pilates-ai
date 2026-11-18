@@ -41,8 +41,8 @@ function SortHeader({
         aria-label={`Sort by ${label}`}
         className={
           isActive
-            ? "inline-flex items-center gap-1 font-semibold text-primary"
-            : "inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+            ? "inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-primary"
+            : "inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground"
         }
       >
         {label}
@@ -133,8 +133,8 @@ export function PatientsPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-white">Patients</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">Patients</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
           {loading ? "Loading…" : `${patients.length} record(s)`}
         </p>
       </div>
@@ -184,8 +184,8 @@ export function PatientsPage() {
                 </TableCell>
                 <TableCell className="text-muted-foreground">{patient.gender || "—"}</TableCell>
                 <TableCell className="text-muted-foreground">{patient.age || "—"}</TableCell>
-                <TableCell className="text-muted-foreground">{patient.totalSessions}</TableCell>
-                <TableCell>
+                <TableCell className="font-mono text-[13px] text-muted-foreground">{patient.totalSessions}</TableCell>
+                <TableCell className="font-mono text-[13px]">
                   {patient.lifetimeAvgScore != null
                     ? formatPercent(patient.lifetimeAvgScore)
                     : "—"}
@@ -249,7 +249,7 @@ export function PatientsPage() {
             key={patient.id}
             to={`/patients/${patient.id}`}
             state={{ from: "Patients" }}
-            className="block rounded-card border border-border bg-card/40 p-3 active:bg-accent/60"
+            className="block rounded-card border border-border bg-card p-3 shadow-card active:bg-accent/60"
           >
             <div className="flex items-start justify-between gap-2">
               <p className="truncate text-sm font-semibold text-primary">

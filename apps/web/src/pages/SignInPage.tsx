@@ -22,13 +22,17 @@ export function SignInPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
-      <Card className="w-full max-w-sm p-6">
-        <div className="mb-6 flex items-center gap-2">
-          <Logo className="h-8 w-8" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-6 text-foreground">
+      {/* Soft teal studio glow behind the sign-in card. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="size-[36rem] rounded-full bg-primary/10 blur-[120px]" />
+      </div>
+      <Card className="relative w-full max-w-sm p-6 shadow-lift">
+        <div className="mb-6 flex flex-col items-center gap-3 text-center">
+          <Logo className="h-12 w-12" />
           <div>
-            <h1 className="text-lg font-bold text-white">Pilates AI Portal</h1>
-            <p className="text-xs text-muted-foreground">Clinical cloud access</p>
+            <h1 className="font-display text-2xl font-semibold tracking-tight">Pilates AI Portal</h1>
+            <p className="mt-1 text-xs text-muted-foreground">Clinical cloud access</p>
           </div>
         </div>
 
@@ -65,7 +69,7 @@ export function SignInPage() {
           </div>
 
           {error && (
-            <p className="rounded-control border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+            <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
               {error}
             </p>
           )}

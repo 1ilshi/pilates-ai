@@ -855,8 +855,8 @@ export function AnalysisPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Analysis</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">Analysis</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
             {scoped.length} patient(s) · {sessions.length} session(s) synced.
             Cohorts below affect only their own charts.
           </p>
@@ -879,10 +879,10 @@ export function AnalysisPage() {
 
       {/* One block: the cohort editor and the charts it drives, so the grouping
           itself communicates that they are not clinic-wide. */}
-      <section className="rounded-card border border-primary/25 bg-primary/[0.04] p-4">
+      <section className="rounded-card border border-primary/20 bg-primary/[0.06] p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <h2 className="text-sm font-semibold text-foreground">
+            <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
               Cohort comparison
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -943,7 +943,7 @@ export function AnalysisPage() {
                     style={
                       included
                         ? { borderColor: color, backgroundColor: `${color}22`, color }
-                        : { borderColor: "#334155", color: "#64748b" }
+                        : { borderColor: "#44403c", color: "#a8a29e" }
                     }
                   >
                     <button
@@ -1114,7 +1114,7 @@ export function AnalysisPage() {
           own section instead of sharing the cohort block's pose selector. */}
       <section className="space-y-3">
         <div>
-          <h2 className="text-sm font-semibold text-foreground">By exercise</h2>
+          <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">By exercise</h2>
           <p className="mt-1 text-xs text-muted-foreground">
             Spread of session accuracy per pose across the whole clinic — the dot
             is the mean, the bar is the range.
@@ -1131,7 +1131,7 @@ export function AnalysisPage() {
 
       <section className="space-y-3">
         <div>
-          <h2 className="text-sm font-semibold text-foreground">Relationships</h2>
+          <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Relationships</h2>
           <p className="mt-1 text-xs text-muted-foreground">
             How performance relates to body composition and attendance.
           </p>
@@ -1187,8 +1187,8 @@ export function AnalysisPage() {
         }
       >
         {editing && (
-          <div className="space-y-3">
-            <label className="block text-xs text-muted-foreground">
+          <div className="space-y-5">
+            <label className="block text-xs font-medium text-muted-foreground">
               Name
               <input
                 autoFocus
@@ -1196,16 +1196,16 @@ export function AnalysisPage() {
                 onChange={(event) =>
                   setEditing({ ...editing, name: event.target.value })
                 }
-                className="mt-1 h-8 w-full rounded-control border border-border bg-background px-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="mt-2 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </label>
 
             {COHORT_RANGES.map(([minKey, maxKey, label]) => (
               <div
                 key={minKey}
-                className="flex items-center gap-2 text-xs text-muted-foreground"
+                className="flex items-center gap-3 text-xs font-medium text-muted-foreground"
               >
-                <span className="w-14 shrink-0">{label}</span>
+                <span className="w-16 shrink-0">{label}</span>
                 <input
                   type="number"
                   value={editing[minKey] as string}
@@ -1217,7 +1217,7 @@ export function AnalysisPage() {
                       [minKey]: event.target.value,
                     } as Cohort)
                   }
-                  className="h-8 min-w-0 flex-1 rounded-control border border-border bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
+                  className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-background px-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
                 />
                 <span className="text-muted-foreground/70">–</span>
                 <input
@@ -1231,19 +1231,19 @@ export function AnalysisPage() {
                       [maxKey]: event.target.value,
                     } as Cohort)
                   }
-                  className="h-8 min-w-0 flex-1 rounded-control border border-border bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
+                  className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-background px-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
                 />
               </div>
             ))}
 
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="w-14 shrink-0">Gender</span>
+            <label className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
+              <span className="w-16 shrink-0">Gender</span>
               <select
                 value={editing.gender}
                 onChange={(event) =>
                   setEditing({ ...editing, gender: event.target.value })
                 }
-                className="h-8 min-w-0 flex-1 rounded-control border border-border bg-background px-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-background px-2.5 text-sm text-foreground focus:border-primary focus:outline-none"
               >
                 <option value="">Any</option>
                 {genders.map((gender) => (
@@ -1255,7 +1255,7 @@ export function AnalysisPage() {
             </label>
 
             {isCohortEmpty(editing) && (
-              <p className="text-[11px] text-muted-foreground">
+              <p className="pt-1 text-xs text-muted-foreground">
                 No criteria set — this cohort matches every patient.
               </p>
             )}

@@ -27,7 +27,10 @@
 :root {
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
+  /* Cards sit only a step above the background, matching the old
+     bg-slate-900/40-over-slate-950 elevation, and borders are a solid
+     low-chroma line instead of white-alpha so surfaces separate quietly. */
+  --card: oklch(0.178 0.005 285.823);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.21 0.006 285.885);
   --popover-foreground: oklch(0.985 0 0);
@@ -40,8 +43,8 @@
   --accent: oklch(0.274 0.006 286.033);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border: oklch(0.26 0.006 285.823);
+  --input: oklch(0.28 0.006 285.823);
   --ring: oklch(0.552 0.016 285.938);
 
   /* Lime chart ramp — for generic multi-series charts only. Semantic palettes
@@ -52,13 +55,13 @@
   --chart-4: oklch(0.532 0.157 131.589);
   --chart-5: oklch(0.453 0.124 130.933);
 
-  --sidebar: oklch(0.21 0.006 285.885);
+  --sidebar: oklch(0.165 0.005 285.823);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.715 0.143 215.221);
   --sidebar-primary-foreground: oklch(0.302 0.056 229.695);
   --sidebar-accent: oklch(0.274 0.006 286.033);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border: oklch(0.26 0.006 285.823);
   --sidebar-ring: oklch(0.552 0.016 285.938);
 
   /* Preset radius base (drives --radius-sm/md/lg/xl below). */

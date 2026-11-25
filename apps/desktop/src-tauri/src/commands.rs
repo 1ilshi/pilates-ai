@@ -411,6 +411,30 @@ pub fn list_cameras() -> EngineResult<Vec<CameraDescriptor>> {
 
 #[tauri::command]
 pub fn engine_status(state: State<'_, AppState>) -> EngineStatus {
+    // Warm the engine on the first status check so the readiness indicator
+    // reflects a real model load. Without this the dot stayed red until a
+    // recording/preview started, because the engine is otherwise loaded lazily
+    // per pose inside the capture loop.
+    if let Ok(mut guard) = state.engine.lock() {
+        if guard.is_none() && crate::inference::runtime_available() {
+            if let Some(pose_id) = state.pose_definitions.poses.keys().next().cloned() {
+                if let Ok((model_path, num_classes, num_keypoints, _, class_names)) =
+                    resolve_model(&pose_id)
+                {
+                    if let Ok(engine) = InferenceEngine::load(
+                        &model_path,
+                        &pose_id,
+                        num_classes,
+                        num_keypoints,
+                        class_names,
+                    ) {
+                        *guard = Some(engine);
+                    }
+                }
+            }
+        }
+    }
+
     let provider = state
         .engine
         .lock()

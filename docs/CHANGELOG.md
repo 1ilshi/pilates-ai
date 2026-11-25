@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.1 — 2026-11-25
+
+- **Engine readiness dot is green on launch.** The workstation no longer shows a
+  red dot until a recording starts: the pose model is now loaded during the
+  initial engine status check, so the indicator reflects actual readiness.
+
 ## 2.2.0 — 2026-11-18
 
 - **The patient roster has a new table layout in both the workstation and the

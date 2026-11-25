@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.3.0 — 2026-11-25
+
+- **The workstation and portal share a calibrated dark neutral theme.** Surfaces
+  are neutral slate/charcoal with a restrained white-accent primary, an 8px base
+  radius, the system UI font and quiet, theme-matched scrollbars. Content colors
+  (charts, pose/phase) are unchanged.
+- **The workstation navigation is now a horizontal tab bar.** Pose Capture,
+  Patients and Analysis sit as icon + label tabs with a thin active underline;
+  the logo and wordmark were removed from the top bar to give the tabs more room.
+- **The workstation patient roster is centred and capped at the portal's width**
+  instead of stretching across the full window.
+- **The portal's active destination is marked with a white indicator line**
+  rather than a filled highlight.
+
 ## 2.2.1 — 2026-11-25
 
 - **Engine readiness dot is green on launch.** The workstation no longer shows a

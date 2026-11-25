@@ -23,7 +23,6 @@ import { PatientDetailPage } from "./pages/PatientDetailPage";
 import { ActiveCapturePage } from "./pages/ActiveCapturePage";
 import { SessionDetailPage } from "./pages/SessionDetailPage";
 import { SettingsPage } from "./pages/SettingsPage";
-import { Logo } from "./components/Logo";
 import { AccessGate } from "./components/AccessGate";
 import {
   authSignOut,
@@ -273,12 +272,13 @@ export function App() {
     .filter(Boolean)
     .join("\n");
 
+  // Horizontal tabs: the active destination is marked by a thin underline
+  // rather than a pill, matching the workstation's instrument-panel chrome.
   const navItem =
-    "inline-flex items-center gap-2 rounded-full border border-transparent px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50";
-  // Same solid teal pill as the portal's selected studio-rail destination.
-  const navActive = "bg-primary text-primary-foreground";
+    "relative inline-flex h-full flex-1 items-center justify-center gap-2 px-3 text-sm font-medium transition-colors outline-none after:absolute after:inset-x-2 after:-bottom-px after:h-0.5 after:rounded-full after:transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50";
+  const navActive = "text-foreground after:bg-primary";
   const navIdle =
-    "text-muted-foreground hover:bg-accent hover:text-foreground";
+    "text-muted-foreground after:bg-transparent hover:text-foreground";
 
   if (access === "checking") {
     return (
@@ -306,20 +306,8 @@ export function App() {
     <TooltipProvider delayDuration={200}>
     <div className="flex h-screen w-screen flex-col bg-background font-sans text-foreground">
       {/* Top bar — brand, destinations and compact status indicators. */}
-      <header className="flex h-16 shrink-0 items-center gap-4 border-b border-sidebar-border bg-sidebar px-4">
-        <div className="flex flex-1 items-center gap-2.5">
-          <Logo className="h-8 w-8 shrink-0" />
-          <div className="hidden leading-tight lg:block">
-            <h1 className="font-display text-sm font-semibold tracking-tight text-foreground">
-              Pilates AI
-            </h1>
-            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
-              Clinical workstation
-            </p>
-          </div>
-        </div>
-
-        <nav className="flex min-w-0 items-center gap-1" aria-label="Main navigation">
+      <header className="flex h-16 shrink-0 items-stretch border-b border-sidebar-border bg-sidebar px-4">
+        <nav className="flex min-w-0 flex-1 items-stretch gap-1" aria-label="Main navigation">
           {NAV.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -353,7 +341,7 @@ export function App() {
           </button>
         </nav>
 
-        <div className="flex flex-1 items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 pl-4">
           {patient && (
             <span
               className="hidden max-w-40 truncate rounded-full bg-sidebar-accent px-2.5 py-1 text-xs text-foreground md:inline"
@@ -416,7 +404,12 @@ export function App() {
             onClick={() => navigate({ tab: "settings" })}
             aria-label="Settings"
             title="Settings"
-            className={cn(navItem, "px-2.5", tab === "settings" ? navActive : navIdle)}
+            className={cn(
+              "inline-flex size-9 items-center justify-center rounded-full outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50",
+              tab === "settings"
+                ? "bg-accent text-foreground"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground",
+            )}
           >
             <Settings className="h-4 w-4" aria-hidden="true" />
           </button>

@@ -12,12 +12,13 @@
       body {
         margin: 0;
         height: 100%;
-        /* shadcn preset b3vDoo9h44 dark tokens (zinc base, cyan accent),
-           inlined because this renders before any stylesheet is loaded. */
-        background: oklch(0.141 0.005 285.823);
-        color: oklch(0.985 0 0);
+        /* Tafseer Clipper dark neutral palette, inlined because this renders
+           before any stylesheet is loaded. */
+        background: #0f1113;
+        color: #e7e9ea;
         font-family:
-          ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+          ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Leelawadee UI",
+          "Tahoma", "Noto Sans Thai", sans-serif;
       }
       #splash {
         position: fixed;
@@ -35,13 +36,13 @@
       #splash .label {
         font-size: 13px;
         letter-spacing: 0.02em;
-        color: oklch(0.705 0.015 286.067);
+        color: #8e969c;
       }
       #splash .bar {
         width: 160px;
         height: 3px;
         border-radius: 999px;
-        background: oklch(0.274 0.006 286.033);
+        background: #262b2f;
         overflow: hidden;
       }
       #splash .bar span {
@@ -51,8 +52,8 @@
         border-radius: 999px;
         background: linear-gradient(
           90deg,
-          oklch(0.715 0.143 215.221),
-          oklch(0.52 0.105 223.128)
+          #707a82,
+          #8e969c
         );
         animation: slide 1.1s ease-in-out infinite;
       }
@@ -70,7 +71,7 @@
     <div id="root">
       <div id="splash">
         <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
-          <rect width="48" height="48" rx="12" fill="#0b1220" />
+          <rect width="48" height="48" rx="12" fill="#0f1113" />
           <rect x="10" y="22" width="4" height="10" rx="2" fill="#2dc8de" />
           <rect x="17" y="16" width="4" height="16" rx="2" fill="#5eead4" />
           <rect x="24" y="11" width="4" height="21" rx="2" fill="#2dd4bf" />

@@ -99,10 +99,10 @@ export function App() {
                     end={end}
                     aria-label={label}
                     className={cn(
-                      "flex items-center rounded-full transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                      "relative flex items-center rounded-full transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                       railExpanded ? "h-11 gap-3 px-3" : "size-11 justify-center",
                       (end ? pathname === to : pathname.startsWith(to))
-                        ? "bg-primary text-primary-foreground"
+                        ? "text-foreground before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-primary"
                         : "text-muted-foreground hover:bg-accent hover:text-foreground",
                     )}
                   >

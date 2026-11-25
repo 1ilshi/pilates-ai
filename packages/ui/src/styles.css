@@ -1,93 +1,106 @@
-@import "@fontsource-variable/inter";
-@import "@fontsource-variable/geist-mono";
 @import "@fontsource-variable/outfit";
+@import "@fontsource-variable/geist-mono";
 @import "tw-animate-css";
 
-/* Dark-only product: the dark theme lives in :root below, and this variant
-   makes shadcn components' `dark:` utilities always apply via <html class="dark">. */
+/* Dark-only studio shell: the `.dark` class is the default state, never opt-in. */
 @custom-variant dark (&:is(.dark *));
 
 /**
  * @pilates/ui — shared design tokens for Tailwind CSS v4.
  *
- * This file intentionally does NOT `@import "tailwindcss"`. Consuming apps own
- * the Tailwind entry point and compose this token layer:
- *
- *   @import "tailwindcss";
- *   @import "@pilates/ui/styles.css";
- *   @source "../../packages/ui/src";
- *   @source "../../packages/viz/src";
- *
- * Importing Tailwind from a library would duplicate the preflight/reset layer.
+ * Calibrated dark neutral studio palette (Tafseer Clipper style): low-chroma
+ * slate/charcoal only — no bright surfaces, no saturated chrome. The primary
+ * is the "white accent" (#e3e5e6) with dark foreground.
  */
-/* ---------------------------------------------------------------------------
- * "Warm Studio" theme — the dark instrument panel warmed up. Neutrals move
- * off blue-zinc (hue ~285) onto espresso/stone (hue ~78-95) so surfaces read
- * as warm charcoal. The primary is the brand's teal DNA promoted to a bright
- * teal-ink with dark foreground (bright-on-dark shadcn convention). Controls
- * are pills, cards are 20px porcelain-on-charcoal with soft elevation.
- *
- * Media surfaces (camera feed, skeletal canvas) stay near-black "studio
- * mirror" tiles — they sit on top of video, not on the theme.
- * ------------------------------------------------------------------------- */
 :root {
-  /* Warm espresso canvas. Hue ~78 keeps a candlelit cast; chroma stays low
-     enough for clinical calm. */
-  --background: oklch(0.165 0.008 78);
-  --foreground: oklch(0.955 0.008 95);
+  --radius: 0.5rem;
 
-  /* Cards sit one warm step above the canvas; popovers another. */
-  --card: oklch(0.208 0.009 78);
-  --card-foreground: oklch(0.955 0.008 95);
-  --popover: oklch(0.232 0.01 78);
-  --popover-foreground: oklch(0.955 0.008 95);
+  /*
+   * Height reserved for the renderer-drawn window title bar. Zero in a plain
+   * browser build (the browser owns the chrome); `.desktop-shell` raises it to
+   * the bar's height so fixed overlays start below the bar instead of colliding
+   * with its "Back to app" / drag region.
+   */
+  --titlebar-height: 0px;
 
-  /* Bright teal-ink primary — the Logo's waveform color promoted to the
-     action color. Dark ink text keeps the fill glowing, not neon. */
-  --primary: oklch(0.75 0.115 183);
-  --primary-foreground: oklch(0.23 0.03 200);
+  --background: #0f1113;
+  --foreground: #e7e9ea;
 
-  /* Warm stone fills; hover accents drift sage instead of blue. */
-  --secondary: oklch(0.272 0.01 80);
-  --secondary-foreground: oklch(0.955 0.008 95);
-  --muted: oklch(0.272 0.01 80);
-  --muted-foreground: oklch(0.72 0.016 90);
-  --accent: oklch(0.27 0.016 158);
-  --accent-foreground: oklch(0.955 0.008 95);
+  --card: #14171a;
+  --card-foreground: #e7e9ea;
 
-  --destructive: oklch(0.704 0.191 22.216);
+  --popover: #16191c;
+  --popover-foreground: #e7e9ea;
 
-  /* Warm hairline borders — one step above card, never white-alpha. */
-  --border: oklch(0.3 0.012 80);
-  --input: oklch(0.315 0.012 80);
-  --ring: oklch(0.75 0.115 183);
+  --primary: #e3e5e6;
+  --primary-foreground: #101214;
 
-  /* Categorical data palette — the pastel-saturated set every chart in the
-     repo already speaks; their /10–/15 alpha washes tint the bento panels. */
-  --chart-1: oklch(0.776 0.128 186.5);  /* teal   #2dd4bf */
-  --chart-2: oklch(0.746 0.16 232.7);   /* blue   #60a5fa */
-  --chart-3: oklch(0.718 0.202 349.8);  /* pink   #f472b6 */
-  --chart-4: oklch(0.837 0.128 84.4);   /* amber  #fbbf24 */
-  --chart-5: oklch(0.714 0.158 305.4);  /* violet #a78bfa */
+  --secondary: #1d2124;
+  --secondary-foreground: #d5d8da;
 
-  /* Side rails read a touch deeper than the canvas, like the reference
-     studio shells. */
-  --sidebar: oklch(0.185 0.008 78);
-  --sidebar-foreground: oklch(0.955 0.008 95);
-  --sidebar-primary: oklch(0.75 0.115 183);
-  --sidebar-primary-foreground: oklch(0.23 0.03 200);
-  --sidebar-accent: oklch(0.26 0.012 80);
-  --sidebar-accent-foreground: oklch(0.955 0.008 95);
-  --sidebar-border: oklch(0.28 0.01 80);
-  --sidebar-ring: oklch(0.75 0.115 183);
+  --muted: #191d20;
+  --muted-foreground: #8e969c;
 
-  /* Preset radius base (drives --radius-sm/md/lg/xl below). */
-  --radius: 1rem;
+  --accent: #21262a;
+  --accent-foreground: #eceeef;
+
+  --destructive: #b3463f;
+  --destructive-foreground: #f6eae9;
+
+  --border: #262b2f;
+  --input: #2a3035;
+  --ring: #707a82;
+
+  /*
+   * Brand identity tone for the mark itself (header, splash, dialogs).
+   */
+  --brand-cream: #ecdfc3;
+
+  /*
+   * Status colors for app chrome (sidecar LED, warnings, destructive notices).
+   * Deliberately low chroma so they read as equipment indicators.
+   */
+  --status-online: #7a9e86;
+  --status-warning: #bd9a63;
+  --status-danger: #b3463f;
+
+  /* Content-only colors for subtitle preview and .ass output. */
+  --content-arabic-gold: #dcb46e;
+  --content-thai-white: #f4f4f1;
+
+  /* Pilates-specific: sidebar rail re-skinned to neutral. */
+  --sidebar: #14171a;
+  --sidebar-foreground: #e7e9ea;
+  --sidebar-primary: #e3e5e6;
+  --sidebar-primary-foreground: #101214;
+  --sidebar-accent: #21262a;
+  --sidebar-accent-foreground: #eceeef;
+  --sidebar-border: #262b2f;
+  --sidebar-ring: #707a82;
+
+  /* Categorical data palette (charts). */
+  --chart-1: #2dd4bf;
+  --chart-2: #60a5fa;
+  --chart-3: #f472b6;
+  --chart-4: #fbbf24;
+  --chart-5: #a78bfa;
+
+  /* Pilates-specific: card/pill radii preserved. */
+  --radius-card: 1.25rem;
+  --radius-control: 999px;
+
+  /* Studio elevation on dark. */
+  --shadow-card: 0 1px 2px rgb(12 10 8 / 0.35), 0 12px 32px -16px rgb(12 10 8 / 0.5);
+  --shadow-lift: 0 2px 6px rgb(12 10 8 / 0.4), 0 24px 48px -20px rgb(12 10 8 / 0.6);
+
+  color-scheme: dark;
 }
 
-/* Map the semantic variables onto Tailwind v4 utility namespaces. `inline`
-   keeps the var() references so the :root values above stay the single source
-   of truth. */
+/* Desktop shell: the title bar is drawn in the renderer, so reserve its height. */
+.desktop-shell {
+  --titlebar-height: 2rem;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -104,14 +117,15 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
+  --color-brand-cream: var(--brand-cream);
+  --color-status-online: var(--status-online);
+  --color-status-warning: var(--status-warning);
+  --color-status-danger: var(--status-danger);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -121,49 +135,44 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Studio typography: Outfit display for headings (rounded geometric, the
-     reference look), Inter for UI body copy, Geist Mono reserved for data —
-     stats, measurements, telemetry — where the clinical-instrument feel
-     belongs. Families are bundled per-app via @fontsource. */
 @theme {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Leelawadee UI",
+    "Tahoma", "Noto Sans Thai", sans-serif;
   --font-display: "Outfit Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono Variable", ui-monospace, "Cascadia Mono", monospace;
-}
+  --font-arabic:
+    "Noto Naskh Arabic", "Traditional Arabic", "Scheherazade New", "Tahoma",
+    serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "Cascadia Mono", "Consolas", monospace;
 
-@theme {
-  /* The Logo keeps its teal waveform: it is the product mark, not a theme
-     color. */
-
-  /* Biomechanical status colours — shared by canvas, gauges and badges.
-     Dark-native values, unchanged. */
   --color-pose-high: #22c55e;
   --color-pose-medium: #eab308;
   --color-pose-low: #ef4444;
 
-  /* Motion phase palette (charts). */
   --color-phase-eccentric: #60a5fa;
   --color-phase-holding: #34d399;
   --color-phase-concentric: #f59e0b;
   --color-phase-idle: #94a3b8;
 
-  /* Studio elevation on dark: shadows barely read, so depth comes from the
-     warm surface steps plus a whisper of shadow for floating panels. */
-  --shadow-card: 0 1px 2px rgb(12 10 8 / 0.35), 0 12px 32px -16px rgb(12 10 8 / 0.5);
-  --shadow-lift: 0 2px 6px rgb(12 10 8 / 0.4), 0 24px 48px -20px rgb(12 10 8 / 0.6);
-
   --radius-card: 1.25rem;
   --radius-control: 999px;
+
+  --shadow-card: 0 1px 2px rgb(12 10 8 / 0.35), 0 12px 32px -16px rgb(12 10 8 / 0.5);
+  --shadow-lift: 0 2px 6px rgb(12 10 8 / 0.4), 0 24px 48px -20px rgb(12 10 8 / 0.6);
 }
 
-/* Phase colours are also exposed as plain classes so chart/legend markup can
-   reference them without inline styles. */
 @layer components {
   .phase-swatch-eccentric {
     background-color: var(--color-phase-eccentric);
@@ -179,25 +188,104 @@
   }
 }
 
-/* Tailwind v4's default border colour is `currentColor`. Without this base
-   layer, every bare `border`, `border-b`, `border-t` utility renders as a
-   text-coloured (white) line — harsh table rows and dialog edges. Mapping it
-   to the warm hairline token gives all those utilities the same soft weight
-   as the card/chart-section edges. */
-@layer base {
-  * {
-    @apply border-border;
+/*
+ * The single standout element in the app: a tactile, softly breathing halo
+ * behind the Step 1 lecture dropzone. Everywhere else stays flat and calm.
+ */
+@keyframes dropzone-breathe {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translate3d(0, 0, 0) scale(1);
   }
-
-  body {
-    @apply bg-background text-foreground;
+  50% {
+    opacity: 0.52;
+    transform: translate3d(0, -2px, 0) scale(1.02);
   }
 }
 
-/* Slim, theme-matched scrollbar for overflow containers. The native/webview
-   bar renders bright white on our dark surfaces and reads as a foreign object;
-   this keeps the thumb on-theme and the track invisible. Apply with the
-   `warm-scrollbar` utility on any `overflow-auto` element. */
+.dropzone-glow::before {
+  content: "";
+  position: absolute;
+  inset: -42% 10% auto;
+  z-index: -1;
+  height: 72%;
+  border-radius: 9999px;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--ring) 32%, transparent),
+    transparent 72%
+  );
+  filter: blur(34px);
+  opacity: 0.34;
+  pointer-events: none;
+  animation: dropzone-breathe 7s ease-in-out infinite;
+}
+
+.dropzone-glow[data-dragging="true"]::before {
+  animation: none;
+  opacity: 0.62;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropzone-glow::before {
+    animation: none;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--ring) 35%, transparent);
+    color: var(--foreground);
+  }
+
+  /* Quiet equipment-like scrollbars; never a bright surface. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, var(--border) 80%, transparent);
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklab, var(--ring) 45%, transparent);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+/* Slim, theme-matched scrollbar utility (alias) for explicit callers. */
 @utility warm-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;

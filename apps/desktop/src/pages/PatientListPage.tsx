@@ -301,7 +301,7 @@ export function PatientListPage({ onSelectPatient, onPatientDeleted }: PatientLi
   };
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto w-full max-w-6xl space-y-5">
       {!native && (
         <Card className="border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-300">
           Running in a browser: the native engine is unavailable. Launch with{" "}

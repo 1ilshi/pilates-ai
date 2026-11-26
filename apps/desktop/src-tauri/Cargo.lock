@@ -3651,7 +3651,7 @@ dependencies = [
 
 [[package]]
 name = "pilates-desktop"
-version = "2.4.0"
+version = "2.4.1"
 dependencies = [
  "arc-swap",
  "arrow",

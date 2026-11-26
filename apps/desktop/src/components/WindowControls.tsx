@@ -44,10 +44,10 @@ export function WindowControls() {
     "inline-flex h-full w-11 items-center justify-center text-muted-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-ring/50";
 
   return (
-    // `-mr-4` reaches past the header padding so the buttons sit flush with
-    // the window edge, like a native title bar. `relative` keeps the buttons
-    // above the header's drag overlay.
-    <div className="relative -mr-4 flex h-full items-stretch">
+    // `relative` lifts the buttons above the strip's drag region; the strip
+    // carries no right padding, so the buttons sit flush with the window
+    // edge like a native title bar.
+    <div className="relative flex h-full items-stretch">
       <button
         type="button"
         title="Minimize"

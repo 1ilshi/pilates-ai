@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.4.1 — 2026-11-27
+
+- **The window is draggable again.** 2.4.0 replaced the native title bar with
+  the tab header, whose stretchy tabs covered nearly every pixel of it — there
+  was nowhere to grab and move the window. A dedicated ~32px strip above the
+  tab bar now provides the grab area: logo and app name on the left, minimize,
+  maximize/restore and close on the right, drag anywhere else, double-click to
+  maximize. The strip uses the app's dark palette, so the title bar stays
+  colour-matched to the content.
+
 ## 2.4.0 — 2026-11-26
 
 - **The window title bar is drawn by the app and matches the dark theme.** The

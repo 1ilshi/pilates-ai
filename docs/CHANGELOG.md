@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.4.0 — 2026-11-26
+
+- **The window title bar is drawn by the app and matches the dark theme.** The
+  native decorations are replaced by the workstation's own top bar, so the strip
+  above the content no longer shows the OS's contrasting title-bar colour.
+  Minimize, maximize/restore and close sit at the right edge, the header drags
+  the window anywhere (double-click toggles maximize) and a compact logo +
+  wordmark stand in for the removed native title.
+- **Analysis asks before leaving the workstation.** The Analysis tab now opens
+  a confirmation dialog before handing off to the clinical portal in the
+  browser, and it no longer shows the active-tab underline — it is an exit, not
+  a view that lives in this app.
+
 ## 2.3.1 — 2026-11-26
 
 - **The Settings screen is redesigned around a single centred column.** The

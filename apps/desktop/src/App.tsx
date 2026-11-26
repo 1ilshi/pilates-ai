@@ -24,6 +24,8 @@ import { ActiveCapturePage } from "./pages/ActiveCapturePage";
 import { SessionDetailPage } from "./pages/SessionDetailPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { AccessGate } from "./components/AccessGate";
+import { Logo } from "./components/Logo";
+import { WindowControls } from "./components/WindowControls";
 import {
   authSignOut,
   engineStatus,
@@ -102,9 +104,11 @@ export function App() {
     };
   }, []);
 
-  // Analysis opens in the portal, so it cannot be derived from `tab`. Keep it
-  // highlighted once opened until the clinician picks another destination.
+  // Analysis opens in the portal, so it cannot be derived from `tab`. It gets a
+  // text-only highlight once opened; the underline is reserved for views that
+  // actually live in this app, so it must never appear on the Analysis tab.
   const [analysisActive, setAnalysisActive] = useState(false);
+  const [confirmAnalysis, setConfirmAnalysis] = useState(false);
 
   const navigate = (next: Partial<View>) => {
     setAnalysisActive(false);
@@ -175,15 +179,18 @@ export function App() {
     setUpdatePromptOpen(true);
   }, [update.version, tab]);
 
-  // Escape closes the confirmation, matching the portal's dialogs.
+  // Escape closes the confirmations, matching the portal's dialogs.
   useEffect(() => {
-    if (!confirmSignOut) return;
+    if (!confirmSignOut && !confirmAnalysis) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setConfirmSignOut(false);
+      if (event.key === "Escape") {
+        setConfirmSignOut(false);
+        setConfirmAnalysis(false);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [confirmSignOut]);
+  }, [confirmSignOut, confirmAnalysis]);
 
   const openAnalysis = () => {
     // Clear first, so a successful retry does not leave a stale warning.
@@ -305,8 +312,27 @@ export function App() {
   return (
     <TooltipProvider delayDuration={200}>
     <div className="flex h-screen w-screen flex-col bg-background font-sans text-foreground">
-      {/* Top bar — brand, destinations and compact status indicators. */}
-      <header className="flex h-16 shrink-0 items-stretch border-b border-sidebar-border bg-sidebar px-4">
+      {/* Top bar — brand, destinations and compact status indicators. With
+          `decorations: false` this header doubles as the window title bar, so
+          it uses the app's own colours end to end. */}
+      <header className="relative flex h-16 shrink-0 items-stretch border-b border-sidebar-border bg-sidebar px-4">
+        {/*
+          Drag overlay for the custom title bar: every non-interactive pixel of
+          the header drags the window (double-click toggles maximize, matching
+          the old native bar). It is the first child, so the positioned
+          interactive elements that follow paint above it and stay clickable.
+          The plain-browser build keeps normal page behaviour.
+        */}
+        {isTauri() && (
+          <div aria-hidden="true" data-tauri-drag-region className="absolute inset-0" />
+        )}
+
+        {/* Stand-in for the removed native title text; part of the drag area. */}
+        <div className="flex shrink-0 items-center gap-2 pr-3 text-sm font-medium text-muted-foreground">
+          <Logo className="h-5 w-5" aria-hidden="true" />
+          Pilates AI
+        </div>
+
         <nav className="flex min-w-0 flex-1 items-stretch gap-1" aria-label="Main navigation">
           {NAV.map(({ id, label, icon: Icon }) => (
             <button
@@ -323,14 +349,15 @@ export function App() {
 
           {/*
             Analysis lives in the cloud portal, not here: it is a cohort-level
-            view that benefits from shared, always-current data.
+            view that benefits from shared, always-current data. It is an exit,
+            not a destination in this app, so it never shows the active
+            underline and asks for confirmation before leaving.
           */}
           <button
             type="button"
-            onClick={openAnalysis}
+            onClick={() => setConfirmAnalysis(true)}
             title="Opens the clinical portal in your browser"
-            aria-current={analysisActive ? "page" : undefined}
-            className={cn(navItem, analysisActive ? navActive : navIdle)}
+            className={cn(navItem, analysisActive ? "text-foreground" : navIdle)}
           >
             <BarChart3 className="h-4 w-4" aria-hidden="true" />
             Analysis
@@ -341,7 +368,8 @@ export function App() {
           </button>
         </nav>
 
-        <div className="flex items-center justify-end gap-2 pl-4">
+        {/* `relative` keeps the whole cluster above the header drag overlay. */}
+        <div className="relative flex items-center justify-end gap-2 pl-4">
           {patient && (
             <span
               className="hidden max-w-40 truncate rounded-full bg-sidebar-accent px-2.5 py-1 text-xs text-foreground md:inline"
@@ -428,6 +456,8 @@ export function App() {
             <LogOut className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
+
+        {isTauri() && <WindowControls />}
       </header>
 
       {(syncError || portalError) && (
@@ -568,6 +598,23 @@ export function App() {
               >
                 Sign out
               </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+      {confirmAnalysis && (
+        <AlertDialog open onOpenChange={(next) => !next && setConfirmAnalysis(false)}>
+          <AlertDialogContent onOutsideDismiss={() => setConfirmAnalysis(false)}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Open the data visualization portal?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Analysis lives in the clinical web portal and will open in your
+                browser, outside this workstation app.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={openAnalysis}>Open portal</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

@@ -1,7 +1,15 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Core permissions for the clinical workstation window. Without this the app grants no core permissions at all, so `listen()` for the telemetry stream is denied and the live overlay silently never receives data. `updater:default` lets the UI check and install a release; `process:default` provides the relaunch that follows an install.",
+  "description": "Core permissions for the clinical workstation window. Without this the app grants no core permissions at all, so `listen()` for the telemetry stream is denied and the live overlay silently never receives data. `updater:default` lets the UI check and install a release; `process:default` provides the relaunch that follows an install. The window entries cover the custom title bar: `allow-start-dragging` is NOT part of `core:window:default`, so the header drag region is denied without it; the minimize / toggle-maximize / close permissions cover the title bar buttons.",
   "windows": ["main"],
-  "permissions": ["core:default", "updater:default", "process:default"]
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "updater:default",
+    "process:default"
+  ]
 }

@@ -3,6 +3,7 @@ import { Camera, Check, RefreshCw } from "lucide-react";
 import {
   Button,
   Card,
+  cn,
   Select,
   SelectContent,
   SelectItem,
@@ -11,11 +12,18 @@ import {
 } from "@pilates/ui";
 import { UpdateBanner } from "../components/UpdateBanner";
 import type { UpdateState } from "../hooks/useUpdate";
-import { isTauri, listCameras, type CameraDescriptor } from "../lib/ipc";
+import {
+  isTauri,
+  listCameras,
+  type CameraDescriptor,
+  type EngineStatus,
+} from "../lib/ipc";
 import { getSelectedCamera, setSelectedCamera } from "../lib/cameraPreference";
 
 export interface SettingsPageProps {
   update: UpdateState;
+  /** Live engine health polled in App; null in browser mode or before the first poll. */
+  engine: EngineStatus | null;
 }
 
 /** A card with a hairline-separated header, matching the patient roster panel. */
@@ -41,7 +49,7 @@ function Panel({
   );
 }
 
-export function SettingsPage({ update }: SettingsPageProps) {
+export function SettingsPage({ update, engine }: SettingsPageProps) {
   const native = isTauri();
   const [cameras, setCameras] = useState<CameraDescriptor[]>([]);
   const [selected, setSelected] = useState<number | null>(() => getSelectedCamera());
@@ -68,8 +76,27 @@ export function SettingsPage({ update }: SettingsPageProps) {
   const externalCount = cameras.filter((camera) => !camera.is_default).length;
   const current = cameras.find((camera) => camera.index === (selected ?? 0));
 
+  // About-panel facts, mirroring the top-bar engine dot in App.tsx.
+  const engineReady = !!engine?.runtime_found && !!engine?.inference_available;
+  const engineLabel = !native
+    ? "Browser mode"
+    : !engine
+      ? "Status unavailable"
+      : engineReady
+        ? `Ready · ${engine.provider}`
+        : "Not ready";
+  const engineTone: "ready" | "down" | "muted" =
+    native && engine ? (engineReady ? "ready" : "down") : "muted";
+  const cloudSyncLabel = !native
+    ? "Unavailable"
+    : engine
+      ? engine.cloud_sync_enabled
+        ? "Enabled"
+        : "Local only"
+      : "Status unavailable";
+
   return (
-    <div className="space-y-5">
+    <div className="mx-auto w-full max-w-3xl space-y-6">
       <div>
         <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">
           Settings
@@ -183,12 +210,45 @@ export function SettingsPage({ update }: SettingsPageProps) {
           </p>
         )}
 
-        <UpdateBanner update={update} className="rounded-xl border-0 bg-primary/10" />
+        <UpdateBanner
+          update={update}
+          className="rounded-xl border border-primary/30 bg-primary/10 sm:px-4"
+        />
 
         <p className="text-xs text-muted-foreground">
           Updates are checked automatically. If you skip one, you can check again
           any time here in Settings → Updates.
         </p>
+      </Panel>
+
+      <Panel title="About" description="Workstation build and engine health.">
+        <dl className="divide-y divide-border/40">
+          <div className="flex items-center justify-between gap-4 py-2.5 first:pt-0 last:pb-0">
+            <dt className="text-sm text-muted-foreground">App version</dt>
+            <dd className="font-mono text-sm text-foreground">
+              {update.currentVersion ?? "—"}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between gap-4 py-2.5 first:pt-0 last:pb-0">
+            <dt className="text-sm text-muted-foreground">Engine</dt>
+            <dd className="flex items-center gap-2 text-sm text-foreground">
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "size-2 rounded-full",
+                  engineTone === "ready" && "bg-emerald-500",
+                  engineTone === "down" && "bg-red-500",
+                  engineTone === "muted" && "bg-muted-foreground/40",
+                )}
+              />
+              {engineLabel}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between gap-4 py-2.5 first:pt-0 last:pb-0">
+            <dt className="text-sm text-muted-foreground">Cloud sync</dt>
+            <dd className="text-sm text-foreground">{cloudSyncLabel}</dd>
+          </div>
+        </dl>
       </Panel>
     </div>
   );

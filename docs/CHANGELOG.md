@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.3.1 — 2026-11-26
+
+- **The Settings screen is redesigned around a single centred column.** The
+  title, panels and edges now share one axis on wide windows instead of hugging
+  the top-left corner, matching the centred patient roster.
+- **A new About panel rounds out the page.** It lists the app version, engine
+  readiness with its provider (mirroring the top-bar dot) and whether cloud
+  sync is enabled.
+- **The update banner sits flush inside the Updates panel.** Its extra padding
+  and stray border inside the card are gone.
+
 ## 2.3.0 — 2026-11-25
 
 - **The workstation and portal share a calibrated dark neutral theme.** Surfaces

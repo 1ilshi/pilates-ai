@@ -517,7 +517,7 @@ export function App() {
           )}
 
           {tab === "settings" && (
-            <SettingsPage update={update} />
+            <SettingsPage update={update} engine={engine} />
           )}
         </section>
       </main>

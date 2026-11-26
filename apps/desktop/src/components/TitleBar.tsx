@@ -14,8 +14,9 @@ export function TitleBar() {
   return (
     <div data-tauri-drag-region className="flex h-8 shrink-0 items-stretch bg-sidebar">
       {/* `pointer-events-none` keeps the strip itself as the mousedown target
-          even over the brand, so dragging works anywhere on the strip. */}
-      <div className="pointer-events-none flex items-center gap-2 pl-3 text-xs font-medium text-muted-foreground">
+          even over the brand, and `flex-1` pushes the window controls to the
+          right edge so the whole left and middle stay grabbable. */}
+      <div className="pointer-events-none flex flex-1 items-center gap-2 pl-3 text-xs font-medium text-muted-foreground">
         <Logo className="h-4 w-4" />
         Pilates AI Clinical Workstation
       </div>

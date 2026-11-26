@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.4.2 — 2026-11-27
+
+- **The window controls sit at the right edge of the title bar.** In 2.4.1 they
+  rendered next to the app name because the title-bar strip had no spacer
+  between the brand and the controls; the brand block now fills the leftover
+  width and the strip still drags everywhere outside the buttons.
+
 ## 2.4.1 — 2026-11-27
 
 - **The window is draggable again.** 2.4.0 replaced the native title bar with
